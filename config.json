@@ -1,0 +1,47 @@
+{
+	"name": "Flight Connector",
+
+	"namespace": "Vanderbilt\\FlightConnectorExternalModule",
+
+	"description": "A REDCap External Module that transforms a list of contents and methods into a REDCap survey, whose data is turned into a social network map of topics.",
+
+	"authors": [
+		{
+			"name": "Scott J. Pearson",
+			"email": "scott.j.pearson@vumc.org",
+			"institution": "Vanderbilt University Medical Center"
+		}
+	],
+
+	
+	"permissions": [
+			"hook_every_page_top",
+			"hook_survey_page"
+	],
+
+	"links": {
+		"project": [
+			{
+				"name": "Flight Connector Map",
+				"icon": "fa-regular fa-map",
+				"url": "map.php?NOAUTH"
+			}
+		]
+	},
+
+	"framework-version": 9,
+
+	"compatibility": {
+		"php-version-min": "7.3.0",
+		"php-version-max": "",
+		"redcap-version-min": "10.6.4",
+		"redcap-version-max": ""
+	},
+
+	"no-auth-pages": [
+		"map"
+	],
+
+	"project-settings": [
+	]
+}
