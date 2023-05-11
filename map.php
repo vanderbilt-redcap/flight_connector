@@ -11,6 +11,10 @@ $pid = getPid();
 $cssUrl = $module->getUrl("connect.css");
 $ftLogo = $module->getUrl("flight_tracker_icon.png");
 
+if (!$module->isSetup($pid)) {
+    header("Location: ".$module->getUrl("install.php"));
+}
+
 echo "<title>Flight Connector</title>";
 echo "<link rel='stylesheet' href='$cssUrl' />";
 echo "<link rel='icon' href='$ftLogo' />";

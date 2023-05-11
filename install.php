@@ -193,7 +193,7 @@ if ($publicSurveyLink) {
     echo makePublicSurveyLink($module, $publicSurveyLink);
     echo "<p class='centered max-width'>Share this public link to see the Flight Tracker Map real-time as the data grows. <br/><input id='mapUrl' value='$mapUrl' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='copyToClipboard($(\"#mapUrl\"));'>Copy</a></span></p>";
     echo "<p class='centered max-width'>Both of these links are available in REDCap's left-hand toolbar. The Public Survey Link is available under Survey Distribution Tools, and the Flight Connector Map is under Bookmarks.</p>";
-    echo "<p class='centered max-width'><a href='$projectHomeUrl'>To the project's home page</a></p>";
+    echo "<p class='bolded centered max-width'><a href='$projectHomeUrl'>REDCap Project's Home Page</a></p>";
 } else {
     echo "<h1>Flight Connector Installation</h1>";
     echo makeHeader($module);

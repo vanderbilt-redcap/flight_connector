@@ -10,13 +10,16 @@ class FlightConnectorExternalModule extends AbstractExternalModule
     const INSTRUMENT = "flight_connector_survey";
     const FIELDS = ["contents" => "Concepts or Content Areas", "methods" => "Methods or Tools"];
 
-    function redcap_every_page_before_render($project_id)
-    {
+    function isSetup($project_id) {
         $fields = array_keys(self::FIELDS);
         $sql = "SELECT field_name FROM redcap_metadata WHERE project_id = ? AND form_name = ? AND field_name IN (?, ?)";
         $q = $this->query($sql, [$project_id, "flight_connector_survey", $fields[0], $fields[1]]);
+        return $q->fetch_assoc();
+    }
 
-        if (!$q->fetch_assoc() && !self::isExternalModulePage() && self::isREDCap()) {
+    function redcap_every_page_before_render($project_id)
+    {
+        if (!$this->isSetup($project_id) && !self::isExternalModulePage() && self::isREDCap()) {
             header("Location: ".$this->getUrl("install.php"));
         }
     }

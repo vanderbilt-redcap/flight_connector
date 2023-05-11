@@ -74,3 +74,63 @@ function makePublicSurveyLink($module, $publicSurveyLink = "") {
         return "";
     }
 }
+
+function getChoices($metadata) {
+    $choicesStrs = array();
+    $multis = array("checkbox", "dropdown", "radio");
+    foreach ($metadata as $row) {
+        if (in_array($row['field_type'], $multis) && $row['select_choices_or_calculations']) {
+            $choicesStrs[$row['field_name']] = $row['select_choices_or_calculations'];
+        } else if ($row['field_type'] == "yesno") {
+            $choicesStrs[$row['field_name']] = "0,No|1,Yes";
+        } else if ($row['field_type'] == "truefalse") {
+            $choicesStrs[$row['field_name']] = "0,False|1,True";
+        }
+    }
+    $choices = array();
+    foreach ($choicesStrs as $fieldName => $choicesStr) {
+        $choices[$fieldName] = getRowChoices($choicesStr);
+    }
+    return $choices;
+}
+
+function getRowChoices($choicesStr, $directFromDB = FALSE) {
+    if ($directFromDB) {
+        $regex = "/\s*\\\\n\s*/";
+    } else {
+        $regex = "/\s*\|\s*/";
+    }
+    $choicePairs = preg_split($regex, $choicesStr);
+    $choices = [];
+    foreach ($choicePairs as $pair) {
+        $a = preg_split("/\s*,\s*/", $pair);
+        if (count($a) == 2) {
+            $choices[$a[0]] = $a[1];
+        } else if (count($a) > 2) {
+            $a = explode(",", $pair);
+            $b = [];
+            for ($i = 1; $i < count($a); $i++) {
+                $b[] = $a[$i];
+            }
+            $choices[trim($a[0])] = trim(implode(",", $b));
+        }
+    }
+    return $choices;
+}
+
+function fetchFromServer($request, $server) {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $server);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_VERBOSE, 0);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_AUTOREFERER, true);
+    curl_setopt($ch, CURLOPT_MAXREDIRS, 10);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+    curl_setopt($ch, CURLOPT_FRESH_CONNECT, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($request, '', '&'));
+    $output = curl_exec($ch);
+    curl_close($ch);
+    return $output;
+}
