@@ -37,7 +37,7 @@ $json = fetchFromServer($metadataRequest, $vfrsServer);
 $vfrsMetadata = json_decode($json, TRUE);
 $vfrsChoices = getChoices($vfrsMetadata);
 
-$json = \REDCap::getDataDictionary($pid, TRUE);
+$json = \REDCap::getDataDictionary($pid, "json");
 $metadata = json_decode($json, TRUE);
 $choices = getChoices($metadata);
 
