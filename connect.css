@@ -2,5 +2,10 @@
 @font-face { font-family: 'europa'; font-style: normal; font-weight: normal; src: url('EuropaNuovaRegular.woff'); }
 body { font-family: europa, Arial, Helvetica, sans-serif; }
 .smaller,.smaller a { font-size: 12px; }
+.smallest,.smallest a { font-size: 11px; }
 a { color: black; }
 .max-width { margin-left: auto; margin-right: auto; max-width: 800px; }
+h1,h2,h3,h4 { text-align: center; }
+h1 { font-size: 44px; margin-top: 16px; margin-bottom: 16px; }
+h2 { font-size: 24px; letter-spacing: 0.3rem; position: relative; }
+h2::before { content: ""; top: 50%; position: absolute; left: 0; right: 0; bottom: 0; text-align: center; z-index: -1; width: 95%; margin: 0 auto; border-top: 2px solid #d2d2eb; }

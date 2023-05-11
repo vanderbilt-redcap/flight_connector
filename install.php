@@ -12,7 +12,9 @@ if (!$pid) {
 $baseUrl = ExternalModules::$BASE_URL ?? APP_URL_EXTMOD_RELATIVE;
 $cssUrl = $module->getUrl("connect.css");
 $efsLogo = $module->getUrl("efs_small_logoonly.png");
+$ftLogo = $module->getUrl("flight_tracker_icon.png");
 $thisUrl = $module->getUrl("install.php");
+$jsUrl = $module->getUrl("jquery.min.js");
 
 $fields = [
     "content" => "Content Areas",
@@ -21,7 +23,13 @@ $fields = [
 $applicableInstrument = "flight_connector_survey";
 $instrumentLabel = "Flight Connector";
 $publicSurveyLink = "";
-$csv = \REDCap::getDataDictionary($pid, "csv", FALSE);
+$csvData = \REDCap::getDataDictionary($pid, "csv", FALSE);
+$csv = [];
+foreach (preg_split("/[\n\r]+/", $csvData) as $row) {
+    if ($row) {
+        $csv[] = str_getcsv($row);
+    }
+}
 if (!empty($_POST)) {
     $headers = $csv[0];
     $fieldIndex = -1;
@@ -107,10 +115,22 @@ if (!empty($_POST)) {
             }
             unset($old);
         }
+    }
+
+    $filename = APP_PATH_TEMP.bin2hex(random_bytes(8))."_".$applicableInstrument.".csv";
+    $fp = fopen($filename, "w");
+    foreach ($csv as $row) {
+        fputcsv($fp, $row);
+    }
+    fclose($fp);
+    $module->importDataDictionary($pid, $filename);
+    unlink($filename);
+
+    if (empty($rowIndexes)) {
         $sql = "UPDATE redcap_projects SET surveys_enabled='1' WHERE project_id = ?";
         $module->query($sql, [$pid]);
 
-        $surveyIntroText = '<p><strong>Please complete the survey below with your expertise.</strong></p>\r\n<p>Thank you!</p>';
+        $surveyIntroText = '<p><strong>Please complete the survey below with your expertise.</strong></p><p>Thank you!</p>';
         $surveyCompletionText = '<p><strong>Thank you for taking the survey.</strong></p><p>Have a nice day!</p>';
         $sql = "INSERT INTO redcap_surveys (project_id, font_family, form_name, title, instructions, acknowledgement, question_by_section, question_auto_numbering, survey_enabled, save_and_return, logo, hide_title, view_results, min_responses_view_results, check_diversity_view_results, end_survey_redirect_url, survey_expiration) VALUES (?, '16', ?, ?, ?, ?, 0, 1, 1, 1, NULL, 0, 0, 10, 0, NULL, NULL)";
         $module->query($sql, [$pid, $applicableInstrument, $instrumentLabel, $surveyIntroText, $surveyCompletionText]);
@@ -127,8 +147,6 @@ if (!empty($_POST)) {
         } else {
             throw new \Exception("Did not set up survey!");
         }
-
-        # TODO enable public survey link
     } else {
         # some but not all
         $old = $csv;
@@ -154,16 +172,6 @@ if (!empty($_POST)) {
         }
         unset($old);
     }
-
-    $filename = APP_PATH_TEMP.bin2hex(random_bytes(8))."_".$applicableInstrument.".csv";
-    $fp = fopen($filename, "w");
-    fputcsv($fp, $headers);
-    foreach ($csv as $row) {
-        fputcsv($fp, $row);
-    }
-    fclose($fp);
-    $module->importDataDictionary($pid, $filename);
-    unlink($filename);
 } else if (count($csv) > 2) {
     $hasSurvey = FALSE;
     foreach ($csv as $row) {
@@ -179,57 +187,62 @@ if (!empty($_POST)) {
 
 echo "<title>Flight Connector Installation</title>";
 echo "<link rel='stylesheet' href='$cssUrl' />";
+echo "<link rel='icon' href='$ftLogo' />";
+echo "<script src='$jsUrl'></script>";
 
-$header = "<p class='centered'>from <a href='https://edgeforscholars.org'>Edge for Scholars</a> <img src='$efsLogo' style='width: 27px; height: 20px;' alt='Edge for Scholars' /> - <a href='https://redcap.link/flight_tracker'>more about Flight Tracker</a></p>";
+$header = "<p class='centered'>from <a href='https://edgeforscholars.org'>Edge for Scholars</a> <img src='$efsLogo' style='width: 27px; height: 20px;' alt='Edge for Scholars' /> &amp; <a href='https://redcap.link/flight_tracker'>Flight Tracker</a> <img src='$ftLogo' style='width: 22px; height: 22px;' alt='Flight Tracker for Scholars' /><br/><span class='smallest'>Copyright &#9400 ".date("Y")." <a href='https://vumc.org'>Vanderbilt University Medical Center</a></span></p>";
 
 if ($publicSurveyLink) {
     $mapUrl = $module->getUrl("map.php");
     $projectHomeUrl = APP_PATH_WEBROOT."index.php?pid=$pid";
-    echo "<h1>Flight Connector Has Been Set Up!</h1>";
+    echo "<h1>Flight Connector</h1>";
     echo $header;
+    echo "<h2>Setup Complete!</h2>";
     echo "<p class='centered max-width'>Share this public link with others to populate your data.<br/><input id='surveyUrl' value='$publicSurveyLink' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='copyToClipboard($(\"#surveyUrl\"));'>Copy</a></span></p>";
     echo "<p class='centered max-width'>Share this public link to see the Flight Tracker Map real-time as the data grows. <br/><input id='mapUrl' value='$mapUrl' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='copyToClipboard($(\"#mapUrl\"));'>Copy</a></span></p>";
     echo "<p class='centered max-width'>Both of these links are available in REDCap's left-hand toolbar. The Public Survey Link is available under Survey Distribution Tools, and the Flight Connector Map is under Bookmarks.</p>";
     echo "<p class='centered max-width'><a href='$projectHomeUrl'>To the project's home page</a></p>";
-}
+} else {
+    echo "<h1>Flight Connector Installation</h1>";
+    echo $header;
+    echo "<p class='centered smaller'><a href='$baseUrl"."manager/project.php?pid=$pid'>Wrong Page? Disable this Module</a></p>";
 
-echo "<h1>Flight Connector Installation</h1>";
-echo $header;
-echo "<p class='centered smaller'><a href='$baseUrl"."manager/project.php?pid=$pid'>Wrong Page? Disable this Module</a></p>";
-
-echo "<p class='centered max-width'>Flight Connector is a networking tool to help groups of knowledge workers identify colleagues with areas of expertise, whether intellectual content or methodologies. This page will generate a survey for participants to fill out. The survey will contain checkboxes for each item for participants to identify their strengths. These strengths will, in turn, produce an interactive social network map for broader viewing.</p>";
-echo "<form action='$thisUrl' method='POST'>";
-$requiredFields = [];
-foreach ($fields as $field => $label) {
-    $labelField = $field."_label";
-    echo "<h2>$label</h2>";
-    $defaultLabel = isset($_POST[$labelField]) ? htmlentities($_POST[$labelField]) : "";
-    $defaultEntry = isset($_POST[$field]) ? htmlentities($_POST[$field]) : "";
-    echo "<p class='centered max-width'><label for='$labelField'>Label:</label> <input type='text' id='$labelField' name='$labelField' placeholder='$label' value='$defaultLabel' style='width: 200px;' /><br/><label for='$field'>Checkbox Options (one per line):</label><br/><textarea name='$field' id='$field' style='width: 600px; height: 400px;'>$defaultEntry</textarea></p>";
-    $requiredFields[] = $labelField;
-    $requiredFields[] = $field;
-}
-$requiredFieldsJSON = json_encode($requiredFields);
-echo "<p class='centered'><button onclick='if (isInvalid()) { alert(\"You must fill in a value\"); return false; } else { return true; } '>Set Up Project</button></p>";
-echo "</form>";
-echo "<p class='centered smaller'>Copyright &#9400 ".date("Y")." <a href='https://vumc.org'>Vanderbilt University Medical Center</a></p>";
-echo "<script>
-function copyToClipboard(element) {
-	const text = $(element).text() ? $(element).text() : $(element).val();
-	navigator.clipboard.writeText(text);
-}
-
-function isInvalid() {
-    const requiredFields = $requiredFieldsJSON;
-    for (let i=0; i < requiredFields.length; i++) {
-        const field = requiredFields[i];
-        if ($('#'+field).val() === '') {
-            return true;
-        }
+    echo "<p class='centered max-width'>Flight Connector is a networking tool to help groups of knowledge workers identify colleagues with areas of expertise, whether intellectual content or methodologies. This page will generate a survey for participants to fill out. The survey will contain checkboxes for each item for participants to identify their strengths. These strengths will, in turn, produce an interactive social network map for broader viewing.</p>";
+    echo "<form action='$thisUrl' method='POST'>";
+    $csrfToken = $module->getCSRFToken();
+    echo "<input type='hidden' id='redcap_csrf_token' name='redcap_csrf_token' value='$csrfToken' />";
+    $requiredFields = [];
+    foreach ($fields as $field => $label) {
+        $labelField = $field."_label";
+        echo "<h2>Options for $label</h2>";
+        $defaultLabel = isset($_POST[$labelField]) ? htmlentities($_POST[$labelField]) : "";
+        $defaultEntry = isset($_POST[$field]) ? htmlentities($_POST[$field]) : "";
+        echo "<p class='centered max-width'><label for='$labelField'>Label:</label> <input type='text' id='$labelField' name='$labelField' placeholder='$label' value='$defaultLabel' style='width: 200px;' /><br/><label for='$field'>Checkbox Options (one per line):</label><br/><textarea name='$field' id='$field' style='width: 400px; height: 200px;'>$defaultEntry</textarea></p>";
+        $requiredFields[] = $labelField;
+        $requiredFields[] = $field;
     }
-    return false;
+    $requiredFieldsJSON = json_encode($requiredFields);
+    echo "<p class='centered'><button onclick='if (isInvalid()) { alert(\"You must fill in a value for all labels and options.\"); return false; } else { return true; } '>Set Up Project</button></p>";
+    echo "</form>";
+    echo "<script>
+        function copyToClipboard(element) {
+            const text = $(element).text() ? $(element).text() : $(element).val();
+            navigator.clipboard.writeText(text);
+        }
+        
+        function isInvalid() {
+            const requiredFields = $requiredFieldsJSON;
+            for (let i=0; i < requiredFields.length; i++) {
+                const field = requiredFields[i];
+                if ($('#'+field).val() === '') {
+                    return true;
+                }
+            }
+            return false;
+        }
+        </script>";
 }
-</script>";
+
 
 function getEventIdForClassical($module, $pid) {
     $sql = "SELECT DISTINCT(m.event_id) AS event_id FROM redcap_events_metadata AS m INNER JOIN redcap_events_arms AS a ON (a.arm_id = m.arm_id) WHERE a.project_id = ?";

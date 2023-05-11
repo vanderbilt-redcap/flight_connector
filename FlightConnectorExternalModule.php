@@ -8,14 +8,25 @@ use \ExternalModules\AbstractExternalModule;
 class FlightConnectorExternalModule extends AbstractExternalModule
 {
 
-    function hook_every_page_top($project_id)
+    function redcap_every_page_before_render($project_id)
     {
         $sql = "SELECT field_name FROM redcap_metadata WHERE project_id = ? AND form_name = ? AND field_name IN (?, ?)";
         $q = $this->query($sql, [$project_id, "flight_connector_survey", "subjects", "skills"]);
 
-        if (($q->num_rows() === 0) && !self::isExternalModulePage()) {
+        if (!$q->fetch_assoc() && !self::isExternalModulePage() && self::isREDCap()) {
             header("Location: ".$this->getUrl("install.php"));
         }
+    }
+
+    private static function isREDCap() {
+        $rootPage = $_SERVER['PHP_SELF'] ?? "";
+        if (strpos($rootPage, "ExternalModules") !== FALSE) {
+            return FALSE;
+        }
+        if (strpos($rootPage, APP_PATH_WEBROOT) === FALSE) {
+            return FALSE;
+        }
+        return TRUE;
     }
 
     private static function isExternalModulePage() {
@@ -35,7 +46,7 @@ class FlightConnectorExternalModule extends AbstractExternalModule
         return FALSE;
     }
 
-    function hook_survey_page($project_id, $record, $instrument, $event_id, $group_id, $survey_hash, $response_id, $repeat_instance)
+    function redcap_survey_page($project_id, $record, $instrument, $event_id, $group_id, $survey_hash, $response_id, $repeat_instance)
     {
         $applicableInstruments = "flight_connector_survey";
         $fields = ["contents", "methods"];
