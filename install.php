@@ -5,6 +5,7 @@ namespace Vanderbilt\FlightConnectorExternalModule;
 use \ExternalModules\ExternalModules;
 
 require_once(__DIR__."/FlightConnectorExternalModule.php");
+require_once(__DIR__."/base.php");
 
 $pid = (int) htmlentities($_GET['pid']);
 if (!$pid) {
@@ -114,6 +115,30 @@ if (!empty($_POST)) {
             }
             unset($old);
         }
+    } else {
+        # some but not all
+        $old = $csv;
+        $csv = [];
+        foreach ($old as $i => $row) {
+            if ($i == $insertAtRow) {
+                foreach ($rowsToInsert as $field => $insertRow) {
+                    $inOldCSV = FALSE;
+                    foreach ($old as $row2) {
+                        if ($row2["field_name"] == $field) {
+                            $inOldCSV = TRUE;
+                        }
+                    }
+                    if (!$inOldCSV) {
+                        $csv[] = $insertRow;
+                    }
+                }
+            }
+            if (isset($choiceStr[$row['field_name']])) {
+                $row[$selectIndex] = $choiceStr[$row['field_name']];
+            }
+            $csv[] = $row;
+        }
+        unset($old);
     }
 
     $filename = APP_PATH_TEMP.bin2hex(random_bytes(8))."_".$applicableInstrument.".csv";
@@ -146,30 +171,6 @@ if (!empty($_POST)) {
         } else {
             throw new \Exception("Did not set up survey!");
         }
-    } else {
-        # some but not all
-        $old = $csv;
-        $csv = [];
-        foreach ($old as $i => $row) {
-            if ($i == $insertAtRow) {
-                foreach ($rowsToInsert as $field => $insertRow) {
-                    $inOldCSV = FALSE;
-                    foreach ($old as $row2) {
-                        if ($row2["field_name"] == $field) {
-                            $inOldCSV = TRUE;
-                        }
-                    }
-                    if (!$inOldCSV) {
-                        $csv[] = $insertRow;
-                    }
-                }
-            }
-            if (isset($choiceStr[$row['field_name']])) {
-                $row[$selectIndex] = $choiceStr[$row['field_name']];
-            }
-            $csv[] = $row;
-        }
-        unset($old);
     }
 } else if (count($csv) > 2) {
     $hasSurvey = FALSE;
@@ -243,11 +244,3 @@ if ($publicSurveyLink) {
 }
 
 
-function getEventIdForClassical($module, $pid) {
-    $sql = "SELECT DISTINCT(m.event_id) AS event_id FROM redcap_events_metadata AS m INNER JOIN redcap_events_arms AS a ON (a.arm_id = m.arm_id) WHERE a.project_id = ?";
-    $q = $module->query($sql, [$pid]);
-    if ($row = $q->fetch_assoc()) {
-        return $row['event_id'];
-    }
-    throw new \Exception("The event_id is not defined. (This should never happen.)");
-}
