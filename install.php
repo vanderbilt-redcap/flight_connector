@@ -7,17 +7,11 @@ use \ExternalModules\ExternalModules;
 require_once(__DIR__."/FlightConnectorExternalModule.php");
 require_once(__DIR__."/base.php");
 
-$pid = (int) htmlentities($_GET['pid']);
-if (!$pid) {
-    die("Error");
-}
-
+$pid = getPid();
 $baseUrl = ExternalModules::$BASE_URL ?? APP_URL_EXTMOD_RELATIVE;
 $cssUrl = $module->getUrl("connect.css");
-$efsLogo = $module->getUrl("efs_small_logoonly.png");
 $ftLogo = $module->getUrl("flight_tracker_icon.png");
 $thisUrl = $module->getUrl("install.php");
-$jsUrl = $module->getUrl("jquery.min.js");
 
 $fields = FlightConnectorExternalModule::FIELDS;
 $applicableInstrument = FlightConnectorExternalModule::INSTRUMENT;
@@ -188,23 +182,21 @@ if (!empty($_POST)) {
 echo "<title>Flight Connector Installation</title>";
 echo "<link rel='stylesheet' href='$cssUrl' />";
 echo "<link rel='icon' href='$ftLogo' />";
-echo "<script src='$jsUrl'></script>";
-
-$header = "<p class='centered'>A Networking Tool from <a href='https://edgeforscholars.org'>Edge for Scholars</a> <img src='$efsLogo' style='width: 27px; height: 20px;' alt='Edge for Scholars' /> &amp; <a href='https://redcap.link/flight_tracker'>Flight Tracker</a> <img src='$ftLogo' style='width: 22px; height: 22px;' alt='Flight Tracker for Scholars' /><br/><span class='smallest'>Copyright &#9400 ".date("Y")." <a href='https://vumc.org'>Vanderbilt University Medical Center</a></span></p>";
+echo makeJS($module);
 
 if ($publicSurveyLink) {
     $mapUrl = $module->getUrl("map.php");
     $projectHomeUrl = APP_PATH_WEBROOT."index.php?pid=$pid";
     echo "<h1>Flight Connector</h1>";
-    echo $header;
+    echo makeHeader($module);
     echo "<h2>Setup Complete!</h2>";
-    echo "<p class='centered max-width'>Share this public link with others to populate your data.<br/><input id='surveyUrl' value='$publicSurveyLink' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='copyToClipboard($(\"#surveyUrl\"));'>Copy</a></span></p>";
+    echo makePublicSurveyLink($module, $publicSurveyLink);
     echo "<p class='centered max-width'>Share this public link to see the Flight Tracker Map real-time as the data grows. <br/><input id='mapUrl' value='$mapUrl' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='copyToClipboard($(\"#mapUrl\"));'>Copy</a></span></p>";
     echo "<p class='centered max-width'>Both of these links are available in REDCap's left-hand toolbar. The Public Survey Link is available under Survey Distribution Tools, and the Flight Connector Map is under Bookmarks.</p>";
     echo "<p class='centered max-width'><a href='$projectHomeUrl'>To the project's home page</a></p>";
 } else {
     echo "<h1>Flight Connector Installation</h1>";
-    echo $header;
+    echo makeHeader($module);
     echo "<p class='centered smaller'><a href='$baseUrl"."manager/project.php?pid=$pid'>Wrong Page? Disable this Module</a></p>";
 
     echo "<p class='centered max-width'>Flight Connector is a networking tool to help groups of knowledge workers identify colleagues with areas of expertise, whether intellectual content or methodologies. This page will generate a survey for participants to fill out. The survey will contain checkboxes for each item for participants to identify their strengths. These strengths will, in turn, produce an interactive social network map for broader viewing.</p>";
@@ -222,25 +214,8 @@ if ($publicSurveyLink) {
         $requiredFields[] = $field;
     }
     $requiredFieldsJSON = json_encode($requiredFields);
-    echo "<p class='centered'><button onclick='if (isInvalid()) { alert(\"You must fill in a value for all labels and options.\"); return false; } else { return true; } '>Set Up Project</button></p>";
+    echo "<p class='centered'><button onclick='if (isInvalid($requiredFieldsJSON)) { alert(\"You must fill in a value for all labels and options.\"); return false; } else { return true; } '>Set Up Project</button></p>";
     echo "</form>";
-    echo "<script>
-        function copyToClipboard(element) {
-            const text = $(element).text() ? $(element).text() : $(element).val();
-            navigator.clipboard.writeText(text);
-        }
-        
-        function isInvalid() {
-            const requiredFields = $requiredFieldsJSON;
-            for (let i=0; i < requiredFields.length; i++) {
-                const field = requiredFields[i];
-                if ($('#'+field).val() === '') {
-                    return true;
-                }
-            }
-            return false;
-        }
-        </script>";
 }
 
 
