@@ -88,7 +88,7 @@ if (!empty($_POST)) {
         "email" => ["email", $applicableInstrument, "", "text", "Email", "", "", "email", "", "", "y", "", "y", "", "", "", "", ""],
     ];
     foreach (array_keys($fields) as $field) {
-        $rowsToInsert[$field] = [$field, $applicableInstrument, "", "checkbox", $labels[$field], $choiceStr[$field], "", "", "", "", "", "", "", "", "", "", "", ""];
+        $rowsToInsert[$field] = [$field, $applicableInstrument, "", "checkbox", $labels[$field], $choiceStr[$field], "", "", "", "", "", "", "", "LV", "", "", "", ""];
     }
     if (count($rowIndexes) == count($fields)) {
         foreach (array_keys($fields) as $field) {
@@ -189,7 +189,7 @@ echo "<link rel='stylesheet' href='$cssUrl' />";
 echo "<link rel='icon' href='$ftLogo' />";
 echo "<script src='$jsUrl'></script>";
 
-$header = "<p class='centered'>from <a href='https://edgeforscholars.org'>Edge for Scholars</a> <img src='$efsLogo' style='width: 27px; height: 20px;' alt='Edge for Scholars' /> &amp; <a href='https://redcap.link/flight_tracker'>Flight Tracker</a> <img src='$ftLogo' style='width: 22px; height: 22px;' alt='Flight Tracker for Scholars' /><br/><span class='smallest'>Copyright &#9400 ".date("Y")." <a href='https://vumc.org'>Vanderbilt University Medical Center</a></span></p>";
+$header = "<p class='centered'>A Networking Tool from <a href='https://edgeforscholars.org'>Edge for Scholars</a> <img src='$efsLogo' style='width: 27px; height: 20px;' alt='Edge for Scholars' /> &amp; <a href='https://redcap.link/flight_tracker'>Flight Tracker</a> <img src='$ftLogo' style='width: 22px; height: 22px;' alt='Flight Tracker for Scholars' /><br/><span class='smallest'>Copyright &#9400 ".date("Y")." <a href='https://vumc.org'>Vanderbilt University Medical Center</a></span></p>";
 
 if ($publicSurveyLink) {
     $mapUrl = $module->getUrl("map.php");

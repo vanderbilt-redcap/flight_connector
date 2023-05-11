@@ -12,8 +12,9 @@ class FlightConnectorExternalModule extends AbstractExternalModule
 
     function redcap_every_page_before_render($project_id)
     {
+        $fields = array_keys(self::FIELDS);
         $sql = "SELECT field_name FROM redcap_metadata WHERE project_id = ? AND form_name = ? AND field_name IN (?, ?)";
-        $q = $this->query($sql, [$project_id, "flight_connector_survey", "subjects", "skills"]);
+        $q = $this->query($sql, [$project_id, "flight_connector_survey", $fields[0], $fields[1]]);
 
         if (!$q->fetch_assoc() && !self::isExternalModulePage() && self::isREDCap()) {
             header("Location: ".$this->getUrl("install.php"));
@@ -52,7 +53,7 @@ class FlightConnectorExternalModule extends AbstractExternalModule
         if (version_compare(REDCAP_VERSION, '12.0.0', '<')) {
             $line = "$(ob).parent().find('label.fl').after(\"<div id='\"+row+\"-left' class='leftCol'></div><div id='\"+row+\"-right' class='rightCol'></div>\");";
         } else {
-            $line = "$('#'+row).find('span[data-kind=field-value]').append(\"<div id='\"+row+\"-left' class='leftCol'></div><div id='\"+row+\"-right' class='rightCol'></div>\");";
+            $line = "$('#'+row).find('div[data-kind=field-value]').append(\"<div id='\"+row+\"-left' class='leftCol'></div><div id='\"+row+\"-right' class='rightCol'></div>\");";
         }
 
         echo "
