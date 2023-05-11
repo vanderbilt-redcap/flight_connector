@@ -7,6 +7,8 @@ use \ExternalModules\AbstractExternalModule;
 
 class FlightConnectorExternalModule extends AbstractExternalModule
 {
+    const INSTRUMENT = "flight_connector_survey";
+    const FIELDS = ["contents" => "Concepts or Content Areas", "methods" => "Methods or Tools"];
 
     function redcap_every_page_before_render($project_id)
     {
@@ -46,10 +48,51 @@ class FlightConnectorExternalModule extends AbstractExternalModule
         return FALSE;
     }
 
-    function redcap_survey_page($project_id, $record, $instrument, $event_id, $group_id, $survey_hash, $response_id, $repeat_instance)
-    {
-        $applicableInstruments = "flight_connector_survey";
-        $fields = ["contents", "methods"];
-        # two column checkboxes
+    function hook_survey_page ($project_id, $record,$instrument,$event_id, $group_id, $survey_hash,$response_id, $repeat_instance) {
+        if (version_compare(REDCAP_VERSION, '12.0.0', '<')) {
+            $line = "$(ob).parent().find('label.fl').after(\"<div id='\"+row+\"-left' class='leftCol'></div><div id='\"+row+\"-right' class='rightCol'></div>\");";
+        } else {
+            $line = "$('#'+row).find('span[data-kind=field-value]').append(\"<div id='\"+row+\"-left' class='leftCol'></div><div id='\"+row+\"-right' class='rightCol'></div>\");";
+        }
+
+        echo "
+<script>
+        function twoColumnCheckboxes() {
+            const checkboxes = {};
+            $('tr td div.choicevert').each(function(index, ob) {
+        	    const row = $(ob).closest('tr').attr('id');
+        	    if (typeof checkboxes[row] == 'undefined') {
+        		    checkboxes[row] = 0;
+        	    }
+        	    checkboxes[row]++;
+            });
+            for (let row in checkboxes) {
+        	    let done = false;
+        	    if (checkboxes[row] > 10) {
+                    const checksInCol = Math.ceil(checkboxes[row] / 2);
+                    $('#'+row+' td div.choicevert').each(function(index, ob) {
+                        if (!done) {
+                            $line
+                        }
+                        done = true;
+                    });
+                    $('#'+row+' td div.choicevert').each(function(index, ob) {
+                        if (index < checksInCol) {
+                            $(ob).appendTo('#'+row+'-left');
+                        } else {
+                            $(ob).appendTo('#'+row+'-right');
+                        }
+                    });
+                }
+            }
+        }
+        $(document).ready(function() {
+            twoColumnCheckboxes();
+        });
+</script>
+<style>
+    div.leftCol { width: 50%; float: left; }
+    div.rightCol { width: 50%; float: right; }
+</style>";
     }
 }

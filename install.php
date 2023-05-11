@@ -4,6 +4,8 @@ namespace Vanderbilt\FlightConnectorExternalModule;
 
 use \ExternalModules\ExternalModules;
 
+require_once(__DIR__."/FlightConnectorExternalModule.php");
+
 $pid = (int) htmlentities($_GET['pid']);
 if (!$pid) {
     die("Error");
@@ -16,11 +18,8 @@ $ftLogo = $module->getUrl("flight_tracker_icon.png");
 $thisUrl = $module->getUrl("install.php");
 $jsUrl = $module->getUrl("jquery.min.js");
 
-$fields = [
-    "content" => "Content Areas",
-    "methods" => "Methods or Tools",
-];
-$applicableInstrument = "flight_connector_survey";
+$fields = FlightConnectorExternalModule::FIELDS;
+$applicableInstrument = FlightConnectorExternalModule::INSTRUMENT;
 $instrumentLabel = "Flight Connector";
 $publicSurveyLink = "";
 $csvData = \REDCap::getDataDictionary($pid, "csv", FALSE);
