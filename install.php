@@ -15,6 +15,7 @@ $thisUrl = $module->getUrl("install.php");
 
 $fields = FlightConnectorExternalModule::FIELDS;
 $applicableInstrument = FlightConnectorExternalModule::INSTRUMENT;
+$hashSetting = FlightConnectorExternalModule::UNIQUE_HASH_SETTING;
 $instrumentLabel = "Flight Connector";
 $publicSurveyLink = "";
 $csvData = \REDCap::getDataDictionary($pid, "csv", FALSE);
@@ -148,7 +149,7 @@ if (!empty($_POST)) {
         $sql = "UPDATE redcap_projects SET surveys_enabled='1' WHERE project_id = ?";
         $module->query($sql, [$pid]);
 
-        $surveyIntroText = '<p><strong>Please complete the survey below with your expertise.</strong></p><p>Thank you!</p>';
+        $surveyIntroText = '<p><strong>Please complete the survey below with your areas of expertise.</strong></p><p>Thank you!</p>';
         $surveyCompletionText = '<p><strong>Thank you for taking the survey.</strong></p><p>Have a nice day!</p>';
         $sql = "INSERT INTO redcap_surveys (project_id, font_family, form_name, title, instructions, acknowledgement, question_by_section, question_auto_numbering, survey_enabled, save_and_return, logo, hide_title, view_results, min_responses_view_results, check_diversity_view_results, end_survey_redirect_url, survey_expiration) VALUES (?, '16', ?, ?, ?, ?, 0, 1, 1, 1, NULL, 0, 0, 10, 0, NULL, NULL)";
         $module->query($sql, [$pid, $applicableInstrument, $instrumentLabel, $surveyIntroText, $surveyCompletionText]);
@@ -162,6 +163,8 @@ if (!empty($_POST)) {
             $sql = "INSERT INTO redcap_surveys_participants (survey_id, event_id, hash) VALUES (?, ?, ?)";
             $module->query($sql, [$surveyId, $eventId, $hash]);
             $publicSurveyLink = APP_PATH_SURVEY_FULL."index.php?s=$hash";
+
+            $module->setProjectSetting($hashSetting, bin2hex(random_bytes(8)), $pid);
         } else {
             throw new \Exception("Did not set up survey!");
         }
@@ -185,18 +188,15 @@ echo "<link rel='icon' href='$ftLogo' />";
 echo makeJS($module);
 
 if ($publicSurveyLink) {
-    $mapUrl = $module->getUrl("map.php");
     $projectHomeUrl = APP_PATH_WEBROOT."index.php?pid=$pid";
-    echo "<h1>Flight Connector</h1>";
-    echo makeHeader($module);
+    echo makeHeader($module, "Flight Connector");
     echo "<h2>Setup Complete!</h2>";
     echo makePublicSurveyLink($module, $publicSurveyLink);
-    echo "<p class='centered max-width'>Share this public link to see the Flight Tracker Map real-time as the data grows. <br/><input id='mapUrl' value='$mapUrl' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='copyToClipboard($(\"#mapUrl\"));'>Copy</a></span></p>";
+    echo makeMapLink($module);
     echo "<p class='centered max-width'>Both of these links are available in REDCap's left-hand toolbar. The Public Survey Link is available under Survey Distribution Tools, and the Flight Connector Map is under Bookmarks.</p>";
     echo "<p class='bolded centered max-width'><a href='$projectHomeUrl'>REDCap Project's Home Page</a></p>";
 } else {
-    echo "<h1>Flight Connector Installation</h1>";
-    echo makeHeader($module);
+    echo makeHeader($module, "Install Flight Connector");
     echo "<p class='centered smaller'><a href='$baseUrl"."manager/project.php?pid=$pid'>Wrong Page? Disable this Module</a></p>";
 
     echo "<p class='centered max-width'>Flight Connector is a networking tool to help groups of knowledge workers identify colleagues with areas of expertise, whether intellectual content or methodologies. This page will generate a survey for participants to fill out. The survey will contain checkboxes for each item for participants to identify their strengths. These strengths will, in turn, produce an interactive social network map for broader viewing.</p>";

@@ -14,13 +14,16 @@ $ftLogo = $module->getUrl("flight_tracker_icon.png");
 if (!$module->isSetup($pid)) {
     header("Location: ".$module->getUrl("install.php"));
 }
+$uniqueHash = $module->getProjectSetting(FlightConnectorExternalModule::UNIQUE_HASH_SETTING, $pid) ?? "";
+if (($uniqueHash === "") || ($uniqueHash !== $_GET['h'])) {
+    die("No access.");
+}
 
 echo "<title>Flight Connector</title>";
 echo "<link rel='stylesheet' href='$cssUrl' />";
 echo "<link rel='icon' href='$ftLogo' />";
 echo makeJS($module);
-echo "<h1>Flight Connector</h1>";
-echo makeHeader($module);
+echo makeHeader($module, "Flight Connector");
 
 $redcapData = getData($pid);
 if (empty($redcapData)) {
@@ -28,3 +31,5 @@ if (empty($redcapData)) {
     echo makePublicSurveyLink($module);
     exit;
 }
+
+echo makePublicSurveyLink($module);

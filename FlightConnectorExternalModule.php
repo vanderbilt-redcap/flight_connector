@@ -2,6 +2,8 @@
 
 namespace Vanderbilt\FlightConnectorExternalModule;
 
+require_once(__DIR__."/base.php");
+
 use \ExternalModules\ExternalModules;
 use \ExternalModules\AbstractExternalModule;
 
@@ -9,6 +11,7 @@ class FlightConnectorExternalModule extends AbstractExternalModule
 {
     const INSTRUMENT = "flight_connector_survey";
     const FIELDS = ["contents" => "Concepts or Content Areas", "methods" => "Methods or Tools"];
+    const UNIQUE_HASH_SETTING = "unique_hash";
 
     function isSetup($project_id) {
         $fields = array_keys(self::FIELDS);
@@ -20,8 +23,30 @@ class FlightConnectorExternalModule extends AbstractExternalModule
     function redcap_every_page_before_render($project_id)
     {
         if (!$this->isSetup($project_id) && !self::isExternalModulePage() && self::isREDCap()) {
-            header("Location: ".$this->getUrl("install.php"));
+            header("Location: " . $this->getUrl("install.php"));
         }
+    }
+    function redcap_every_page_top($project_id) {
+        if (self::isREDCap()) {
+            $mapUrl = $this->getMapURL($this);
+            echo "<script>
+$(document).ready(() => {
+    setTimeout(() => {
+        $('a[data-link-key=flight_connector-link_project_1]').attr('href', '$mapUrl');    
+    }, 30);
+});
+</script>";
+        }
+    }
+
+    public function getMapURL() {
+        $mapUrl = $this->getUrl("map.php");
+        $pid = getPid();
+        $uniqueHash = $this->getProjectSetting(self::UNIQUE_HASH_SETTING, $pid);
+        if ($uniqueHash) {
+            $mapUrl .= "&h=$uniqueHash";
+        }
+        return $mapUrl;
     }
 
     private static function isREDCap() {
@@ -58,6 +83,7 @@ class FlightConnectorExternalModule extends AbstractExternalModule
         } else {
             $line = "$('#'+row).find('div[data-kind=field-value]').append(\"<div id='\"+row+\"-left' class='leftCol'></div><div id='\"+row+\"-right' class='rightCol'></div>\");";
         }
+        $header = makeHeader($this, "Flight Connector", 650);
 
         echo "
 <script>
@@ -92,6 +118,7 @@ class FlightConnectorExternalModule extends AbstractExternalModule
         }
         $(document).ready(function() {
             twoColumnCheckboxes();
+            $('#surveytitle').replaceWith(\"<div id='surveytitle'>$header</div>\");
         });
 </script>
 <style>

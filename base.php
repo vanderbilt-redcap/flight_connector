@@ -11,13 +11,24 @@ function getEventIdForClassical($module, $pid) {
     throw new \Exception("The event_id is not defined. (This should never happen.)");
 }
 
-function makeHeader($module) {
+function makeHeader($module, $title, $width = 800) {
     $efsLogo = $module->getUrl("efs_small_logoonly.png");
     $ftLogo = $module->getUrl("flight_tracker_icon.png");
     // TODO check with team which link to go to - remember that outsiders might use the Vanderbilt server
     $efsLink = isVanderbilt() ? "https://edgeforscholars.vumc.org" : "https://edgeforscholars.org";
 
-    return "<p class='centered' style='margin-top: 2px;'>A Networking Tool from <a href='$efsLink' target='_blank'>Edge for Scholars</a> <img src='$efsLogo' style='width: 27px; height: 20px;' alt='Edge for Scholars' /> &amp; <a href='https://redcap.link/flight_tracker' target='_blank'>Flight Tracker</a> <img src='$ftLogo' style='width: 22px; height: 22px;' alt='Flight Tracker for Scholars' /><br/><span class='smallest'>Copyright &#9400 ".date("Y")." <a href='https://vumc.org' target='_blank'>Vanderbilt University Medical Center</a></span></p>";
+    $html = "<style>.ftRainbow { padding-bottom: 4px; padding-top: 4px; background: linear-gradient(0deg, white 0%, transparent 30%, transparent 70%, white 100%), linear-gradient(90deg, white 0%, #d4d4eb 20%, #f69ca0 40%, #b0d87a 60%, #f6ba70 80%, white 100%); }</style>";
+
+    $linkStyle = "color: inherit; font-size: inherit;";
+    $headerInfo = "<p style='text-align: right; font-size: 15px; line-height: 1.0em;'>A Professional Networking Tool<br/>from <a style='$linkStyle' href='$efsLink' target='_blank'>Edge for Scholars</a> <img src='$efsLogo' style='width: 27px; height: 20px;' alt='Edge for Scholars' /><br/>and <a style='$linkStyle' href='https://redcap.link/flight_tracker' target='_blank'>Flight Tracker</a> <img src='$ftLogo' style='width: 20px; height: 20px;' alt='Flight Tracker for Scholars' /><br/><span style='font-size: 11px; line-height: 1.3em;'>Copyright &#9400 ".date("Y")."<br/><a style='$linkStyle' href='https://vumc.org' target='_blank'>Vanderbilt University Medical Center</a></span></p>";;
+    $html .= "<table class='ftRainbow' style='margin-right: auto; margin-left: auto; width: $width"."px;'><tbody>";
+    $html .= "<tr>";
+    $html .= "<td style='width: 62%; vertical-align: middle;'><h1 style='text-align: left;'>$title</h1></td>";
+    $html .= "<td style='width: 38%; vertical-align: middle;'>$headerInfo</td>";
+    $html .= "</tr>";
+    $html .= "</tbody></table>";
+
+    return $html;
 }
 
 function isVanderbilt() {
@@ -69,10 +80,15 @@ function makePublicSurveyLink($module, $publicSurveyLink = "") {
         $publicSurveyLink = $module->getPublicSurveyUrl($pid) ?? "";
     }
     if ($publicSurveyLink) {
-        return "<p class='centered max-width'>Share this public link with others to populate your data.<br/><input id='surveyUrl' value='$publicSurveyLink' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='copyToClipboard($(\"#surveyUrl\"));'>Copy</a></span></p>";
+        return "<p class='centered max-width' style='margin-top: 0; margin-bottom: 0;'>Share this public link with others to populate your data.<br/><input id='surveyUrl' value='$publicSurveyLink' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='copyToClipboard($(\"#surveyUrl\"));'>Copy</a></span></p>";
     } else {
         return "";
     }
+}
+
+function makeMapLink($module) {
+    $mapUrl = $module->getMapURL();
+    return "<p class='centered max-width'>Share this public link to see the Flight Tracker Map real-time as the data grows. <br/><input id='mapUrl' value='$mapUrl' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='copyToClipboard($(\"#mapUrl\"));'>Copy</a></span></p>";
 }
 
 function getChoices($metadata) {
