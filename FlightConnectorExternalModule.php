@@ -22,7 +22,7 @@ class FlightConnectorExternalModule extends AbstractExternalModule
 
     function redcap_every_page_before_render($project_id)
     {
-        if (!$this->isSetup($project_id) && !self::isExternalModulePage() && self::isREDCap()) {
+        if (!$this->isSetup($project_id) && !self::isExternalModulePage() && self::isREDCap() && ($_GET['page'] != "setupUniqueHash")) {
             header("Location: " . $this->getUrl("install.php"));
         }
     }
