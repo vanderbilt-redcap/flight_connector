@@ -432,7 +432,7 @@ class LdapLookup {
     public static function initialize($force = FALSE) {
         $ldappass = "";
         $ldapuser = "";
-        $includeFile = Application::getCredentialsDir()."/con_redcap_ldap_user.php";
+        $includeFile = "/app001/credentials/con_redcap_ldap_user.php";
         if (!file_exists($includeFile)) {
             throw new \Exception("Could not find credentials file!");
         }
