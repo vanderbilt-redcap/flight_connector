@@ -32,26 +32,28 @@ foreach ($redcapData as $row) {
     $recordId = $row['record_id'];
     $name = $row['name'];
     $email = $row['email'];
-    if ($name && $email) {
-        $vuEmail = preg_replace("/@vumc\.org$/i", "@vanderbilt.edu", $email);
-        $vumcEmail = preg_replace("/@vanderbilt\.edu$/i", "@vumc.org", $email);
-        list($first, $last) = NameMatcher::splitName($name, 2);
-        $priorInLDAP = $row[$ldapField];
-        if (
-            LDAP::getEmailFromName($first, $last)
-            || LDAP::getNameFromEmail($vuEmail)
+    $vuEmail = preg_replace("/@vumc\.org$/i", "@vanderbilt.edu", $email);
+    $vumcEmail = preg_replace("/@vanderbilt\.edu$/i", "@vumc.org", $email);
+    list($first, $last) = NameMatcher::splitName($name, 2);
+    $priorInLDAP = $row[$ldapField];
+    if ($name && LDAP::getEmailFromName($first, $last)) {
+        $newInLDAP = 1;
+    } else if (
+        $email
+        && (
+            LDAP::getNameFromEmail($vuEmail)
             || LDAP::getNameFromEmail($vumcEmail)
-        ) {
-            $newInLDAP = 1;
-        } else {
-            $newInLDAP = 0;
-        }
-        if ($priorInLDAP !== $newInLDAP) {
-            $upload[] = [
-                "record_id" => $recordId,
-                $ldapField => "$newInLDAP",
-            ];
-        }
+        )
+    ) {
+        $newInLDAP = 1;
+    } else {
+        $newInLDAP = 0;
+    }
+    if ($priorInLDAP !== $newInLDAP) {
+        $upload[] = [
+            "record_id" => $recordId,
+            $ldapField => "$newInLDAP",
+        ];
     }
 }
 
