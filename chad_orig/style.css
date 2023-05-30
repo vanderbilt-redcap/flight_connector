@@ -1,0 +1,61 @@
+
+
+/* map */
+svg {
+  font-family: proxima-soft, sans-serif;
+  font-size: 10px;
+}
+.userid > rect {
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+path {
+  fill: none;
+}
+.userid, .node, .detail text, .all-users {
+  cursor: pointer;
+}
+.all-users {
+  fill: #aaa;
+}
+.detail a text:hover, text.all-users:hover {
+  text-decoration: underline;
+}
+#graph-info {
+    font-family: proxima-soft, sans-serif;
+    position: relative;
+    width: 251px;
+    top: 400px;
+    float: left;
+    line-height: 17px;
+    letter-spacing: -0.5px;
+    padding: 19px;
+    border: 1px solid #efefef;
+    background-color: #ffffff;
+    height: auto;
+    filter: drop-shadow(5px 5px 10px #efefef);
+}
+
+/* references */
+#references h3 {
+  color: #999;
+}
+em.ref {
+  color: #999;
+  margin-left: 10px;
+}
+.ref-userid a, .ref-userid a:visited {
+  white-space: nowrap;
+  color: #999;
+}
+
+/* map */
+#map .leaflet-popup-content a {
+  display: block;
+  margin-top: 10px;
+  border-bottom: 1px solid transparent;
+}
+#map .leaflet-popup-content a:hover {
+  color: #000;
+  border-bottom-color: #0da4d3;
+}
