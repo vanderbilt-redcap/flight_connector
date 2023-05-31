@@ -11,8 +11,8 @@
         o = 15,
         t = 10,
         w = 1000,
-        F = "elastic",
-        N = "#029F4C";
+        F = 'elastic',
+        N = '#029F4C';
     var T, q, x, j, H, A, P;
     var L = {},
         k = {};
@@ -27,20 +27,20 @@
         return X[0];
     }).y(function(X) {
         return X[1];
-    }).interpolate("bundle").tension(0.5);
-    var d = d3.select("#graph").append("svg").attr("width", a).attr("height", c).append("g").attr("transform", "translate(" + a / 2 + "," + c / 2 + ")");
-    var I = d.append("rect").attr("class", "bg").attr({
+    }).interpolate('bundle').tension(0.5);
+    var d = d3.select('#graph').append('svg').attr('width', a).attr('height', c).append('g').attr('transform', 'translate(' + a / 2 + ',' + c / 2 + ')');
+    var I = d.append('rect').attr('class', 'bg').attr({
         x: a / -2,
         y: c / -2,
         width: a,
         height: c,
-        fill: "transparent"
-    }).on("click", O);
-    var B = d.append("g").attr("class", "links"),
-        f = d.append("g").attr("class", "scholars"),
-        E = d.append("g").attr("class", "nodes");
-    var Q = d3.select("#graph-info");
-    d3.json("flightconnector_data.json", function(X, Y) {
+        fill: 'transparent'
+    }).on('click', O);
+    var B = d.append('g').attr('class', 'links'),
+        f = d.append('g').attr('class', 'scholars'),
+        E = d.append('g').attr('class', 'nodes');
+    var Q = d3.select('#graph-info');
+    d3.json('flightconnector_data.json', function(X, Y) {
         T = d3.map(Y);
         q = d3.merge(T.values());
         x = {};
@@ -57,14 +57,14 @@
             }
         });
         j = d3.map();
-        T.get("scholars").forEach(function(aa) {
-        	console.log("61 - "+aa[0]);
+        T.get('scholars').forEach(function(aa) {
+            console.log('61 - '+aa[0]);
             aa.links = aa.links.filter(function(ab) {
-                return typeof x[p(ab)] !== "undefined" && ab.indexOf("r-") !== 0;
+                return typeof x[p(ab)] !== 'undefined' && ab.indexOf('r-') !== 0;
             });
             j.set(aa.key, aa.links.map(function(ab) {
                 var ac = p(ab);
-                if (typeof j.get(ac) === "undefined") {
+                if (typeof j.get(ac) === 'undefined') {
                     j.set(ac, []);
                 }
                 j.get(ac).push(aa);
@@ -94,16 +94,16 @@
             node: null,
             map: {}
         };
-        i = Math.floor(c / T.get("scholars").length);
-        y = Math.floor(T.get("scholars").length * i / 2);
-        T.get("scholars").forEach(function(af, ae) {
+        i = Math.floor(c / T.get('scholars').length);
+        y = Math.floor(T.get('scholars').length * i / 2);
+        T.get('scholars').forEach(function(af, ae) {
             af.x = U / -2;
             af.y = ae * i - y
         });
         var ad = 180 + J,
             Z = 360 - J,
-            ac = (Z - ad) / (T.get("types").length - 1);
-        T.get("types").forEach(function(af, ae) {
+            ac = (Z - ad) / (T.get('types').length - 1);
+        T.get('types').forEach(function(af, ae) {
             af.x = Z - ae * ac;
             af.y = h / 2 - R;
             af.xOffset = -S;
@@ -111,8 +111,8 @@
         });
         ad = J;
         Z = 180 - J;
-        ac = (Z - ad) / (T.get("perspectives").length - 1);
-        T.get("perspectives").forEach(function(af, ae) {
+        ac = (Z - ad) / (T.get('perspectives').length - 1);
+        T.get('perspectives').forEach(function(af, ae) {
             af.x = ae * ac + ad;
             af.y = h / 2 - R;
             af.xOffset = S;
@@ -120,20 +120,20 @@
         });
         H = [];
         var ab, Y, aa, X = h / 2 - R;
-        T.get("scholars").forEach(function(ae) {
+        T.get('scholars').forEach(function(ae) {
             ae.links.forEach(function(af) {
                 ab = x[p(af)];
-                if (!ab || ab.type === "reference") {
+                if (!ab || ab.type === 'reference') {
                     return
                 }
                 Y = (ab.x - 90) * Math.PI / 180;
-                aa = ae.key + "-to-" + ab.key;
+                aa = ae.key + '-to-' + ab.key;
                 H.push({
                     source: ae,
                     target: ab,
                     key: aa,
                     canonicalKey: aa,
-                    x1: ae.x + (ab.type === "theme" ? 0 : U),
+                    x1: ae.x + (ab.type === 'theme' ? 0 : U),
                     y1: ae.y + K / 2,
                     x2: Math.cos(Y) * X + ab.xOffset,
                     y2: Math.sin(Y) * X
@@ -153,7 +153,7 @@
                 y2: Math.sin(a2) * X
             });
         });
-        window.location.hash = "";
+        window.location.hash = '';
         M();
     }
 
@@ -194,14 +194,14 @@
             ac._children = JSON.parse(JSON.stringify(ac._children));
             ac._children.forEach(function(ad) {
                 ad.canonicalKey = ad.key;
-                ad.key = ac.key + "-" + ad.key;
+                ad.key = ac.key + '-' + ad.key;
                 L.map[ad.key] = true
             });
-            var aa = ac.key + "-group",
+            var aa = ac.key + '-group',
                 ab = ac._children.length;
             ac._group = [{
                 isGroup: true,
-                key: aa + "-group-key",
+                key: aa + '-group-key',
                 canonicalKey: aa,
                 name: ab,
                 count: ab,
@@ -234,12 +234,12 @@
         k.map[X.key] = true;
         if (X.key !== X.canonicalKey) {
             k.map[X.parent.canonicalKey] = true;
-            k.map[X.parent.canonicalKey + "-to-" + X.canonicalKey] = true;
-            k.map[X.canonicalKey + "-to-" + X.parent.canonicalKey] = true;
+            k.map[X.parent.canonicalKey + '-to-' + X.canonicalKey] = true;
+            k.map[X.canonicalKey + '-to-' + X.parent.canonicalKey] = true;
         } else {
             j.get(X.canonicalKey).forEach(function(Y) {
                 k.map[Y.canonicalKey] = true;
-                k.map[X.canonicalKey + "-" + Y.canonicalKey] = true;
+                k.map[X.canonicalKey + '-' + Y.canonicalKey] = true;
             });
             H.forEach(function(Y) {
                 if (k.map[Y.source.canonicalKey] && k.map[Y.target.canonicalKey]) {
@@ -252,24 +252,24 @@
 
     function M() {
         V();
-        B.selectAll("path").attr("d", function(X) {
+        B.selectAll('path').attr('d', function(X) {
             return v([
                 [X.x1, X.y1],
                 [X.x1, X.y1],
                 [X.x1, X.y1]
             ]);
-        }).transition().duration(w).ease(F).attr("d", function(X) {
+        }).transition().duration(w).ease(F).attr('d', function(X) {
             return v([
                 [X.x1, X.y1],
                 [X.target.xOffset * s, 0],
                 [X.x2, X.y2]
             ]);
         });
-        D(T.get("scholars"));
-        b(d3.merge([T.get("types"), T.get("perspectives")]));
+        D(T.get('scholars'));
+        b(d3.merge([T.get('types'), T.get('perspectives')]));
         C([]);
         m(P);
-        Q.html('<a href="javascript:void(0)">What\'s this?</a>');
+        Q.html('<a href=\"javascript:void(0)\">What\'s this?</a>');
         n();
         z()
     }
@@ -283,16 +283,16 @@
         });
         H = r.links(X);
         H.forEach(function(Z) {
-            Z.key = Z.target.canonicalKey + "-to-" + Z.source.canonicalKey;
+            Z.key = Z.target.canonicalKey + '-to-' + Z.source.canonicalKey;
             Z.canonicalKey = Z.key;
         });
         V();
-        B.selectAll("path").transition().duration(w).ease(F).attr("d", W);
+        B.selectAll('path').transition().duration(w).ease(F).attr('d', W);
         D([]);
         b(X);
         C([L.node]);
         m([]);
-        var Y = "";
+        var Y = '';
         if (L.node.description) {
             Y = L.node.description;
         }
@@ -302,26 +302,26 @@
     }
 
     function b(X) {
-        var X = E.selectAll(".node").data(X, u);
-        var Y = X.enter().append("g").attr("transform", function(aa) {
+        var X = E.selectAll('.node').data(X, u);
+        var Y = X.enter().append('g').attr('transform', function(aa) {
             var Z = aa.parent ? aa.parent : {
                 xOffset: 0,
                 x: 0,
                 y: 0
             };
-            return "translate(" + Z.xOffset + ",0)rotate(" + (Z.x - 90) + ")translate(" + Z.y + ")";
-        }).attr("class", "node").on("mouseover", g).on("mouseout", n).on("click", G);
-        Y.append("circle").attr("r", 0);
-        Y.append("text").attr("stroke", "#fff").attr("stroke-width", 4).attr("class", "label-stroke");
-        Y.append("text").attr("font-size", 0).attr("class", "label");
-        X.transition().duration(w).ease(F).attr("transform", function(Z) {
+            return 'translate(' + Z.xOffset + ',0)rotate(' + (Z.x - 90) + ')translate(' + Z.y + ')';
+        }).attr('class', 'node').on('mouseover', g).on('mouseout', n).on('click', G);
+        Y.append('circle').attr('r', 0);
+        Y.append('text').attr('stroke', '#fff').attr('stroke-width', 4).attr('class', 'label-stroke');
+        Y.append('text').attr('font-size', 0).attr('class', 'label');
+        X.transition().duration(w).ease(F).attr('transform', function(Z) {
             if (Z === L.node) {
                 return null;
             }
             var aa = Z.isGroup ? Z.y + (7 + Z.count) : Z.y;
-            return "translate(" + Z.xOffset + ",0)rotate(" + (Z.x - 90) + ")translate(" + aa + ")";
+            return 'translate(' + Z.xOffset + ',0)rotate(' + (Z.x - 90) + ')translate(' + aa + ')';
         });
-        X.selectAll("circle").transition().duration(w).ease(F).attr("r", function(Z) {
+        X.selectAll('circle').transition().duration(w).ease(F).attr('r', function(Z) {
             if (Z == L.node) {
                 return 100;
             } else {
@@ -332,7 +332,7 @@
                 }
             }
         });
-        X.selectAll("text").transition().duration(w).ease(F).attr("dy", ".3em").attr("font-size", function(Z) {
+        X.selectAll('text').transition().duration(w).ease(F).attr('dy', '.3em').attr('font-size', function(Z) {
             if (Z.depth === 0) {
                 return 20;
             } else {
@@ -340,30 +340,30 @@
             }
         }).text(function(Z) {
             return Z.name;
-        }).attr("text-anchor", function(Z) {
+        }).attr('text-anchor', function(Z) {
             if (Z === L.node || Z.isGroup) {
-                return "middle"
+                return 'middle'
             }
-            return Z.x < 180 ? "start" : "end"
-        }).attr("transform", function(Z) {
+            return Z.x < 180 ? 'start' : 'end'
+        }).attr('transform', function(Z) {
             if (Z === L.node) {
                 return null;
             } else {
                 if (Z.isGroup) {
-                    return Z.x > 180 ? "rotate(180)" : null;
+                    return Z.x > 180 ? 'rotate(180)' : null;
                 }
             }
-            return Z.x < 180 ? "translate(" + t + ")" : "rotate(180)translate(-" + t + ")";
+            return Z.x < 180 ? 'translate(' + t + ')' : 'rotate(180)translate(-' + t + ')';
         });
-        X.selectAll("text.label-stroke").attr("display", function(Z) {
-            return Z.depth === 1 ? "block" : "none";
+        X.selectAll('text.label-stroke').attr('display', function(Z) {
+            return Z.depth === 1 ? 'block' : 'none';
         });
         X.exit().remove();
     }
 
     function V() {
-        var X = B.selectAll("path").data(H, u);
-        X.enter().append("path").attr("d", function(Z) {
+        var X = B.selectAll('path').data(H, u);
+        X.enter().append('path').attr('d', function(Z) {
             var Y = Z.source ? {
                 x: Z.source.x,
                 y: Z.source.y
@@ -375,78 +375,78 @@
                 source: Y,
                 target: Y
             });
-        }).attr("class", "link");
+        }).attr('class', 'link');
         X.exit().remove();
     }
 
     function C(Z) {
-        var ac = d.selectAll(".detail").data(Z, u);
-        var Y = ac.enter().append("g").attr("class", "detail");
+        var ac = d.selectAll('.detail').data(Z, u);
+        var Y = ac.enter().append('g').attr('class', 'detail');
         var ab = Z[0];
-            if (ab && ab.type === "theme") {
-                Y.append("text").attr("fill", "#aaa").attr("text-anchor", "middle").attr("y", (o + t) * -1).text("THEME");
-            } else {
-                if (ab && ab.type === "perspective") {
-                    var ad = ac.selectAll(".pair").data(A.get(ab.group).filter(function(ae) {
-                        return ae !== ab;
-                    }), u);
-                    ad.enter().append("text").attr("fill", "#aaa").attr("text-anchor", "middle").attr("y", function(af, ae) {
-                        return (o + t) * 2 + (ae * (o + t));
-                    }).text(function(ae) {
-                        return "(vs. " + ae.name + ")";
-                    }).attr("class", "pair").on("click", G);
-                    Y.append("text").attr("fill", "#aaa").attr("text-anchor", "middle").attr("y", (o + t) * -1).text("PERSPECTIVE");
-                    ad.exit().remove();
-                }
+        if (ab && ab.type === 'theme') {
+            Y.append('text').attr('fill', '#aaa').attr('text-anchor', 'middle').attr('y', (o + t) * -1).text('THEME');
+        } else {
+            if (ab && ab.type === 'perspective') {
+                var ad = ac.selectAll('.pair').data(A.get(ab.group).filter(function(ae) {
+                    return ae !== ab;
+                }), u);
+                ad.enter().append('text').attr('fill', '#aaa').attr('text-anchor', 'middle').attr('y', function(af, ae) {
+                    return (o + t) * 2 + (ae * (o + t));
+                }).text(function(ae) {
+                    return '(vs. ' + ae.name + ')';
+                }).attr('class', 'pair').on('click', G);
+                Y.append('text').attr('fill', '#aaa').attr('text-anchor', 'middle').attr('y', (o + t) * -1).text('PERSPECTIVE');
+                ad.exit().remove();
             }
+        }
         //}
         ac.exit().remove();
-        var X = d.selectAll(".all-users").data(Z);
-        X.enter().append("text").attr("text-anchor", "start").attr("x", a / -2 + t).attr("y", c / 2 - t).text("all users").attr("class", "all-users").on("click", O);
+        var X = d.selectAll('.all-users').data(Z);
+        X.enter().append('text').attr('text-anchor', 'start').attr('x', a / -2 + t).attr('y', c / 2 - t).text('all users').attr('class', 'all-users').on('click', O);
         X.exit().remove();
     }
 
     function D(Y) {
-        var Y = f.selectAll(".userid").data(Y, u);
-        var X = Y.enter().append("g").attr("class", "userid").on("mouseover", g).on("mouseout", n).on("click", G);
-        X.append("rect").attr("x", U / -2).attr("y", K / -2).attr("width", U).attr("height", K).transition().duration(w).ease(F).attr("x", function(Z) {
+        var Y = f.selectAll('.userid').data(Y, u);
+        var X = Y.enter().append('g').attr('class', 'userid').on('mouseover', g).on('mouseout', n).on('click', G);
+        X.append('rect').attr('x', U / -2).attr('y', K / -2).attr('width', U).attr('height', K).transition().duration(w).ease(F).attr('x', function(Z) {
             return Z.x;
-        }).attr("y", function(Z) {
+        }).attr('y', function(Z) {
             return Z.y;
         });
-        X.append("text").attr("x", function(Z) {
+        X.append('text').attr('x', function(Z) {
             return U / -2 + t;
-        }).attr("y", function(Z) {
+        }).attr('y', function(Z) {
             return K / -2 + o;
-        }).attr("fill", "#fff").text(function(Z) {
+        }).attr('fill', '#fff').text(function(Z) {
             return Z.name;
-        }).transition().duration(w).ease(F).attr("x", function(Z) {
+        }).transition().duration(w).ease(F).attr('x', function(Z) {
             return Z.x + t;
-        }).attr("y", function(Z) {
+        }).attr('y', function(Z) {
             return Z.y + 10;
         });
-        Y.exit().selectAll("rect").transition().duration(w).ease(F).attr("x", function(Z) {
+        Y.exit().selectAll('rect').transition().duration(w).ease(F).attr('x', function(Z) {
             return U / -2;
-        }).attr("y", function(Z) {
+        }).attr('y', function(Z) {
             return K / -2;
         });
-        Y.exit().selectAll("text").transition().duration(w).ease(F).attr("x", function(Z) {
+        Y.exit().selectAll('text').transition().duration(w).ease(F).attr('x', function(Z) {
             return U / -2 + t;
-        }).attr("y", function(Z) {
+        }).attr('y', function(Z) {
             return K / -2 + o;
         });
         Y.exit().transition().duration(w).remove();
     }
 
     function m(Y) {
-        var X = f.selectAll("path").data(Y);
-        X.enter().append("path").attr("d", function(Z) {
+        var X = f.selectAll('path').data(Y);
+        X.enter().append('path').attr('d', function(Z) {
             return v([
                 [Z.x1, Z.y1],
                 [Z.x1, Z.y1],
                 [Z.x1, Z.y1]
             ]);
-        }).attr("stroke", "#000").attr("stroke-width", 1.5).transition().duration(w).ease(F).attr("d", function(Z) {
+        }).attr('stroke', '#000').attr('stroke-width', 1.5).transition().duration(w).ease(F).attr('d', function(Z) {
             return v([
                 [Z.x1, Z.y1],
                 [Z.xx, Z.yy],
@@ -457,14 +457,14 @@
     }
 
     function z() {
-        f.selectAll("rect").attr("fill", function(X) {
-            return l(X, "#000", N, "#000");
+        f.selectAll('rect').attr('fill', function(X) {
+            return l(X, '#000', N, '#000');
         });
-        B.selectAll("path").attr("stroke", function(X) {
-            return l(X, "#aaa", N, "#aaa");
-        }).attr("stroke-width", function(X) {
-            return l(X, "1.5px", "2.5px", "1px");
-        }).attr("opacity", function(X) {
+        B.selectAll('path').attr('stroke', function(X) {
+            return l(X, '#aaa', N, '#aaa');
+        }).attr('stroke-width', function(X) {
+            return l(X, '1.5px', '2.5px', '1px');
+        }).attr('opacity', function(X) {
             return l(X, 0.4, 0.75, 0.3);
         }).sort(function(Y, X) {
             if (!k.node) {
@@ -474,49 +474,49 @@
                 Z = k.map[X.canonicalKey] ? 1 : 0;
             return aa - Z;
         });
-        E.selectAll("circle").attr("fill", function(X) {
+        E.selectAll('circle').attr('fill', function(X) {
             if (X === L.node) {
-                return "#000";
+                return '#000';
             } else {
-                if (X.type === "theme") {
-                    return l(X, "#666", N, "#000");
+                if (X.type === 'theme') {
+                    return l(X, '#666', N, '#000');
                 } else {
-                    if (X.type === "perspective") {
-                        return "#fff";
+                    if (X.type === 'perspective') {
+                        return '#fff';
                     }
                 }
             }
-            return l(X, "#000", N, "#999")
-        }).attr("stroke", function(X) {
+            return l(X, '#000', N, '#999')
+        }).attr('stroke', function(X) {
             if (X === L.node) {
                 return l(X, null, N, null);
             } else {
-                if (X.type === "theme") {
-                    return "#000";
+                if (X.type === 'theme') {
+                    return '#000';
                 } else {
-                    if (X.type === "perspective") {
-                        return l(X, "#000", N, "#000");
+                    if (X.type === 'perspective') {
+                        return l(X, '#000', N, '#000');
                     }
                 }
             }
             return null;
-        }).attr("stroke-width", function(X) {
+        }).attr('stroke-width', function(X) {
             if (X === L.node) {
                 return l(X, null, 2.5, null);
             } else {
-                if (X.type === "theme" || X.type === "perspective") {
+                if (X.type === 'theme' || X.type === 'perspective') {
                     return 1.5;
                 }
             }
             return null;
         });
-        E.selectAll("text.label").attr("fill", function(X) {
-            return (X === L.node || X.isGroup) ? "#fff" : l(X, "#000", N, "#999");
+        E.selectAll('text.label').attr('fill', function(X) {
+            return (X === L.node || X.isGroup) ? '#fff' : l(X, '#000', N, '#999');
         })
     }
 
     function p(X) {
-        return X.toLowerCase().replace(/[ .,()]/g, "-");
+        return X.toLowerCase().replace(/[ .,()]/g, '-');
     }
 
     function u(X) {
