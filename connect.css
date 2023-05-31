@@ -14,23 +14,83 @@ h2::before { content: ""; top: 50%; position: absolute; left: 0; right: 0; botto
 .padded { padding: 8px; }
 .bolded { font-weight: bold; }
 div.centered,table.centered { margin-left: auto; margin-right: auto; }
-.ftRainbow {
-    padding-bottom: 4px;
-    padding-top: 4px;
-    background: linear-gradient(
-            0deg,
-            white 0%,
-            transparent 30%,
-            transparent 70%,
-            white 100%
-    ),
-    linear-gradient(
-            90deg,
-            white 0%,
-            #d4d4eb 20%,
-            #f69ca0 40%,
-            #b0d87a 60%,
-            #f6ba70 80%,
-            white 100%
-    );
+
+/* Font family. */
+dl dt, blockquote, blockquote blockquote blockquote, #site-title, #menu-primary li a { font-family: 'Abel', serif; }
+
+/* Link color. */
+a, a:visited, .page-template-front .hfeed-more .hentry .entry-title a:hover, .entry-title a, .entry-title a:visited { color: #029F4C; }
+.read-more, .read-more:visited, .pagination a:hover, .comment-navigation a:hover, #respond #submit, .button, a.button, #subscribe #subbutton, .wpcf7-submit, #loginform .button-primary { background-color: #029F4C; }
+a:hover, a:focus { color: #000; }
+.read-more:hover, #respond #submit:hover, .button:hover, a.button:hover, #subscribe #subbutton:hover, .wpcf7-submit:hover, #loginform .button-primary:hover { background-color: #111; }
+#graph {
+    float: left;
+}
+#main {
+    width: 1200px;
+    margin: auto;
+    text-align: left;
+    font-size: 16px;
+}
+
+
+
+/* map */
+svg {
+    font-family: proxima-soft, sans-serif;
+    font-size: 10px;
+}
+.userid > rect {
+    stroke: #fff;
+    stroke-width: 1.5px;
+}
+path {
+    fill: none;
+}
+.userid, .node, .detail text, .all-users {
+    cursor: pointer;
+}
+.all-users {
+    fill: #aaa;
+}
+.detail a text:hover, text.all-users:hover {
+    text-decoration: underline;
+}
+#graph-info {
+    font-family: proxima-soft, sans-serif;
+    position: relative;
+    width: 251px;
+    top: 400px;
+    float: left;
+    line-height: 17px;
+    letter-spacing: -0.5px;
+    padding: 19px;
+    border: 1px solid #efefef;
+    background-color: #ffffff;
+    height: auto;
+    filter: drop-shadow(5px 5px 10px #efefef);
+}
+
+/* references */
+#references h3 {
+    color: #999;
+}
+em.ref {
+    color: #999;
+    margin-left: 10px;
+}
+.ref-userid a, .ref-userid a:visited {
+    white-space: nowrap;
+    color: #999;
+}
+
+/* map */
+#map .leaflet-popup-content a {
+    display: block;
+    margin-top: 10px;
+    border-bottom: 1px solid transparent;
+}
+#map .leaflet-popup-content a:hover {
+    color: #000;
+    border-bottom-color: #0da4d3;
 }

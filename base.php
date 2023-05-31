@@ -17,7 +17,7 @@ function makeHeader($module, $title, $width = 800) {
     // TODO check with team which link to go to - remember that outsiders might use the Vanderbilt server
     $efsLink = isVanderbilt() ? "https://edgeforscholars.vumc.org" : "https://edgeforscholars.org";
 
-    $html = "<style>.ftRainbow { padding-bottom: 4px; padding-top: 4px; background: linear-gradient(0deg, white 0%, transparent 30%, transparent 70%, white 100%), linear-gradient(90deg, white 0%, #d4d4eb 20%, #f69ca0 40%, #b0d87a 60%, #f6ba70 80%, white 100%); }</style>";
+    $html = "<style>.ftRainbow { padding-bottom: 4px; padding-top: 4px; background: linear-gradient(0deg, white 0%, transparent 50%, white 100%), linear-gradient(90deg, white 0%, #d4d4eb 20%, #f69ca0 40%, #b0d87a 60%, #f6ba70 80%, white 100%); }</style>";
 
     $linkStyle = "color: inherit; font-size: inherit;";
     $headerInfo = "<p style='text-align: right; font-size: 15px; line-height: 1.0em;'>A Professional Networking Tool<br/>from <a style='$linkStyle' href='$efsLink' target='_blank'>Edge for Scholars</a> <img src='$efsLogo' style='width: 27px; height: 20px;' alt='Edge for Scholars' /><br/>and <a style='$linkStyle' href='https://redcap.link/flight_tracker' target='_blank'>Flight Tracker</a> <img src='$ftLogo' style='width: 20px; height: 20px;' alt='Flight Tracker for Scholars' /><br/><span style='font-size: 11px; line-height: 1.3em;'>Copyright &#9400 ".date("Y")."<br/><a style='$linkStyle' href='https://vumc.org' target='_blank'>Vanderbilt University Medical Center</a></span></p>";;
@@ -149,4 +149,83 @@ function fetchFromServer($request, $server) {
     $output = curl_exec($ch);
     curl_close($ch);
     return $output;
+}
+
+function downloadChoicesForField($module, $pid, $field) {
+    $sql = "SELECT element_enum FROM redcap_metadata WHERE project_id = ? AND field_name = ?";
+    $q = $module->query($sql, [$pid, $field]);
+    if ($row = $q->fetch_assoc()) {
+        return getRowChoices($row['element_enum'], TRUE);
+    }
+    return [];
+}
+
+function makeD3JSON($data, $choices) {
+    $outData = [];
+    $outData['scholars'] = [];
+    $outData['types'] = [];
+    $outData['perspectives'] = [];
+
+    $counts = [];
+    foreach ($choices as $field => $indices) {
+        $counts[$field] = [];
+        foreach ($indices as $index => $label) {
+            $counts[$field][$index] = 0;
+        }
+    }
+
+    foreach ($data as $row) {
+        $name = $row['name'];
+        $email = $row['email'];
+        $checks = [];
+        foreach ($row as $field => $value) {
+            if (($value == "1") && preg_match("/___/", $field)) {
+                list($field, $index) = explode("___", $field);
+                if (isset($choices[$field])) {
+                    $counts[$field][$index]++;
+                    if (isset($choices[$field][$index])) {
+                        $label = str_replace("&amp;", "&", $choices[$field][$index]);
+                        $checks[] = $label;
+                    } else {
+                        $checks[] = $index;
+                    }
+                }
+            }
+        }
+        $pubMedLink = "https://pubmed.ncbi.nlm.nih.gov/?term=".urlencode(strtolower($name));
+        if ($name && !empty($checks)) {
+            $outData['scholars'][] = [
+                "type" => "scholars",
+                "name" => $name,
+                "description" => "<a href='mailto:$email'>Contact by Email</a><br/><a href='$pubMedLink'>Search PubMed</a>",
+                "links" => $checks,
+            ];
+        }
+    }
+
+    foreach ($choices['contents'] as $index => $label) {
+        $label = str_replace("&amp;", "&", $label);
+        if ($counts['contents'][$index] > 0) {
+            $slug = $index;
+            $outData['types'][] = [
+                "type" => "theme",
+                "name" => $label,
+                "description" => $label." (".$counts['contents'][$index].")",
+                "slug" => $slug,
+            ];
+        }
+    }
+    foreach ($choices['methods'] as $index => $label) {
+        $label = str_replace("&amp;", "&", $label);
+        if ($counts['methods'][$index] > 0) {
+            $outData['perspectives'][] = [
+                "type" => "perspective",
+                "name" => $label,
+                "description" => $label." (".$counts['methods'][$index].")",
+                "count" => $counts['methods'][$index],
+            ];
+        }
+    }
+
+    return json_encode($outData);
 }
