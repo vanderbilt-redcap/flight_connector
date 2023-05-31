@@ -58,8 +58,8 @@ echo "
     <div id='container'>
 		<div class='wrap'>
 			<div id='main'>
-				<div id='graph'></div>
 				<div id='graph-info'></div>
+				<div id='graph'></div>
 				<script type='text/javascript' src='$d3Link'></script>
 			</div>			
 		</div>
@@ -67,6 +67,7 @@ echo "
 		</div>
 	</div>";
 
+$numRows = count($redcapData);
 if ((count($choices['methods']) > 80) || (count($choices['contents']) > 80)) {
     $defaultFontSize = 8;
 } else if ((count($choices['methods']) > 40) || (count($choices['contents']) > 40)) {
@@ -74,16 +75,22 @@ if ((count($choices['methods']) > 80) || (count($choices['contents']) > 80)) {
 } else {
     $defaultFontSize = 15;
 }
-$ucContentLabel = "CONTENT";
-$ucMethodLabel = "METHOD";
+$contentsLabel = "Contents";
+$methodsLabel = "Methods";
+$peopleLabel = "People";
+$ucContentLabel = strtoupper(substr($contentsLabel, 0, strlen($contentsLabel) - 1));
+$ucMethodLabel = strtoupper(substr($methodsLabel, 0, strlen($methodsLabel) - 1));
+$ucPersonLabel = "PERSON";
+$width = 1200;
+$height = 900;
 
 echo "<script type='text/javascript'>
 (function() {
-    var a = 1000,
-        c = 900,
+    var a = $width,
+        c = $height,
         h = c,
-        U = 200,
-        K = 16,
+        U = 150,
+        K = ($numRows < 60) ? 16 : ($numRows < 75) ? 14 : ($numRows < 90) ? 12 : ($numRows < 105) ? 10 : ($numRows < 120) ? 8 : ($numRows < 240) ? 4 : 2,
         S = 20,
         s = 8,
         R = 110,
@@ -342,7 +349,7 @@ echo "<script type='text/javascript'>
         b(d3.merge([T.get('types'), T.get('perspectives')]));
         C([]);
         m(P);
-        Q.html('Welcome to the Flight Connector. Click on a name or a node to begin exploring.');
+        Q.html('$contentsLabel are on the left, $peopleLabel are in the middle, and $methodsLabel are on the right. Click to begin exploring.');
         n();
         z()
     }
@@ -406,17 +413,7 @@ echo "<script type='text/javascript'>
             }
         });
         X.selectAll('text').transition().duration(w).ease(F).attr('dy', '.3em').attr('font-size', function(Z) {
-            if (Z.depth === 0) {
-                return 20;
-            } else if (Z.type === 'perspective' || Z.type === 'theme') {
-                if (window.location.hash) {
-                    return 14;
-                } else {
-                    return $defaultFontSize;
-                }
-            } else {
-                return 15;
-            }
+            return getFontSize(Z);
         }).text(function(Z) {
             return Z.name;
         }).attr('text-anchor', function(Z) {
@@ -435,7 +432,7 @@ echo "<script type='text/javascript'>
             return Z.x < 180 ? 'translate(' + t + ')' : 'rotate(180)translate(-' + t + ')';
             return Z.x < 180 ? 'translate(' + t + ')' : 'rotate(180)translate(-' + t + ')';
         }).attr('class', function(Z) {
-            if ((Z.type === 'perspective' || Z.type === 'theme') && window.location.hash && Z.name.length > 30) {
+            if ((Z.type === 'perspective' || Z.type === 'theme') && window.location.hash && Z.name.length > 25) {
                 return 'label multiline';
             } else {
                 return 'label';
@@ -444,27 +441,57 @@ echo "<script type='text/javascript'>
         setTimeout(() => {
             X.selectAll('text.multiline')
                 .text(function(Z) {
-                    const lines = wrap(Z.name).split(/\\n/);
-                    return lines[0];
+                    const lines = wrap(Z.name).split(/[\\n\\r]+/);
+                    return lines[0].trim();
                 })
                 .append('tspan')
+                                .attr('x', 0)
+                .attr('dy', function(Z) {
+                    return getFontSize(Z);
+                })
                 .text(function(Z) {
-                    const lines = wrap(Z.name).split(/\\n/);
-                    return lines[1];
-                }).attr('x', 0)
-                .attr('dy', 20)
-                .append('tspan')
+                    const lines = wrap(Z.name).split(/[\\n\\r]+/);
+                    return lines[1].trim();
+                });
+            X.selectAll('text.multiline').append('tspan')
+                .attr('x', 0)
+                .attr('dy', function(Z) {
+                    return getFontSize(Z);
+                })
                 .text(function(Z) {
-                    const lines = wrap(Z.name).split(/\\n/);
-                    return lines[2];
-                }).attr('x', 0)
-                .attr('dy', 20);
-        }, 0);
+                    const lines = wrap(Z.name).split(/[\\n\\r]+/);
+                    return lines[2].trim();
+                });
+            X.selectAll('text.multiline').append('tspan')
+                .attr('x', 0)
+                .attr('dy', function(Z) {
+                    return getFontSize(Z);
+                }).text(function(Z) {
+                    const lines = wrap(Z.name).split(/[\\n\\r]+/);
+                    const line = lines[3].trim();
+                    const elipses = (lines.length > 4) ? '...' : '';
+                    return line+elipses; 
+                });
+        }, 10);
 
         X.selectAll('text.label-stroke').attr('display', function(Z) {
             return Z.depth === 1 ? 'block' : 'none';
         });
         X.exit().remove();
+    }
+    
+    function getFontSize(Z) {
+        if (Z.depth === 0) {
+            return 20;
+        } else if (Z.type === 'perspective' || Z.type === 'theme') {
+            if (window.location.hash) {
+                return 14;
+            } else {
+                return $defaultFontSize;
+            }
+        } else {
+            return 15;
+        }
     }
 
     function V() {
@@ -490,7 +517,7 @@ echo "<script type='text/javascript'>
         var Y = ac.enter().append('g').attr('class', 'detail');
         var ab = Z[0];
         if (ab && ab.type) {
-            let text = 'PERSON';
+            let text = '$ucPersonLabel';
             if (ab.type === 'theme') {
                 text = '$ucContentLabel';
             } else if (ab.type === 'perspective') {
@@ -499,12 +526,11 @@ echo "<script type='text/javascript'>
             Y.append('text').attr('fill', '#888').attr('text-anchor', 'middle').attr('y', (o + t) * -1).text(text).attr('font-weight', 'bold').attr('font-size', 15);
         }
         ac.exit().remove();
-        var X = d.selectAll('.all-users').data(Z);
-        X.enter().append('text').attr('text-anchor', 'start').attr('x', a / -2 + t).attr('y', c / 2 - t).text('all users').attr('class', 'all-users').on('click', O);
-        X.exit().remove();
     }
 
     function D(Y) {
+        const offset = 1;
+        const fontSize = (K >= 12) ? 12 : (K >= 9) ? K - 1 : 8;
         var Y = f.selectAll('.userid').data(Y, u);
         var X = Y.enter().append('g').attr('class', 'userid').on('mouseover', g).on('mouseout', n).on('click', G);
         X.append('rect').attr('x', U / -2).attr('y', K / -2).attr('width', U).attr('height', K).transition().duration(w).ease(F).attr('x', function(Z) {
@@ -514,14 +540,12 @@ echo "<script type='text/javascript'>
         });
         X.append('text').attr('x', function(Z) {
             return U / -2 + t;
-        }).attr('y', function(Z) {
-            return K / -2 + o;
         }).attr('fill', '#fff').text(function(Z) {
-            return Z.name;
-        }).transition().duration(w).ease(F).attr('x', function(Z) {
+            return ($numRows < 120) ? Z.name : '';
+        }).attr('font-size', fontSize).transition().duration(w).ease(F).attr('x', function(Z) {
             return Z.x + t;
         }).attr('y', function(Z) {
-            return Z.y + 10;
+            return Z.y + fontSize - offset;
         });
         Y.exit().selectAll('rect').transition().duration(w).ease(F).attr('x', function(Z) {
             return U / -2;
@@ -556,7 +580,7 @@ echo "<script type='text/javascript'>
 
     function z() {
         f.selectAll('rect').attr('fill', function(X) {
-            return l(X, '#000', N, '#000');
+            return '#5764ae';
         });
         B.selectAll('path').attr('stroke', function(X) {
             return l(X, '#aaa', N, '#aaa');
@@ -574,7 +598,7 @@ echo "<script type='text/javascript'>
         });
         E.selectAll('circle').attr('fill', function(X) {
             if (X === L.node) {
-                return '#b0d87a';
+                return '#8dc63f';
             } else if (X.type === 'theme') {
                 return l(X, '#b0d87a', N, '#000');
             } else if (X.type === 'perspective') {

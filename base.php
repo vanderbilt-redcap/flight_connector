@@ -37,11 +37,20 @@ function isVanderbilt() {
 
 function getData($pid) {
     if (version_compare(REDCAP_VERSION, "12.5.2", ">=")) {
-        return \REDCap::getData($pid, "json-array");
+        $data = \REDCap::getData($pid, "json-array");
     } else {
         $json = \REDCap::getData($pid, "json");
-        return json_decode($json, TRUE);
+        $data = json_decode($json, TRUE);
     }
+    if (isset($_GET['rows']) && is_numeric($_GET['rows'])) {
+        $newData = [];
+        for ($i = 0; $i < $_GET['rows']; $i++) {
+            $newData[] = $data[$i];
+        }
+        return $newData;
+    } else {
+    }
+    return $data;
 }
 
 function getPid() {
@@ -184,7 +193,7 @@ function makeD3JSON($data, $choices) {
                 if (isset($choices[$field])) {
                     $counts[$field][$index]++;
                     if (isset($choices[$field][$index])) {
-                        $label = str_replace("&amp;", "&", $choices[$field][$index]);
+                        $label = clearHTML($choices[$field][$index]);
                         $checks[] = $label;
                     } else {
                         $checks[] = $index;
@@ -192,40 +201,53 @@ function makeD3JSON($data, $choices) {
                 }
             }
         }
+        $resetLink = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}";
+        $reset = "<a href='$resetLink'>reset graph</a>";
+
         $pubMedLink = "https://pubmed.ncbi.nlm.nih.gov/?term=".urlencode(strtolower($name));
         if ($name && !empty($checks)) {
             $outData['scholars'][] = [
                 "type" => "scholars",
                 "name" => $name,
-                "description" => "<a href='mailto:$email'>Contact by Email</a><br/><a href='$pubMedLink'>Search PubMed</a>",
+                "description" => "<a href='mailto:$email'>contact $name by email</a> - <a href='$pubMedLink' target='_blank'>search PubMed for $name</a> - $reset",
                 "links" => $checks,
             ];
         }
     }
 
     foreach ($choices['contents'] as $index => $label) {
-        $label = str_replace("&amp;", "&", $label);
+        $label = clearHTML($label);
         if ($counts['contents'][$index] > 0) {
             $slug = $index;
             $outData['types'][] = [
                 "type" => "theme",
                 "name" => $label,
-                "description" => $label." (".$counts['contents'][$index].")",
+                "description" => $label." - ".$counts['contents'][$index]." people - click to explore - $reset",
                 "slug" => $slug,
             ];
         }
     }
     foreach ($choices['methods'] as $index => $label) {
-        $label = str_replace("&amp;", "&", $label);
+        $label = clearHTML($label);
         if ($counts['methods'][$index] > 0) {
             $outData['perspectives'][] = [
                 "type" => "perspective",
                 "name" => $label,
-                "description" => $label." (".$counts['methods'][$index].")",
+                "description" => $label." - ".$counts['methods'][$index]." people - click to explore - $reset",
                 "count" => $counts['methods'][$index],
             ];
         }
     }
 
     return json_encode($outData);
+}
+
+function clearHTML($str) {
+    $str = str_replace("&#039;", "'", $str);
+    $str = str_replace("&#39;", "'", $str);
+    $str = str_replace("&quot;", "\"", $str);
+    $str = str_replace("&#034;", "\"", $str);
+    $str = str_replace("&#34;", "\"", $str);
+    $str = str_replace("&amp;", "&", $str);
+    return $str;
 }

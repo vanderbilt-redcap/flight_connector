@@ -24,7 +24,7 @@ a, a:visited, .page-template-front .hfeed-more .hentry .entry-title a:hover, .en
 a:hover, a:focus { color: #000; }
 .read-more:hover, #respond #submit:hover, .button:hover, a.button:hover, #subscribe #subbutton:hover, .wpcf7-submit:hover, #loginform .button-primary:hover { background-color: #111; }
 #graph {
-    float: left;
+    text-align: center;
 }
 #main {
     width: 1200px;
@@ -47,21 +47,17 @@ svg {
 path {
     fill: none;
 }
-.userid, .node, .detail text, .all-users {
+.userid, .node, .detail text {
     cursor: pointer;
 }
-.all-users {
-    fill: #aaa;
-}
-.detail a text:hover, text.all-users:hover {
+.detail a text:hover {
     text-decoration: underline;
 }
 #graph-info {
     font-family: proxima-soft, sans-serif;
-    position: relative;
-    width: 251px;
-    top: 400px;
-    float: left;
+    width: 90%;
+    margin: 8px auto 16px auto;
+    text-align: center;
     line-height: 17px;
     letter-spacing: -0.5px;
     padding: 19px;
