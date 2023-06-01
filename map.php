@@ -406,9 +406,10 @@ echo "<script type='text/javascript'>
             ]);
         });
         const scholarsAry = T.get('scholars');
-        const scholarNames = [];
+        const names = {};
+        names['scholars'] = [];
         for (let i=0; i < scholarsAry.length; i++) {
-            scholarNames.push(scholarsAry[i].name);
+            names['scholars'].push(scholarsAry[i].name);
         }
         
         D(scholarsAry);
@@ -416,17 +417,21 @@ echo "<script type='text/javascript'>
         C([]);
         m(P);
         Q.html('$contentsLabel are on the left, $peopleLabel are in the middle, and $methodsLabel are on the right. Click to begin exploring.');
-        QList.html(scholarNames.join('<br/>'));
+        QList.html(getListTitle()+makeTable(names));
         n();
         z()
     }
     
     function e() {
         var X = r.nodes(L.node);
-        var nodeNames = [];
+        const cols = ['scholars', 'content', 'method'];
+        const nodeNames = {};
+        for (let i=0; i < cols.length; i++) {
+            nodeNames[cols[i]] = [];
+        }
         X.forEach(function(Z) {
-            if (Z.name && !Number.isInteger(Z.name)) {
-                nodeNames.push(Z.name);
+            if (Z.name && !Number.isInteger(Z.name) && typeof nodeNames[Z.type] !== 'undefined') {
+                nodeNames[Z.type].push(Z.name);
             }
             if (Z.depth === 1) {
                 Z.y -= 20;
@@ -448,9 +453,35 @@ echo "<script type='text/javascript'>
             Y = L.node.description;
         }
         Q.html(Y);
-        QList.html(nodeNames.join('<br/>'));
+        QList.html(getListTitle()+makeTable(nodeNames));
         n();
         z()
+    }
+    
+    function getListTitle() {
+        return '<h3>Relevant $conjugation</h3>';
+    }
+    
+    function makeTable(names) {
+        let hasData = false;
+        let html = '<table style=\"margin: 0 auto; text-align: center;\"><tbody><tr>'
+        for (let col in names) {
+            if (names[col].length > 0) {
+                let header = '$peopleLabel';
+                if (col === 'content') {
+                    header = '$contentsLabel';
+                } else if (col === 'method') {
+                    header = '$methodsLabel';
+                }
+                hasData = true;
+                html += '<td style=\"vertical-align: top; max-width: 300px; padding-left: 10px; padding-right: 10px;\"><h4>'+header+'</h4>'+names[col].join('<br/>')+'</td>';
+            }
+        }
+        if (!hasData) {
+            return '<p>None.</p>';
+        }
+        html += '</tr></tbody></table>';
+        return html;
     }
 
     function b(X) {
