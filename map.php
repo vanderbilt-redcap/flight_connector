@@ -524,7 +524,7 @@ echo "<script type='text/javascript'>
             d3.select(this).select('text.label')
                 .attr('font-size', function(Z) {
                     return increaseFontSizeIfSmall(Z);
-                });
+                }).attr('fill', '#000');
         });
         X.on('mouseout', function(Z) {
             n(Z);
