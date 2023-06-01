@@ -132,6 +132,11 @@ $height = 900;
 
 echo "<script type='text/javascript'>
 (function() {
+    d3.selection.prototype.moveToFront = function() {
+        return this.each(function(){
+            this.parentNode.appendChild(this);
+        });
+    };
     var a = $width,
         c = $height,
         h = c,
@@ -698,7 +703,8 @@ echo "<script type='text/javascript'>
     }
     
     function transformForHeader(y) {
-        return  y * (c - headerFontSize) / c + headerFontSize;
+        const floorOffset = 8;
+        return  y * (c - headerFontSize - floorOffset) / c + headerFontSize;
     }
 
     function D(Y) {
@@ -720,6 +726,28 @@ echo "<script type='text/javascript'>
         }).attr('y', function(Z) {
             return transformForHeader(Z.y) + fontSize - offset;
         });
+        X.on('mouseover', function(Z) {
+            var sel = d3.select(this);
+            sel.moveToFront();
+            sel.select('rect')
+                .attr('fill', '#000')
+                .attr('height', fontSize + offset);
+            sel.select('text')
+                .text(function(Z) {
+                    return Z.name;
+                });
+        });
+        X.on('mouseout', function(Z) {
+            var sel = d3.select(this);
+            sel.select('rect')
+                .attr('fill', boxColor)
+                .attr('height', K);
+            sel.select('text')
+                .text(function(Z) {
+                    return ($numRows < 120) ? Z.name : '';
+                });
+        });
+
         Y.exit().selectAll('rect').transition().duration(w).ease(F).attr('x', function(Z) {
             return U / -2;
         }).attr('y', function(Z) {
