@@ -516,6 +516,7 @@ echo "<script type='text/javascript'>
             return Z.x < 180 ? 'translate(' + t + ')' : 'rotate(180)translate(-' + t + ')';
         })
         X.on('mouseover', function(Z) {
+            g(Z);
             d3.select(this).select('text.label-stroke')
                 .attr('font-size', function(Z) {
                     return increaseFontSizeIfSmall(Z);
@@ -526,6 +527,7 @@ echo "<script type='text/javascript'>
                 });
         });
         X.on('mouseout', function(Z) {
+            n(Z);
             d3.select(this).select('text.label-stroke')
                 .attr('font-size', function(Z) {
                     return getFontSize(Z);
