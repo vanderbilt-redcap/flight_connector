@@ -10,6 +10,18 @@ require_once(__DIR__."/base.php");
 $pid = getPid();
 $cssUrl = $module->getUrl("connect.css");
 $ftLogo = $module->getUrl("flight_tracker_icon.png");
+$json = \REDCap::getDataDictionary($pid, "json");
+$metadata = json_decode($json, TRUE);
+$contentsLabel = "Contents";
+$methodsLabel = "Methods";
+$peopleLabel = "People";
+foreach ($metadata as $row) {
+    if ($row['field_name'] == "contents") {
+        $contentsLabel = $row['field_label'];
+    } else if ($row['field_name'] == "methods") {
+        $methodsLabel = $row['field_label'];
+    }
+}
 
 if (!$module->isSetup($pid)) {
     header("Location: ".$module->getUrl("install.php"));
@@ -54,12 +66,15 @@ echo makePublicSurveyLink($module);
 
 $d3Link = $module->getUrl("d3.v3.min.js");
 
+$saveDiv = makeSaveDiv($module, "svg");
+
 echo "
     <div id='container'>
 		<div class='wrap'>
 			<div id='main'>
 				<div id='graph-info'></div>
 				<div id='graph'></div>
+				$saveDiv
 				<script type='text/javascript' src='$d3Link'></script>
 			</div>			
 		</div>
@@ -75,11 +90,8 @@ if ((count($choices['methods']) > 80) || (count($choices['contents']) > 80)) {
 } else {
     $defaultFontSize = 15;
 }
-$contentsLabel = "Contents";
-$methodsLabel = "Methods";
-$peopleLabel = "People";
-$ucContentLabel = strtoupper(substr($contentsLabel, 0, strlen($contentsLabel) - 1));
-$ucMethodLabel = strtoupper(substr($methodsLabel, 0, strlen($methodsLabel) - 1));
+$ucContentLabel = strtoupper(preg_replace("/s$/", "", $contentsLabel));
+$ucMethodLabel = strtoupper(preg_replace("/s$/", "", $methodsLabel));
 $ucPersonLabel = "PERSON";
 $width = 1200;
 $height = 900;
@@ -163,6 +175,9 @@ echo "<script type='text/javascript'>
         var aa = window.location.hash.substring(1);
         if (aa && x[aa]) {
             G(x[aa], true);
+        }
+        if (window.location.hash) {
+            hideHeaders();
         }
     }
 
@@ -392,7 +407,7 @@ echo "<script type='text/javascript'>
             return 'translate(' + Z.xOffset + ',0)rotate(' + (Z.x - 90) + ')translate(' + Z.y + ')';
         }).attr('class', 'node').on('mouseover', g).on('mouseout', n).on('click', G);
         Y.append('circle').attr('r', 0);
-        Y.append('text').attr('stroke', '#fff').attr('stroke-width', 4).attr('class', 'label-stroke');
+        Y.append('text').attr('stroke', '#fff').attr('stroke-width', 2).attr('class', 'label-stroke');
         Y.append('text').attr('font-size', 0).attr('class', 'label');
         X.transition().duration(w).ease(F).attr('transform', function(Z) {
             if (Z === L.node) {
@@ -412,7 +427,15 @@ echo "<script type='text/javascript'>
                 }
             }
         });
-        X.selectAll('text').transition().duration(w).ease(F).attr('dy', '.3em').attr('font-size', function(Z) {
+        X.selectAll('text').transition().duration(w).ease(F).attr('dy', function(Z) {
+            if (Z == L.node) {
+                return '-0.5em';
+            }
+            if (!Z.type) {
+                return '0.3em';
+            }
+            return '-0.2em';
+        }).attr('font-size', function(Z) {
             return getFontSize(Z);
         }).text(function(Z) {
             return Z.name;
@@ -431,63 +454,99 @@ echo "<script type='text/javascript'>
             }
             return Z.x < 180 ? 'translate(' + t + ')' : 'rotate(180)translate(-' + t + ')';
             return Z.x < 180 ? 'translate(' + t + ')' : 'rotate(180)translate(-' + t + ')';
-        }).attr('class', function(Z) {
+        })
+        X.selectAll('text.label').attr('class', function(Z) {
             if ((Z.type === 'perspective' || Z.type === 'theme') && window.location.hash && Z.name.length > 25) {
                 return 'label multiline';
             } else {
                 return 'label';
             }
         });
+        X.selectAll('text.label-stroke').attr('class', function(Z) {
+            if ((Z.type === 'perspective' || Z.type === 'theme') && window.location.hash && Z.name.length > 25) {
+                return 'label-stroke multiline';
+            } else {
+                return 'label-stroke';
+            }
+        });
         setTimeout(() => {
-            X.selectAll('text.multiline')
-                .text(function(Z) {
-                    const lines = wrap(Z.name).split(/[\\n\\r]+/);
-                    return lines[0].trim();
-                })
-                .append('tspan')
-                                .attr('x', 0)
-                .attr('dy', function(Z) {
-                    return getFontSize(Z);
-                })
-                .text(function(Z) {
-                    const lines = wrap(Z.name).split(/[\\n\\r]+/);
-                    return lines[1].trim();
-                });
-            X.selectAll('text.multiline').append('tspan')
+            var ml = X.selectAll('text.multiline');
+            ml.text(function(Z) {
+                const lines = wrap(Z.name).split(/[\\n\\r]+/);
+                return lines[0].trim();
+             }).append('tspan')
                 .attr('x', 0)
                 .attr('dy', function(Z) {
                     return getFontSize(Z);
                 })
                 .text(function(Z) {
                     const lines = wrap(Z.name).split(/[\\n\\r]+/);
-                    return lines[2].trim();
+                    let elipses = '';
+                    if ((L.node.type === 'perspective' || L.node.type === 'theme') && (Z.type === 'perspective' || Z.type === 'theme') && L.node != Z) {
+                        elipses = '...'
+                    }
+                    return lines[1].trim()+elipses;
                 });
-            X.selectAll('text.multiline').append('tspan')
+            ml.append('tspan')
+                .attr('x', 0)
+                .attr('dy', function(Z) {
+                    return getFontSize(Z);
+                })
+                .text(function(Z) {
+                    if ((L.node.type === 'perspective' || L.node.type === 'theme') && (Z.type === 'perspective' || Z.type === 'theme') && L.node != Z) {
+                        return '';
+                    }
+                    const lines = wrap(Z.name).split(/[\\n\\r]+/);
+                    const line = lines[2];
+                    if (line) {
+                        return line.trim();
+                    } else {
+                        return '';
+                    }
+                });
+            ml.append('tspan')
                 .attr('x', 0)
                 .attr('dy', function(Z) {
                     return getFontSize(Z);
                 }).text(function(Z) {
+                    if ((L.node.type === 'perspective' || L.node.type === 'theme') && (Z.type === 'perspective' || Z.type === 'theme') && L.node != Z) {
+                        return '';
+                    }
                     const lines = wrap(Z.name).split(/[\\n\\r]+/);
-                    const line = lines[3].trim();
+                    const line = lines[3] ? lines[3].trim() : '';
                     const elipses = (lines.length > 4) ? '...' : '';
                     return line+elipses; 
                 });
         }, 10);
-
-        X.selectAll('text.label-stroke').attr('display', function(Z) {
-            return Z.depth === 1 ? 'block' : 'none';
-        });
+        
+        X.selectAll('text.label-stroke').attr('display', 'block');
         X.exit().remove();
+        
+        if (!window.location.hash) {
+            addHeaders(Y);
+        } else {
+            hideHeaders();
+        }
     }
     
     function getFontSize(Z) {
         if (Z.depth === 0) {
             return 20;
-        } else if (Z.type === 'perspective' || Z.type === 'theme') {
-            if (window.location.hash) {
+        } else if ((Z.type === 'perspective') || (Z.type === 'theme')) {
+            if (window.location.hash && (L.node.type === 'perspective'  || L.node.type === 'theme')) {
+                return 12;
+            } else if (window.location.hash) {
                 return 14;
             } else {
                 return $defaultFontSize;
+            }
+        } else if (Z.type === 'scholars' && L.node.type === 'perspective') {
+            if (L.node.count > 80) {
+                return 12;
+            } else if (L.node.count > 60) {
+                return 14;
+            } else {
+                return 15;
             }
         } else {
             return 15;
@@ -523,9 +582,35 @@ echo "<script type='text/javascript'>
             } else if (ab.type === 'perspective') {
                 text = '$ucMethodLabel';
             }
-            Y.append('text').attr('fill', '#888').attr('text-anchor', 'middle').attr('y', (o + t) * -1).text(text).attr('font-weight', 'bold').attr('font-size', 15);
+            Y.append('text').attr('fill', '#888').attr('text-anchor', 'middle').attr('y', (o + t) * -2).text(text).attr('font-weight', 'bold').attr('font-size', 15);
         }
         ac.exit().remove();
+    }
+    
+    function hideHeaders() {
+        d.selectAll('#contentHeader').attr('display', 'none');
+        d.selectAll('#methodHeader').attr('display', 'none');
+        d.selectAll('#peopleHeader').attr('display', 'none');
+    }
+    
+    function addHeaders(Z) {
+        var X;
+
+        X = d.selectAll('#a').data(Z);
+        X.attr('display', 'block');
+        X.enter().append('text').attr('id', 'contentHeader').attr('text-anchor', 'start').attr('x', a / -2 + t).attr('y', 0 - (c / 2 - 2 * t)).text('$contentsLabel').attr('class', 'header').attr('font-size', 24).on('click', O);
+        X.exit().remove();
+
+        X = d.selectAll('#a').data(Z);
+        X.attr('display', 'block');
+        X.enter().append('text').attr('id', 'methodHeader').attr('text-anchor', 'end').attr('x', 0 - (a / -2 + t)).attr('y', 0 - (c / 2 - 2 * t)).text('$methodsLabel').attr('class', 'header').attr('font-size', 24).on('click', O);
+        X.exit().remove();
+
+        X = d.selectAll('#a').data(Z);
+        X.attr('display', 'block');
+        X.enter().append('text').attr('id', 'peopleHeader').attr('text-anchor', 'middle').attr('x', 0).attr('y', 0 - (c / 2 - 2 * t)).text('$peopleLabel').attr('class', 'header').attr('font-size', 24).on('click', O);
+        X.exit().remove();
+
     }
 
     function D(Y) {

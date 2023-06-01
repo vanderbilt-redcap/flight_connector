@@ -42,15 +42,38 @@ function getData($pid) {
         $json = \REDCap::getData($pid, "json");
         $data = json_decode($json, TRUE);
     }
+
+    $data = filterOutDuplicateNames($data);
+    $data = filterOutViaLDAP($data);
+
     if (isset($_GET['rows']) && is_numeric($_GET['rows'])) {
         $newData = [];
         for ($i = 0; $i < $_GET['rows']; $i++) {
             $newData[] = $data[$i];
         }
         return $newData;
-    } else {
     }
     return $data;
+}
+
+function filterOutViaLDAP($data) {
+    $newData = [];
+    foreach ($data as $row) {
+        if (!isset($row['in_ldap']) || ($row['in_ldap'] !== "0")) {
+            $newData[] = $row;
+        }
+    }
+    return $newData;
+}
+
+function filterOutDuplicateNames($data) {
+    $newDataByName = [];
+    foreach ($data as $row) {
+        if ($row['name']) {
+            $newDataByName[$row['name']] = $row;
+        }
+    }
+    return array_values($newDataByName);
 }
 
 function getPid() {
@@ -250,4 +273,24 @@ function clearHTML($str) {
     $str = str_replace("&#34;", "\"", $str);
     $str = str_replace("&amp;", "&", $str);
     return $str;
+}
+
+function makeSaveDiv($module, $type, $mimeType = "image/png") {
+    if ($mimeType == "image/png") {
+        $canvasFunc = "canvas2PNG";
+        $suffix = "png";
+    } else if ($mimeType == "image/jpeg") {
+        $canvasFunc = "canvas2JPEG";
+        $suffix = "jpg";
+    } else {
+        throw new \Exception("Mime Type unsupported: $mimeType");
+    }
+    if ($type == "svg") {
+        $europaWOFFLocation = $module->getUrl("EuropaNuovaRegular.woff");
+        return "<div style='text-align: right;'><button class='smallest' onclick='const svg = $(this).parent().parent().find(\"svg\").prop(\"outerHTML\"); svg2Image(svg, 0, \"#ffffff\", $canvasFunc, \"europa\", \"$europaWOFFLocation\"); return false;'>Save</button></div>";
+    } else if ($type == "canvas") {
+        return "<div style='text-align: right;'v'><button class='smallest' onclick='const c = $(this).parent().parent().find(\"canvas\").get(0); const dataurl = $canvasFunc(c); forceDownloadUrl(dataurl, \"chart.$suffix\"); return false;'>Save</button></div>";
+    } else {
+        throw new \Exception("Invalid type: $type");
+    }
 }
