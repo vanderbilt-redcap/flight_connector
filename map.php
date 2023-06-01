@@ -597,7 +597,7 @@ echo "<script type='text/javascript'>
                     const elipses = (lines.length > 4) ? '...' : '';
                     return line+elipses; 
                 });
-        }, 10);
+        }, 30);
         
         X.selectAll('text.label-stroke').attr('display', 'block');
         X.exit().remove();
