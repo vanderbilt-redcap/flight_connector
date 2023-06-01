@@ -159,4 +159,6 @@ function forceDownloadUrl(source, fileName){
     el.remove();
 }
 
-
+function makeHash(str) {
+    return str.toLowerCase().replace(/[ .,()]/g, '-');
+}

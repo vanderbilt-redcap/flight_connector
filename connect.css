@@ -53,7 +53,7 @@ path {
 .detail a text:hover {
     text-decoration: underline;
 }
-#graph-info {
+.graph-info {
     font-family: proxima-soft, sans-serif;
     width: 90%;
     margin: 8px auto 16px auto;
@@ -89,4 +89,20 @@ em.ref {
 #map .leaflet-popup-content a:hover {
     color: #000;
     border-bottom-color: #0da4d3;
+}
+
+.custom-combobox {
+    position: relative;
+    display: inline-block;
+}
+.custom-combobox-toggle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    margin-left: -1px;
+    padding: 0;
+}
+.custom-combobox-input {
+    margin: 0;
+    padding: 5px 10px;
 }

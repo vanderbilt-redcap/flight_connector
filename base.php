@@ -192,7 +192,7 @@ function downloadChoicesForField($module, $pid, $field) {
     return [];
 }
 
-function makeD3JSON($data, $choices) {
+function makeD3Data($data, $choices) {
     $outData = [];
     $outData['scholars'] = [];
     $outData['types'] = [];
@@ -242,8 +242,8 @@ function makeD3JSON($data, $choices) {
         $label = clearHTML($label);
         if ($counts['contents'][$index] > 0) {
             $slug = $index;
-            $outData['types'][] = [
-                "type" => "theme",
+            $outData['contents'][] = [
+                "type" => "content",
                 "name" => $label,
                 "description" => $label." - ".$counts['contents'][$index]." people - click to explore - $reset",
                 "slug" => $slug,
@@ -253,8 +253,8 @@ function makeD3JSON($data, $choices) {
     foreach ($choices['methods'] as $index => $label) {
         $label = clearHTML($label);
         if ($counts['methods'][$index] > 0) {
-            $outData['perspectives'][] = [
-                "type" => "perspective",
+            $outData['methods'][] = [
+                "type" => "method",
                 "name" => $label,
                 "description" => $label." - ".$counts['methods'][$index]." people - click to explore - $reset",
                 "count" => $counts['methods'][$index],
@@ -262,7 +262,7 @@ function makeD3JSON($data, $choices) {
         }
     }
 
-    return json_encode($outData);
+    return $outData;
 }
 
 function clearHTML($str) {

@@ -35,14 +35,20 @@ echo "<!doctype html><html lang='en-US'>";
 echo "<head>";
 $migrateLink = $module->getUrl("jquery-migrate.min.js");
 $baseLink = $module->getUrl("base.js");
+$jqueryUICSS = $module->getUrl("jquery-ui.min.css");
+$jqueryUIJS = $module->getUrl("jquery-ui.min.js");
+$autocompleteJS = $module->getUrl("autocomplete.js");
 echo makeJS($module);
 echo "	<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
 	<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1' />
 	<meta name='viewport' content='width=device-width,initial-scale=1' />	 	
 	<link rel='profile' href='http://gmpg.org/xfn/11' />
 	<link rel='stylesheet' href='https://use.typekit.net/ght7wyw.css' />
+	<link rel='stylesheet' href='$jqueryUICSS' />
 	<script type='text/javascript' src='$migrateLink'></script>
 	<script type='text/javascript' src='$baseLink'></script>
+	<script type='text/javascript' src='$jqueryUIJS'></script>
+	<script type='text/javascript' src='$autocompleteJS'></script>
 	<title>Flight Connector</title>
 	<link rel='stylesheet' href='$cssUrl' />
 	<link rel='icon' href='$ftLogo' />";
@@ -60,7 +66,15 @@ $choices = [];
 foreach (array_keys(FlightConnectorExternalModule::FIELDS) as $field) {
     $choices[$field] = downloadChoicesForField($module, $pid, $field);
 }
-$inputJSON = makeD3JSON($redcapData, $choices);
+$inputData = makeD3Data($redcapData, $choices);
+$matchedItems = [];
+foreach (array_keys(FlightConnectorExternalModule::FIELDS) as $field) {
+    $matchedItems[$field] = [];
+    foreach ($inputData[$field] as $ary) {
+        $matchedItems[$field][] = $ary['name'];
+    }
+}
+$inputJSON = json_encode($inputData);
 
 echo makePublicSurveyLink($module);
 
@@ -68,13 +82,31 @@ $d3Link = $module->getUrl("d3.v3.min.js");
 
 $saveDiv = makeSaveDiv($module, "svg");
 
+$options = [];
+$options[] = "<option value='' selected></option>";
+foreach ($redcapData as $row) {
+    $name = htmlentities($row['name']);
+    $options[] = "<option value='$name'>$name</option>";
+}
+foreach ($choices as $field => $fieldChoices) {
+    foreach ($fieldChoices as $index => $label) {
+        if (in_array($label, $matchedItems[$field])) {
+            $label = str_replace("'", "\\'", $label);
+            $options[] = "<option value='$label'>$label</option>";
+        }
+    }
+}
+$optionHTML = implode("", $options);
+
 echo "
     <div id='container'>
 		<div class='wrap'>
 			<div id='main'>
-				<div id='graph-info'></div>
+			    <p style='text-align: center;'><select class='combobox' id='search'>$optionHTML</select> <button onclick='const val = $(\"#search option:selected\").val(); window.location.hash = makeHash(val); return false;' style='margin-left: 50px;'>Search</button></p>
+				<div id='main-graph-info' class='graph-info'></div>
 				<div id='graph'></div>
 				$saveDiv
+				<div id='list-graph-info' class='graph-info'></div>
 				<script type='text/javascript' src='$d3Link'></script>
 			</div>			
 		</div>
@@ -84,7 +116,7 @@ echo "
 
 $numRows = count($redcapData);
 if ((count($choices['methods']) > 80) || (count($choices['contents']) > 80)) {
-    $defaultFontSize = 8;
+    $defaultFontSize = 9;
 } else if ((count($choices['methods']) > 40) || (count($choices['contents']) > 40)) {
     $defaultFontSize = 12;
 } else {
@@ -112,6 +144,7 @@ echo "<script type='text/javascript'>
         w = 1000,
         F = 'elastic',
         N = '#5764ae';
+    var headerFontSize = 24;
     var T, q, x, j, H, A, P;
     var L = {},
         k = {};
@@ -138,7 +171,8 @@ echo "<script type='text/javascript'>
     var B = d.append('g').attr('class', 'links'),
         f = d.append('g').attr('class', 'scholars'),
         E = d.append('g').attr('class', 'nodes');
-    var Q = d3.select('#graph-info');
+    var Q = d3.select('#main-graph-info');
+    var QList = d3.select('#list-graph-info');
     var X = {};
     var Y = $inputJSON;
     T = d3.map(Y);
@@ -197,8 +231,8 @@ echo "<script type='text/javascript'>
         });
         var ad = 180 + J,
             Z = 360 - J,
-            ac = (Z - ad) / (T.get('types').length - 1);
-        T.get('types').forEach(function(af, ae) {
+            ac = (Z - ad) / (T.get('contents').length - 1);
+        T.get('contents').forEach(function(af, ae) {
             af.x = Z - ae * ac;
             af.y = h / 2 - R;
             af.xOffset = -S;
@@ -206,8 +240,8 @@ echo "<script type='text/javascript'>
         });
         ad = J;
         Z = 180 - J;
-        ac = (Z - ad) / (T.get('perspectives').length - 1);
-        T.get('perspectives').forEach(function(af, ae) {
+        ac = (Z - ad) / (T.get('methods').length - 1);
+        T.get('methods').forEach(function(af, ae) {
             af.x = ae * ac + ad;
             af.y = h / 2 - R;
             af.xOffset = S;
@@ -228,7 +262,7 @@ echo "<script type='text/javascript'>
                     target: ab,
                     key: aa,
                     canonicalKey: aa,
-                    x1: ae.x + (ab.type === 'theme' ? 0 : U),
+                    x1: ae.x + (ab.type === 'content' ? 0 : U),
                     y1: ae.y + K / 2,
                     x2: Math.cos(Y) * X + ab.xOffset,
                     y2: Math.sin(Y) * X
@@ -355,23 +389,34 @@ echo "<script type='text/javascript'>
             ]);
         }).transition().duration(w).ease(F).attr('d', function(X) {
             return v([
-                [X.x1, X.y1],
+                [X.x1, transformForHeader(X.y1)],
                 [X.target.xOffset * s, 0],
                 [X.x2, X.y2]
             ]);
         });
-        D(T.get('scholars'));
-        b(d3.merge([T.get('types'), T.get('perspectives')]));
+        const scholarsAry = T.get('scholars');
+        const scholarNames = [];
+        for (let i=0; i < scholarsAry.length; i++) {
+            scholarNames.push(scholarsAry[i].name);
+        }
+        
+        D(scholarsAry);
+        b(d3.merge([T.get('contents'), T.get('methods')]));
         C([]);
         m(P);
         Q.html('$contentsLabel are on the left, $peopleLabel are in the middle, and $methodsLabel are on the right. Click to begin exploring.');
+        QList.html(scholarNames.join('<br/>'));
         n();
         z()
     }
     
     function e() {
         var X = r.nodes(L.node);
+        var nodeNames = [];
         X.forEach(function(Z) {
+            if (Z.name && !Number.isInteger(Z.name)) {
+                nodeNames.push(Z.name);
+            }
             if (Z.depth === 1) {
                 Z.y -= 20;
             }
@@ -392,6 +437,7 @@ echo "<script type='text/javascript'>
             Y = L.node.description;
         }
         Q.html(Y);
+        QList.html(nodeNames.join('<br/>'));
         n();
         z()
     }
@@ -456,14 +502,14 @@ echo "<script type='text/javascript'>
             return Z.x < 180 ? 'translate(' + t + ')' : 'rotate(180)translate(-' + t + ')';
         })
         X.selectAll('text.label').attr('class', function(Z) {
-            if ((Z.type === 'perspective' || Z.type === 'theme') && window.location.hash && Z.name.length > 25) {
+            if ((Z.type === 'method' || Z.type === 'content') && window.location.hash && Z.name.length > 25) {
                 return 'label multiline';
             } else {
                 return 'label';
             }
         });
         X.selectAll('text.label-stroke').attr('class', function(Z) {
-            if ((Z.type === 'perspective' || Z.type === 'theme') && window.location.hash && Z.name.length > 25) {
+            if ((Z.type === 'method' || Z.type === 'content') && window.location.hash && Z.name.length > 25) {
                 return 'label-stroke multiline';
             } else {
                 return 'label-stroke';
@@ -482,7 +528,7 @@ echo "<script type='text/javascript'>
                 .text(function(Z) {
                     const lines = wrap(Z.name).split(/[\\n\\r]+/);
                     let elipses = '';
-                    if ((L.node.type === 'perspective' || L.node.type === 'theme') && (Z.type === 'perspective' || Z.type === 'theme') && L.node != Z) {
+                    if ((L.node.type === 'method' || L.node.type === 'content') && (Z.type === 'method' || Z.type === 'content') && L.node != Z) {
                         elipses = '...'
                     }
                     return lines[1].trim()+elipses;
@@ -493,7 +539,7 @@ echo "<script type='text/javascript'>
                     return getFontSize(Z);
                 })
                 .text(function(Z) {
-                    if ((L.node.type === 'perspective' || L.node.type === 'theme') && (Z.type === 'perspective' || Z.type === 'theme') && L.node != Z) {
+                    if ((L.node.type === 'method' || L.node.type === 'content') && (Z.type === 'method' || Z.type === 'content') && L.node != Z) {
                         return '';
                     }
                     const lines = wrap(Z.name).split(/[\\n\\r]+/);
@@ -509,7 +555,7 @@ echo "<script type='text/javascript'>
                 .attr('dy', function(Z) {
                     return getFontSize(Z);
                 }).text(function(Z) {
-                    if ((L.node.type === 'perspective' || L.node.type === 'theme') && (Z.type === 'perspective' || Z.type === 'theme') && L.node != Z) {
+                    if ((L.node.type === 'method' || L.node.type === 'content') && (Z.type === 'method' || Z.type === 'content') && L.node != Z) {
                         return '';
                     }
                     const lines = wrap(Z.name).split(/[\\n\\r]+/);
@@ -532,15 +578,15 @@ echo "<script type='text/javascript'>
     function getFontSize(Z) {
         if (Z.depth === 0) {
             return 20;
-        } else if ((Z.type === 'perspective') || (Z.type === 'theme')) {
-            if (window.location.hash && (L.node.type === 'perspective'  || L.node.type === 'theme')) {
+        } else if ((Z.type === 'method') || (Z.type === 'content')) {
+            if (window.location.hash && (L.node.type === 'method'  || L.node.type === 'theme')) {
                 return 12;
             } else if (window.location.hash) {
                 return 14;
             } else {
                 return $defaultFontSize;
             }
-        } else if (Z.type === 'scholars' && L.node.type === 'perspective') {
+        } else if (Z.type === 'scholars' && L.node.type === 'method') {
             if (L.node.count > 80) {
                 return 12;
             } else if (L.node.count > 60) {
@@ -577,9 +623,9 @@ echo "<script type='text/javascript'>
         var ab = Z[0];
         if (ab && ab.type) {
             let text = '$ucPersonLabel';
-            if (ab.type === 'theme') {
+            if (ab.type === 'content') {
                 text = '$ucContentLabel';
-            } else if (ab.type === 'perspective') {
+            } else if (ab.type === 'method') {
                 text = '$ucMethodLabel';
             }
             Y.append('text').attr('fill', '#888').attr('text-anchor', 'middle').attr('y', (o + t) * -2).text(text).attr('font-weight', 'bold').attr('font-size', 15);
@@ -598,30 +644,35 @@ echo "<script type='text/javascript'>
 
         X = d.selectAll('#a').data(Z);
         X.attr('display', 'block');
-        X.enter().append('text').attr('id', 'contentHeader').attr('text-anchor', 'start').attr('x', a / -2 + t).attr('y', 0 - (c / 2 - 2 * t)).text('$contentsLabel').attr('class', 'header').attr('font-size', 24).on('click', O);
+        X.enter().append('text').attr('id', 'contentHeader').attr('text-anchor', 'start').attr('x', a / -2 + t).attr('y', 0 - (c / 2 - 2 * t)).text('$contentsLabel').attr('class', 'header').attr('font-size', headerFontSize).on('click', O);
         X.exit().remove();
 
         X = d.selectAll('#a').data(Z);
         X.attr('display', 'block');
-        X.enter().append('text').attr('id', 'methodHeader').attr('text-anchor', 'end').attr('x', 0 - (a / -2 + t)).attr('y', 0 - (c / 2 - 2 * t)).text('$methodsLabel').attr('class', 'header').attr('font-size', 24).on('click', O);
+        X.enter().append('text').attr('id', 'methodHeader').attr('text-anchor', 'end').attr('x', 0 - (a / -2 + t)).attr('y', 0 - (c / 2 - 2 * t)).text('$methodsLabel').attr('class', 'header').attr('font-size', headerFontSize).on('click', O);
         X.exit().remove();
 
+        const numScholars = T.get('scholars').length;        
         X = d.selectAll('#a').data(Z);
         X.attr('display', 'block');
-        X.enter().append('text').attr('id', 'peopleHeader').attr('text-anchor', 'middle').attr('x', 0).attr('y', 0 - (c / 2 - 2 * t)).text('$peopleLabel').attr('class', 'header').attr('font-size', 24).on('click', O);
+        X.enter().append('text').attr('id', 'peopleHeader').attr('text-anchor', 'middle').attr('x', 0).attr('y', 0 - (c / 2 - 2 * t)).text(numScholars+' $peopleLabel').attr('class', 'header').attr('font-size', headerFontSize).on('click', O);
         X.exit().remove();
 
+    }
+    
+    function transformForHeader(y) {
+        return  y * (c - headerFontSize) / c + headerFontSize;
     }
 
     function D(Y) {
         const offset = 1;
-        const fontSize = (K >= 12) ? 12 : (K >= 9) ? K - 1 : 8;
+        const fontSize = (K >= 12) ? 12 : (K >= 10) ? K - 1 : 9;
         var Y = f.selectAll('.userid').data(Y, u);
         var X = Y.enter().append('g').attr('class', 'userid').on('mouseover', g).on('mouseout', n).on('click', G);
         X.append('rect').attr('x', U / -2).attr('y', K / -2).attr('width', U).attr('height', K).transition().duration(w).ease(F).attr('x', function(Z) {
             return Z.x;
         }).attr('y', function(Z) {
-            return Z.y;
+            return transformForHeader(Z.y);
         });
         X.append('text').attr('x', function(Z) {
             return U / -2 + t;
@@ -630,7 +681,7 @@ echo "<script type='text/javascript'>
         }).attr('font-size', fontSize).transition().duration(w).ease(F).attr('x', function(Z) {
             return Z.x + t;
         }).attr('y', function(Z) {
-            return Z.y + fontSize - offset;
+            return transformForHeader(Z.y) + fontSize - offset;
         });
         Y.exit().selectAll('rect').transition().duration(w).ease(F).attr('x', function(Z) {
             return U / -2;
@@ -684,9 +735,9 @@ echo "<script type='text/javascript'>
         E.selectAll('circle').attr('fill', function(X) {
             if (X === L.node) {
                 return '#8dc63f';
-            } else if (X.type === 'theme') {
+            } else if (X.type === 'content') {
                 return l(X, '#b0d87a', N, '#000');
-            } else if (X.type === 'perspective') {
+            } else if (X.type === 'method') {
                 return '#d4d4eb';
             } else if (X.type === 'scholars') {
                 return l(X, '#5764ae', N, '#999')
@@ -696,10 +747,10 @@ echo "<script type='text/javascript'>
             if (X === L.node) {
                 return l(X, null, N, null);
             } else {
-                if (X.type === 'theme') {
+                if (X.type === 'content') {
                     return '#000';
                 } else {
-                    if (X.type === 'perspective') {
+                    if (X.type === 'method') {
                         return l(X, '#000', N, '#000');
                     }
                 }
@@ -709,7 +760,7 @@ echo "<script type='text/javascript'>
             if (X === L.node) {
                 return l(X, null, 2.5, null);
             } else {
-                if (X.type === 'theme' || X.type === 'perspective') {
+                if (X.type === 'content' || X.type === 'method') {
                     return 1.5;
                 }
             }
@@ -721,7 +772,7 @@ echo "<script type='text/javascript'>
     }
 
     function p(X) {
-        return X.toLowerCase().replace(/[ .,()]/g, '-');
+        return makeHash(X);
     }
 
     function u(X) {
