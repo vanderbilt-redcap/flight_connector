@@ -84,10 +84,6 @@ $saveDiv = makeSaveDiv($module, "svg");
 
 $options = [];
 $options[] = "<option value='' selected></option>";
-foreach ($redcapData as $row) {
-    $name = htmlentities($row['name']);
-    $options[] = "<option value='$name'>$name</option>";
-}
 foreach ($choices as $field => $fieldChoices) {
     foreach ($fieldChoices as $index => $label) {
         if (in_array($label, $matchedItems[$field])) {
@@ -96,13 +92,19 @@ foreach ($choices as $field => $fieldChoices) {
         }
     }
 }
+foreach ($redcapData as $row) {
+    $name = str_replace("'", "\\'", $row['name']);
+    $options[] = "<option value='$name'>$name</option>";
+}
 $optionHTML = implode("", $options);
+
+$conjugation = makeConjunction([$contentsLabel, $methodsLabel, $peopleLabel]);
 
 echo "
     <div id='container'>
 		<div class='wrap'>
 			<div id='main'>
-			    <p style='text-align: center;'><select class='combobox' id='search'>$optionHTML</select> <button onclick='const val = $(\"#search option:selected\").val(); window.location.hash = makeHash(val); return false;' style='margin-left: 50px;'>Search</button></p>
+			    <p style='text-align: center;'><select items='$conjugation' class='combobox' id='search'>$optionHTML</select> <button onclick='const val = $(\"#search option:selected\").val(); window.location.hash = makeHash(val); return false;' style='margin-left: 50px;'>Search</button></p>
 				<div id='main-graph-info' class='graph-info'></div>
 				<div id='graph'></div>
 				$saveDiv

@@ -7,7 +7,12 @@ $( function() {
 
 			if (!this.element.is(":visible")) {
 				this.wrapper.hide();
-			} 
+			}
+
+			this.itemsList = this.element.attr("items");
+			if (!this.itemsList) {
+				this.itemsList = 'Items';
+			}
  
 			this._createAutocomplete();
 			this._createShowAllButton();
@@ -53,7 +58,7 @@ $( function() {
  
 			$( "<a>" )
 				.attr( "tabIndex", -1 )
-				.attr( "title", "Show All Items" )
+				.attr( "title", "Show All "+this.itemsList )
 				.tooltip()
 				.appendTo( this.wrapper )
 				.button({
