@@ -480,6 +480,9 @@ echo "<script type='text/javascript'>
             if (!Z.type) {
                 return '0.3em';
             }
+            if (!window.location.hash) {
+                return '0em';
+            }
             return '-0.2em';
         }).attr('font-size', function(Z) {
             return getFontSize(Z);
