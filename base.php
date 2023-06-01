@@ -287,9 +287,9 @@ function makeSaveDiv($module, $type, $mimeType = "image/png") {
     }
     if ($type == "svg") {
         $europaWOFFLocation = $module->getUrl("EuropaNuovaRegular.woff");
-        return "<div style='text-align: right;'><button class='smallest' onclick='const svg = $(this).parent().parent().find(\"svg\").prop(\"outerHTML\"); svg2Image(svg, 0, \"#ffffff\", $canvasFunc, \"europa\", \"$europaWOFFLocation\"); return false;'>Save</button></div>";
+        return "<div style='text-align: right;'><button class='smallest' onclick='const svg = $(this).parent().parent().find(\"svg\").prop(\"outerHTML\"); svg2Image(svg, 0, \"#ffffff\", $canvasFunc, \"europa\", \"$europaWOFFLocation\"); return false;'>Save Image</button></div>";
     } else if ($type == "canvas") {
-        return "<div style='text-align: right;'v'><button class='smallest' onclick='const c = $(this).parent().parent().find(\"canvas\").get(0); const dataurl = $canvasFunc(c); forceDownloadUrl(dataurl, \"chart.$suffix\"); return false;'>Save</button></div>";
+        return "<div style='text-align: right;'v'><button class='smallest' onclick='const c = $(this).parent().parent().find(\"canvas\").get(0); const dataurl = $canvasFunc(c); forceDownloadUrl(dataurl, \"chart.$suffix\"); return false;'>Save Image</button></div>";
     } else {
         throw new \Exception("Invalid type: $type");
     }

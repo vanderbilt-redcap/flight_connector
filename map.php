@@ -474,7 +474,7 @@ echo "<script type='text/javascript'>
                     header = '$methodsLabel';
                 }
                 hasData = true;
-                html += '<td style=\"vertical-align: top; max-width: 300px; padding-left: 10px; padding-right: 10px;\"><h4>'+header+'</h4>'+names[col].join('<br/>')+'</td>';
+                html += '<td style=\"vertical-align: top; max-width: 300px; padding-left: 10px; padding-right: 10px;\"><h4>'+header+'</h4><p style=\"margin: 8px auto;\">'+names[col].join('</p><p style=\"margin: 8px auto;\">')+'</p></td>';
             }
         }
         if (!hasData) {
