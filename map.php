@@ -99,8 +99,8 @@ foreach ($redcapData as $row) {
 $optionHTML = implode("", $options);
 
 $radioConfig = [
-    "scholars" => $peopleLabel,
     "contents" => $contentsLabel,
+    "scholars" => $peopleLabel,
     "methods" => $methodsLabel,
 ];
 $radios = [];
