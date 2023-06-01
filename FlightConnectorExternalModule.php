@@ -46,6 +46,9 @@ $(document).ready(() => {
         if ($uniqueHash) {
             $mapUrl .= "&h=$uniqueHash";
         }
+        if (!preg_match("/NOAUTH/", $mapUrl)) {
+            $mapUrl .= "&NOAUTH";
+        }
         return $mapUrl;
     }
 
