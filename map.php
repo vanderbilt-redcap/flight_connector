@@ -145,7 +145,11 @@ echo "<script type='text/javascript'>
         t = 10,
         w = 1000,
         F = 'elastic',
-        N = '#5764ae';
+        accentColor = '#48489d',
+        boxColor = '#5764ae',
+        mainCircleColor = '#8dc63f',
+        contentColor = '#b0d87a',
+        methodColor = '#d4d4eb';
     var headerFontSize = 24;
     var T, q, x, j, H, A, P;
     var L = {},
@@ -455,7 +459,7 @@ echo "<script type='text/javascript'>
             return 'translate(' + Z.xOffset + ',0)rotate(' + (Z.x - 90) + ')translate(' + Z.y + ')';
         }).attr('class', 'node').on('mouseover', g).on('mouseout', n).on('click', G);
         Y.append('circle').attr('r', 0);
-        Y.append('text').attr('stroke', '#fff').attr('stroke-width', 2).attr('class', 'label-stroke');
+        Y.append('text').attr('stroke', '#ddd').attr('stroke-width', 2).attr('class', 'label-stroke');
         Y.append('text').attr('font-size', 0).attr('class', 'label');
         X.transition().duration(w).ease(F).attr('transform', function(Z) {
             if (Z === L.node) {
@@ -506,6 +510,26 @@ echo "<script type='text/javascript'>
             return Z.x < 180 ? 'translate(' + t + ')' : 'rotate(180)translate(-' + t + ')';
             return Z.x < 180 ? 'translate(' + t + ')' : 'rotate(180)translate(-' + t + ')';
         })
+        X.on('mouseover', function(Z) {
+            d3.select(this).select('text.label-stroke')
+                .attr('font-size', function(Z) {
+                    return increaseFontSizeIfSmall(Z);
+                });
+            d3.select(this).select('text.label')
+                .attr('font-size', function(Z) {
+                    return increaseFontSizeIfSmall(Z);
+                });
+        });
+        X.on('mouseout', function(Z) {
+            d3.select(this).select('text.label-stroke')
+                .attr('font-size', function(Z) {
+                    return getFontSize(Z);
+                });
+            d3.select(this).select('text.label')
+                .attr('font-size', function(Z) {
+                    return getFontSize(Z);
+                });
+        });
         X.selectAll('text.label').attr('class', function(Z) {
             if ((Z.type === 'method' || Z.type === 'content') && window.location.hash && Z.name.length > 25) {
                 return 'label multiline';
@@ -578,6 +602,14 @@ echo "<script type='text/javascript'>
         } else {
             hideHeaders();
         }
+    }
+    
+    function increaseFontSizeIfSmall(Z) {
+        const fontSize = getFontSize(Z);
+        if (fontSize <= 14) {
+            return 14;
+        }
+        return fontSize;
     }
     
     function getFontSize(Z) {
@@ -721,10 +753,10 @@ echo "<script type='text/javascript'>
 
     function z() {
         f.selectAll('rect').attr('fill', function(X) {
-            return '#5764ae';
+            return boxColor;
         });
         B.selectAll('path').attr('stroke', function(X) {
-            return l(X, '#aaa', N, '#aaa');
+            return l(X, '#aaa', accentColor, '#aaa');
         }).attr('stroke-width', function(X) {
             return l(X, '1.5px', '2.5px', '1px');
         }).attr('opacity', function(X) {
@@ -739,40 +771,36 @@ echo "<script type='text/javascript'>
         });
         E.selectAll('circle').attr('fill', function(X) {
             if (X === L.node) {
-                return '#8dc63f';
+                return mainCircleColor;
             } else if (X.type === 'content') {
-                return l(X, '#b0d87a', N, '#000');
+                return l(X, contentColor, accentColor, '#000');
             } else if (X.type === 'method') {
-                return '#d4d4eb';
+                return l(X, methodColor, accentColor, '#000');
             } else if (X.type === 'scholars') {
-                return l(X, '#5764ae', N, '#999')
+                return l(X, boxColor, accentColor, '#999')
             }
-            return l(X, '#ebebf8', N, '#999')
+            return l(X, '#ebebf8', accentColor, '#999')
         }).attr('stroke', function(X) {
             if (X === L.node) {
-                return l(X, null, N, null);
-            } else {
-                if (X.type === 'content') {
-                    return '#000';
-                } else {
-                    if (X.type === 'method') {
-                        return l(X, '#000', N, '#000');
-                    }
-                }
+                return l(X, null, accentColor, null);
+            } else if (X.type === 'content') {
+                return '#000';
+            } else if (X.type === 'method') {
+                return '#000';
+            } else if (X.type === 'scholars') {
+                return '#000';
             }
             return null;
         }).attr('stroke-width', function(X) {
             if (X === L.node) {
                 return l(X, null, 2.5, null);
-            } else {
-                if (X.type === 'content' || X.type === 'method') {
-                    return 1.5;
-                }
+            } else if (X.type === 'content' || X.type === 'method') {
+                return 1.5;
             }
             return null;
         });
         E.selectAll('text.label').attr('fill', function(X) {
-            return (X === L.node || X.isGroup) ? '#444' : l(X, '#000', N, '#999');
+            return (X === L.node || X.isGroup) ? '#444' : l(X, '#000', accentColor, '#999');
         })
     }
 
