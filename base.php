@@ -230,7 +230,7 @@ function makeD3Data($data, $choices) {
         $pubMedLink = "https://pubmed.ncbi.nlm.nih.gov/?term=".urlencode(strtolower($name));
         if ($name && !empty($checks)) {
             $outData['scholars'][] = [
-                "type" => "scholars",
+                "type" => "scholar",
                 "name" => $name,
                 "description" => "<a href='mailto:$email'>contact $name by email</a> - <a href='$pubMedLink' target='_blank'>search PubMed for $name</a> - $reset",
                 "links" => $checks,

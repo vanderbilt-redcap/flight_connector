@@ -88,15 +88,26 @@ foreach ($choices as $field => $fieldChoices) {
     foreach ($fieldChoices as $index => $label) {
         if (in_array($label, $matchedItems[$field])) {
             $label = str_replace("'", "\\'", $label);
-            $options[] = "<option value='$label'>$label</option>";
+            $options[] = "<option value='$label' class='select_$field'>$label</option>";
         }
     }
 }
 foreach ($redcapData as $row) {
     $name = str_replace("'", "\\'", $row['name']);
-    $options[] = "<option value='$name'>$name</option>";
+    $options[] = "<option value='$name' class='select_scholars'>$name</option>";
 }
 $optionHTML = implode("", $options);
+
+$radioConfig = [
+    "scholars" => $peopleLabel,
+    "contents" => $contentsLabel,
+    "methods" => $methodsLabel,
+];
+$radios = [];
+foreach ($radioConfig as $filterTerm => $label) {
+    $radios[] = "<input type='radio' name='filter' value='$filterTerm' id='$filterTerm' onclick='filterSelect(this);' /><label for='$filterTerm'>$label</label>";
+}
+$radioHTML = implode("&nbsp;&nbsp;&nbsp;&nbsp;", $radios);
 
 $conjugation = makeConjunction([$contentsLabel, $methodsLabel, $peopleLabel]);
 
@@ -104,7 +115,8 @@ echo "
     <div id='container'>
 		<div class='wrap'>
 			<div id='main'>
-			    <p style='text-align: center;'><select items='$conjugation' class='combobox' id='search'>$optionHTML</select> <button onclick='const val = $(\"#search option:selected\").val(); window.location.hash = makeHash(val); return false;' style='margin-left: 50px;'>Search</button></p>
+			    <p style='text-align: center;'>$radioHTML<br/>
+			    <select items='$conjugation' class='combobox' id='search'>$optionHTML</select> <button onclick='const val = $(\"#search option:selected\").val(); window.location.hash = makeHash(val); return false;' style='margin-left: 50px;'>Search</button></p>
 				<div id='main-graph-info' class='graph-info'></div>
 				<div id='graph'></div>
 				$saveDiv
@@ -405,15 +417,21 @@ echo "<script type='text/javascript'>
                 [X.x2, X.y2]
             ]);
         });
-        const scholarsAry = T.get('scholars');
+        const cols = ['scholars', 'contents', 'methods'];
         const names = {};
-        names['scholars'] = [];
-        for (let i=0; i < scholarsAry.length; i++) {
-            names['scholars'].push(scholarsAry[i].name);
+        const arrays = {};
+        for (let i=0; i < cols.length; i++) {
+            const ary = T.get(cols[i]);
+            const col = cols[i].replace(/s$/, '');
+            arrays[cols[i]] = ary;
+            names[col] = [];
+            for (let j=0; j < ary.length; j++) {
+                names[col].push(ary[j].name);
+            }
         }
-        
-        D(scholarsAry);
-        b(d3.merge([T.get('contents'), T.get('methods')]));
+
+        D(arrays['scholars']);
+        b(d3.merge([arrays['contents'], arrays['methods']]));
         C([]);
         m(P);
         Q.html('$contentsLabel are on the left, $peopleLabel are in the middle, and $methodsLabel are on the right. Click to begin exploring.');
@@ -424,7 +442,7 @@ echo "<script type='text/javascript'>
     
     function e() {
         var X = r.nodes(L.node);
-        const cols = ['scholars', 'content', 'method'];
+        const cols = ['scholar', 'content', 'method'];
         const nodeNames = {};
         for (let i=0; i < cols.length; i++) {
             nodeNames[cols[i]] = [];
@@ -661,7 +679,7 @@ echo "<script type='text/javascript'>
             } else {
                 return $defaultFontSize;
             }
-        } else if (Z.type === 'scholars' && L.node.type === 'method') {
+        } else if (Z.type === 'scholar' && L.node.type === 'method') {
             if (L.node.count > 80) {
                 return 12;
             } else if (L.node.count > 60) {
@@ -837,7 +855,7 @@ echo "<script type='text/javascript'>
                 return l(X, contentColor, accentColor, '#000');
             } else if (X.type === 'method') {
                 return l(X, methodColor, accentColor, '#000');
-            } else if (X.type === 'scholars') {
+            } else if (X.type === 'scholar') {
                 return l(X, boxColor, accentColor, '#999')
             }
             return l(X, '#ebebf8', accentColor, '#999')
@@ -848,7 +866,7 @@ echo "<script type='text/javascript'>
                 return '#000';
             } else if (X.type === 'method') {
                 return '#000';
-            } else if (X.type === 'scholars') {
+            } else if (X.type === 'scholar') {
                 return '#000';
             }
             return null;

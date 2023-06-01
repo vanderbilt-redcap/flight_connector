@@ -18,7 +18,7 @@ $( function() {
 			this._createShowAllButton();
 			this.element.hide();
 		},
- 
+
 		_createAutocomplete: function() {
 			var selected = this.element.children( ":selected" ),
 				value = selected.val() ? selected.text() : "";
@@ -87,12 +87,22 @@ $( function() {
  
 		_source: function( request, response ) {
 			var matcher = new RegExp( $.ui.autocomplete.escapeRegex(request.term), "i" );
+			var radioVal = $('[name=filter]:checked').val();
 			response( this.element.children( "option" ).map(function() {
 				var text = $( this ).text();
-				if ( this.value && ( !request.term || matcher.test(text) ) )
+				var className = $( this ).attr('class');
+				var proceed = false;
+				if (className) {
+					var selected = className.replace(/^select_/, '');
+					if (!radioVal || (selected === radioVal)) {
+						proceed = true;
+					}
+				}
+				if ( proceed && this.value && ( !request.term || matcher.test(text) ) )
 					return {
 						label: text,
 						value: text,
+						class: className,
 						option: this
 					};
 			}) );

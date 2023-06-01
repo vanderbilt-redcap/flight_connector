@@ -162,3 +162,7 @@ function forceDownloadUrl(source, fileName){
 function makeHash(str) {
     return str.toLowerCase().replace(/[ .,()]/g, '-');
 }
+
+function filterSelect(ob) {
+    $('.combobox').combobox();
+}
