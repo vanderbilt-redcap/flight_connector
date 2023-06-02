@@ -34,7 +34,6 @@ if (($uniqueHash === "") || ($uniqueHash !== $_GET['h'])) {
 echo "<!doctype html><html lang='en-US'>";
 echo "<head>";
 $migrateLink = $module->getUrl("jquery-migrate.min.js");
-$baseLink = $module->getUrl("base.js");
 $jqueryUICSS = $module->getUrl("jquery-ui.min.css");
 $jqueryUIJS = $module->getUrl("jquery-ui.min.js");
 $autocompleteJS = $module->getUrl("autocomplete.js");
@@ -46,7 +45,6 @@ echo "	<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
 	<link rel='stylesheet' href='https://use.typekit.net/ght7wyw.css' />
 	<link rel='stylesheet' href='$jqueryUICSS' />
 	<script type='text/javascript' src='$migrateLink'></script>
-	<script type='text/javascript' src='$baseLink'></script>
 	<script type='text/javascript' src='$jqueryUIJS'></script>
 	<script type='text/javascript' src='$autocompleteJS'></script>
 	<title>Flight Connector</title>
@@ -105,7 +103,7 @@ $radioConfig = [
 ];
 $radios = [];
 foreach ($radioConfig as $filterTerm => $label) {
-    $radios[] = "<input type='radio' name='filter' value='$filterTerm' id='$filterTerm' onclick='filterSelect(this);' /><label for='$filterTerm'>$label</label>";
+    $radios[] = "<input type='radio' name='filter' value='$filterTerm' id='$filterTerm' onclick='FlightConnector.filterSelect(this);' /><label for='$filterTerm'>$label</label>";
 }
 $radioHTML = implode("&nbsp;&nbsp;&nbsp;&nbsp;", $radios);
 
@@ -116,7 +114,7 @@ echo "
 		<div class='wrap'>
 			<div id='main'>
 			    <p style='text-align: center;'>$radioHTML<br/>
-			    <select items='$conjugation' class='combobox' id='search'>$optionHTML</select> <button onclick='const val = $(\"#search option:selected\").val(); window.location.hash = makeHash(val); return false;' style='margin-left: 50px;'>Search</button></p>
+			    <select items='$conjugation' class='combobox' id='search'>$optionHTML</select> <button onclick='const val = $(\"#search option:selected\").val(); window.location.hash = FlightConnector.makeHash(val); return false;' style='margin-left: 50px;'>Search</button></p>
 				<div id='main-graph-info' class='graph-info'></div>
 				<div id='graph'></div>
 				$saveDiv
@@ -603,7 +601,7 @@ echo "<script type='text/javascript'>
         setTimeout(() => {
             var ml = X.selectAll('text.multiline');
             ml.text(function(Z) {
-                const lines = wrap(Z.name).split(/[\\n\\r]+/);
+                const lines = FlightConnector.wrap(Z.name).split(/[\\n\\r]+/);
                 return lines[0].trim();
              }).append('tspan')
                 .attr('x', 0)
@@ -611,7 +609,7 @@ echo "<script type='text/javascript'>
                     return getFontSize(Z);
                 })
                 .text(function(Z) {
-                    const lines = wrap(Z.name).split(/[\\n\\r]+/);
+                    const lines = FlightConnector.wrap(Z.name).split(/[\\n\\r]+/);
                     let elipses = '';
                     if ((L.node.type === 'method' || L.node.type === 'content') && (Z.type === 'method' || Z.type === 'content') && L.node != Z) {
                         elipses = '...'
@@ -627,7 +625,7 @@ echo "<script type='text/javascript'>
                     if ((L.node.type === 'method' || L.node.type === 'content') && (Z.type === 'method' || Z.type === 'content') && L.node != Z) {
                         return '';
                     }
-                    const lines = wrap(Z.name).split(/[\\n\\r]+/);
+                    const lines = FlightConnector.wrap(Z.name).split(/[\\n\\r]+/);
                     const line = lines[2];
                     if (line) {
                         return line.trim();
@@ -643,7 +641,7 @@ echo "<script type='text/javascript'>
                     if ((L.node.type === 'method' || L.node.type === 'content') && (Z.type === 'method' || Z.type === 'content') && L.node != Z) {
                         return '';
                     }
-                    const lines = wrap(Z.name).split(/[\\n\\r]+/);
+                    const lines = FlightConnector.wrap(Z.name).split(/[\\n\\r]+/);
                     const line = lines[3] ? lines[3].trim() : '';
                     const elipses = (lines.length > 4) ? '...' : '';
                     return line+elipses; 
@@ -884,7 +882,7 @@ echo "<script type='text/javascript'>
     }
 
     function p(X) {
-        return makeHash(X);
+        return FlightConnector.makeHash(X);
     }
 
     function u(X) {

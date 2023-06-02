@@ -77,7 +77,7 @@ function filterOutDuplicateNames($data) {
 }
 
 function getPid() {
-    $pid = (int) htmlentities($_GET['pid']);
+    $pid = (int) htmlspecialchars($_GET['pid']);
     if (!$pid) {
         die("Error");
     }
@@ -86,23 +86,8 @@ function getPid() {
 
 function makeJS($module) {
     $jsUrl = $module->getUrl("jquery.min.js");
-    $html = "<script src='$jsUrl'></script>";
-    $html .= "<script>
-        function copyToClipboard(element) {
-            const text = $(element).text() ? $(element).text() : $(element).val();
-            navigator.clipboard.writeText(text);
-        }
-        
-        function isInvalid(requiredFields) {
-            for (let i=0; i < requiredFields.length; i++) {
-                const field = requiredFields[i];
-                if ($('#'+field).val() === '') {
-                    return true;
-                }
-            }
-            return false;
-        }
-        </script>";
+    $baseLink = $module->getUrl("base.js");
+    $html = "<script type='text/javascript' src='$jsUrl'></script><script type='text/javascript' src='$baseLink'></script>";
     return $html;
 }
 
@@ -112,7 +97,7 @@ function makePublicSurveyLink($module, $publicSurveyLink = "") {
         $publicSurveyLink = $module->getPublicSurveyUrl($pid) ?? "";
     }
     if ($publicSurveyLink) {
-        return "<p class='centered max-width' style='margin-top: 0; margin-bottom: 0;'>Share this public link with others to populate your data.<br/><input id='surveyUrl' value='$publicSurveyLink' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='copyToClipboard($(\"#surveyUrl\"));'>Copy</a></span></p>";
+        return "<p class='centered max-width' style='margin-top: 0; margin-bottom: 0;'>Share this public link with others to populate your data.<br/><input id='surveyUrl' value='$publicSurveyLink' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#surveyUrl\"));'>Copy</a></span></p>";
     } else {
         return "";
     }
@@ -120,7 +105,7 @@ function makePublicSurveyLink($module, $publicSurveyLink = "") {
 
 function makeMapLink($module) {
     $mapUrl = $module->getMapURL();
-    return "<p class='centered max-width'>Share this public link to see the Flight Tracker Map real-time as the data grows. <br/><input id='mapUrl' value='$mapUrl' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='copyToClipboard($(\"#mapUrl\"));'>Copy</a></span></p>";
+    return "<p class='centered max-width'>Share this public link to see the Flight Tracker Map real-time as the data grows. <br/><input id='mapUrl' value='$mapUrl' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#mapUrl\"));'>Copy</a></span></p>";
 }
 
 function getChoices($metadata) {
@@ -287,9 +272,9 @@ function makeSaveDiv($module, $type, $mimeType = "image/png") {
     }
     if ($type == "svg") {
         $europaWOFFLocation = $module->getUrl("EuropaNuovaRegular.woff");
-        return "<div style='text-align: right;'><button class='smallest' onclick='const svg = $(this).parent().parent().find(\"svg\").prop(\"outerHTML\"); svg2Image(svg, 0, \"#ffffff\", $canvasFunc, \"europa\", \"$europaWOFFLocation\"); return false;'>Save Image</button></div>";
+        return "<div style='text-align: right;'><button class='smallest' onclick='const svg = $(this).parent().parent().find(\"svg\").prop(\"outerHTML\"); FlightConnector.svg2Image(svg, 0, \"#ffffff\", FlightConnector.$canvasFunc, \"europa\", \"$europaWOFFLocation\"); return false;'>Save Image</button></div>";
     } else if ($type == "canvas") {
-        return "<div style='text-align: right;'v'><button class='smallest' onclick='const c = $(this).parent().parent().find(\"canvas\").get(0); const dataurl = $canvasFunc(c); forceDownloadUrl(dataurl, \"chart.$suffix\"); return false;'>Save Image</button></div>";
+        return "<div style='text-align: right;'><button class='smallest' onclick='const c = $(this).parent().parent().find(\"canvas\").get(0); const dataurl = FlightConnector.$canvasFunc(c); FlightConnector.forceDownloadUrl(dataurl, \"chart.$suffix\"); return false;'>Save Image</button></div>";
     } else {
         throw new \Exception("Invalid type: $type");
     }

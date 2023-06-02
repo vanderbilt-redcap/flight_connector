@@ -49,8 +49,8 @@ if (!empty($_POST)) {
     $choiceStr = [];
     $labels = [];
     foreach ($fields as $field => $title) {
-        $labels[$field] = htmlentities($_POST[$field."_label"]) ?: $title;
-        $options = preg_split("/[\n\r]+/", htmlentities($_POST[$field]));
+        $labels[$field] = htmlspecialchars($_POST[$field."_label"], ENT_QUOTES) ?: $title;
+        $options = preg_split("/[\n\r]+/", htmlspecialchars($_POST[$field], ENT_QUOTES));
         $i = 1;
         $pairs = [];
         foreach ($options as $option) {
@@ -207,14 +207,14 @@ if ($publicSurveyLink) {
     foreach ($fields as $field => $label) {
         $labelField = $field."_label";
         echo "<h2>Options for $label</h2>";
-        $defaultLabel = isset($_POST[$labelField]) ? htmlentities($_POST[$labelField]) : "";
-        $defaultEntry = isset($_POST[$field]) ? htmlentities($_POST[$field]) : "";
+        $defaultLabel = isset($_POST[$labelField]) ? htmlspecialchars($_POST[$labelField], ENT_QUOTES) : "";
+        $defaultEntry = isset($_POST[$field]) ? htmlspecialchars($_POST[$field], ENT_QUOTES) : "";
         echo "<p class='centered max-width'><label for='$labelField'>Label:</label> <input type='text' id='$labelField' name='$labelField' placeholder='$label' value='$defaultLabel' style='width: 200px;' /><br/><label for='$field'>Checkbox Options (one per line):</label><br/><textarea name='$field' id='$field' style='width: 400px; height: 200px;'>$defaultEntry</textarea></p>";
         $requiredFields[] = $labelField;
         $requiredFields[] = $field;
     }
     $requiredFieldsJSON = json_encode($requiredFields);
-    echo "<p class='centered'><button onclick='if (isInvalid($requiredFieldsJSON)) { alert(\"You must fill in a value for all labels and options.\"); return false; } else { return true; } '>Set Up Project</button></p>";
+    echo "<p class='centered'><button onclick='if (FlightConnector.isInvalid($requiredFieldsJSON)) { alert(\"You must fill in a value for all labels and options.\"); return false; } else { return true; } '>Set Up Project</button></p>";
     echo "</form>";
 }
 
