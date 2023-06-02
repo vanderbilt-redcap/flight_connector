@@ -432,7 +432,7 @@ echo "<script type='text/javascript'>
         b(d3.merge([arrays['contents'], arrays['methods']]));
         C([]);
         m(P);
-        Q.html('$contentsLabel are on the left, $peopleLabel are in the middle, and $methodsLabel are on the right. Click to begin exploring.');
+        Q.html('$contentsLabel are on the left, $peopleLabel are in the middle (names may be hidden), and $methodsLabel are on the right. Click to begin exploring.');
         QList.html(getListTitle()+makeTable(names));
         n();
         z()
