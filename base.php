@@ -225,7 +225,7 @@ function makeD3Data($data, $choices) {
             }
         }
         $resetLink = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}";
-        $reset = "<a href='$resetLink'>reset graph</a>";
+        $reset = "<a href='$resetLink'>View All</a>";
 
         $pubMedLink = "https://pubmed.ncbi.nlm.nih.gov/?term=".urlencode(strtolower($name));
         if ($name && !empty($checks)) {

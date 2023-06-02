@@ -66,6 +66,9 @@ path {
     height: auto;
     filter: drop-shadow(5px 5px 10px #efefef);
 }
+#main-graph-info {
+    background-color: #b0d87a44;
+}
 
 /* references */
 #references h3 {
