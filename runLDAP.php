@@ -35,6 +35,7 @@ foreach ($redcapData as $row) {
     $vuEmail = preg_replace("/@vumc\.org$/i", "@vanderbilt.edu", $email);
     $vumcEmail = preg_replace("/@vanderbilt\.edu$/i", "@vumc.org", $email);
     list($first, $last) = NameMatcher::splitName($name, 2);
+    $first = preg_replace("/\s+\(\w+\)/", "", $first);    // parentheses throw off LDAP
     $priorInLDAP = $row[$ldapField];
     if ($name && LDAP::getEmailFromName($first, $last)) {
         $newInLDAP = 1;
