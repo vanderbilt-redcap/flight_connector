@@ -4,7 +4,7 @@ A REDCap External Module that transforms a list of concepts/contents and tools/m
 ## Introduction
 Groups of professionals - like businesses, departments, conferences, societies, colleges, or research centers - are great for networking. However, finding the right person to meet is often more complex. How can you find out people's exact interests? And how do you get to unearth these people's talents?
 
-Flight Connector was built to address this problem. It builds an interactive concept map to navigate the group and provide contact information. This information is collected via a short, five-question REDCap survey. The essence of the survey consists of two lists of checkboxes, described below.
+Flight Connector was built to address this problem. It builds an interactive concept map to navigate the group and provide contact information. This information is collected via a short, four-question REDCap survey. The essence of the survey consists of two lists of checkboxes, described below.
 
 ### Content Areas Checkboxes
 "Content areas" are lists of concepts or subject matters that your knowledge workers might have. These are areas of knowledge, like HIV/AIDS, computer algorithms, or crisis management. People who check these off feel that they are proficient in this area.
@@ -25,7 +25,7 @@ Each group gets its own list of checkboxes. You can enter the text that correspo
 
 ## Complete Installation
 ![alt text](complete.png "Installation Complete")
-When the project is set up, a REDCap project is automatically created. You will receive a Public Survey Link to give to your people to fill out the five-question REDCap Survey. This is the top link (here incomplete).
+When the project is set up, a REDCap project is automatically created. You will receive a Public Survey Link to give to your people to fill out the four-question REDCap Survey. This is the top link (here incomplete).
 
 The bottom link (also here blank) directs to the interactive map to share with your group so that they are able to look at the results of their answers. This map will be filled in real-time with survey submissions. Accessing the link to this map does not require that the user be logged in to REDCap or even have login access to REDCap.
 
