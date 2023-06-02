@@ -199,7 +199,8 @@ if ($publicSurveyLink) {
     echo makeHeader($module, "Install Flight Connector");
     echo "<p class='centered smaller'><a href='$baseUrl"."manager/project.php?pid=$pid'>Wrong Page? Disable this Module</a></p>";
 
-    echo "<p class='centered max-width'>Flight Connector is a networking tool to help groups of knowledge workers identify colleagues with areas of expertise, whether intellectual content or methodologies. This page will generate a survey for participants to fill out. The survey will contain checkboxes for each item for participants to identify their strengths. These strengths will, in turn, produce an interactive social network map for broader viewing.</p>";
+    $readmeLink = $module->getUrl("README.md");
+    echo "<p class='centered max-width'>Flight Connector is a networking tool to help groups of knowledge workers identify colleagues with areas of expertise, whether intellectual content or methodologies. This page will generate a survey for participants to fill out. The survey will contain checkboxes for each item for participants to identify their strengths. These strengths will, in turn, produce an interactive social network map for broader viewing. (<a href='$readmeLink' target='_blank'>View full ReadMe</a>.)</p>";
     echo "<form action='$thisUrl' method='POST'>";
     $csrfToken = $module->getCSRFToken();
     echo "<input type='hidden' id='redcap_csrf_token' name='redcap_csrf_token' value='$csrfToken' />";
