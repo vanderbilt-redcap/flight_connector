@@ -26,6 +26,11 @@
 				"name": "Flight Connector Map",
 				"icon": "fa-regular fa-map",
 				"url": "map.php?NOAUTH"
+			},
+			{
+				"name": "Flight Connector ReadMe",
+				"icon": "fa-solid fa-book",
+				"url": "README.md"
 			}
 		]
 	},
