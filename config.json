@@ -3,7 +3,7 @@
 
 	"namespace": "Vanderbilt\\FlightConnectorExternalModule",
 
-	"description": "A REDCap External Module that transforms a list of contents and methods into a REDCap survey, whose data is turned into a social network map of topics.",
+	"description": "A REDCap External Module that transforms a list of concepts/contents and tools/methods into a REDCap survey, whose data is turned into a social network map of topics.",
 
 	"authors": [
 		{
