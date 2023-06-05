@@ -49,6 +49,7 @@ function getData($pid) {
     if (SERVER_NAME == "redcap.vanderbilt.edu") {
         $data = screenOutEFSStaff($data);
     }
+    $data = screenOutEmptyChecks($data);
 
     if (isset($_GET['rows']) && is_numeric($_GET['rows'])) {
         $newData = [];
@@ -56,13 +57,29 @@ function getData($pid) {
         foreach ($data as $row) {
             if ($i < $_GET['rows']) {
                 $newData[] = $row;
-                echo "$i: ".json_encode($row)."<br/>";
             }
             $i++;
         }
         return $newData;
     }
     return $data;
+}
+
+function screenOutEmptyChecks($data) {
+    $newData = [];
+    foreach ($data as $row) {
+        $hasCheck = FALSE;
+        foreach ($row as $field => $value) {
+            if (($value === "1") && preg_match("/___/", $field)) {
+                $hasCheck = TRUE;
+                break;
+            }
+        }
+        if ($hasCheck) {
+            $newData[] = $row;
+        }
+    }
+    return $newData;
 }
 
 function screenOutEFSStaff($data) {
