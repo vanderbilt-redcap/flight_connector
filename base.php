@@ -675,8 +675,10 @@ function padWithSpaces($nodes, $parts) {
 function shortenTitle($title) {
     $original = $title;
     $title = preg_replace("/[\s\-:]*Flight Connector[\s\-:]*/i", "", $title);
-    $title = preg_replace("/^\(/", "", $title);
-    $title = preg_replace("/\)$/", "", $title);
+    if (preg_match("/^\(/", $title)) {
+        $title = preg_replace("/^\(/", "", $title);
+        $title = preg_replace("/\)$/", "", $title);
+    }
     $title = trim($title);
     return $title ?: $original;
 }
