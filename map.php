@@ -8,6 +8,7 @@ require_once(__DIR__."/FlightConnectorExternalModule.php");
 require_once(__DIR__."/base.php");
 
 $pid = getPid();
+$projectTitle = shortenTitle(\REDCap::getProjectTitle());
 $cssUrl = $module->getUrl("connect.css");
 $ftLogo = $module->getUrl("flight_tracker_icon.png");
 $json = \REDCap::getDataDictionary($pid, "json");
@@ -110,6 +111,7 @@ $radioHTML = implode("&nbsp;&nbsp;&nbsp;&nbsp;", $radios);
 $conjugation = makeConjunction([$contentsLabel, $methodsLabel, $peopleLabel]);
 
 echo "
+    <h2>$projectTitle</h2>
     <div id='container'>
 		<div class='wrap'>
 			<div id='main'>
