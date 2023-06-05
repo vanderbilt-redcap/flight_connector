@@ -3,6 +3,7 @@
 namespace Vanderbilt\FlightConnectorExternalModule;
 
 require_once(__DIR__."/base.php");
+require_once(__DIR__."/ldapFunction.php");
 
 use \ExternalModules\ExternalModules;
 use \ExternalModules\AbstractExternalModule;
@@ -38,6 +39,44 @@ $(document).ready(() => {
 </script>";
         }
     }
+
+    public function cron() {
+        if (in_array(SERVER_NAME, ["redcap.vanderbilt.edu", "redcaptest.vanderbilt.edu"])) {
+            $allPids = $this->framework->getProjectsWithModuleEnabled();
+            foreach ($allPids as $pid) {
+                if ($this->isActiveProject($pid)) {
+                    $json = \REDCap::getDataDictionary($pid, "json");
+                    $metadata = json_decode($json, TRUE);
+                    $hasLDAPField = FALSE;
+                    foreach ($metadata as $row) {
+                        if ($row['field_name'] == "in_ldap") {
+                            $hasLDAPField = TRUE;
+                            break;
+                        }
+                    }
+                    if ($hasLDAPField) {
+                        getLDAP($pid);
+                    }
+                }
+            }
+        }
+    }
+
+    private function isActiveProject($pid) {
+        if (!$pid) {
+            return FALSE;
+        }
+        $sql = "SELECT date_deleted, completed_time FROM redcap_projects WHERE project_id = ? LIMIT 1";
+        $q = $this->query($sql, [$pid]);
+        if ($row = $q->fetch_assoc()) {
+            if (!$row['date_deleted'] && !$row['completed_time']) {
+                return TRUE;
+            }
+        }
+        return FALSE;
+    }
+
+
 
     public function getMapURL() {
         $mapUrl = $this->getUrl("map.php");
