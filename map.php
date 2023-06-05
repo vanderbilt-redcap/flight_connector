@@ -836,7 +836,6 @@ echo "<script type='text/javascript'>
             return l(X, '#aaa', accentColor, '#aaa');
         }).attr('stroke-width', function(X) {
             const numScholarsShown = ($('.userid').length === 0) ? $('.node').length : $('.userid').length;
-            console.log('numShown: '+numScholarsShown);
             if (numScholarsShown > 30) { 
                 return l(X, '1px', '1px', '1px');
             } else {
