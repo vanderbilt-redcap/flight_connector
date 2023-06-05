@@ -752,7 +752,7 @@ echo "<script type='text/javascript'>
     }
     
     function transformForHeader(y) {
-        const floorOffset = 8;
+        const floorOffset = 24;
         return  y * (c - headerFontSize - floorOffset) / c + headerFontSize;
     }
 
