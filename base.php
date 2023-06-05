@@ -56,6 +56,7 @@ function getData($pid) {
         foreach ($data as $row) {
             if ($i < $_GET['rows']) {
                 $newData[] = $row;
+                echo json_encode($row)."<br/>";
             }
             $i++;
         }
