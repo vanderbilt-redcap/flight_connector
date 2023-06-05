@@ -835,7 +835,13 @@ echo "<script type='text/javascript'>
         B.selectAll('path').attr('stroke', function(X) {
             return l(X, '#aaa', accentColor, '#aaa');
         }).attr('stroke-width', function(X) {
-            return l(X, '1.5px', '2.5px', '1px');
+            const numScholarsShown = ($('.userid').length === 0) ? $('.node').length : $('.userid').length;
+            console.log('numShown: '+numScholarsShown);
+            if (numScholarsShown > 30) { 
+                return l(X, '1px', '1px', '1px');
+            } else {
+                return l(X, '1.5px', '2.5px', '1px');
+            }
         }).attr('opacity', function(X) {
             return l(X, 0.4, 0.75, 0.3);
         }).sort(function(Y, X) {
