@@ -52,8 +52,12 @@ function getData($pid) {
 
     if (isset($_GET['rows']) && is_numeric($_GET['rows'])) {
         $newData = [];
-        for ($i = 0; $i < $_GET['rows']; $i++) {
-            $newData[] = $data[$i];
+        $i = 0;
+        foreach ($data as $row) {
+            if ($i < $_GET['rows']) {
+                $newData[] = $row;
+            }
+            $i++;
         }
         return $newData;
     }
