@@ -162,6 +162,7 @@ echo "<script type='text/javascript'>
         t = 10,
         w = 1000,
         F = 'elastic',
+        peripheralCircleColor = '#ebebf8',
         accentColor = '#48489d',
         boxColor = '#5764ae',
         mainCircleColor = '#8dc63f',
@@ -172,6 +173,8 @@ echo "<script type='text/javascript'>
     var L = {},
         k = {};
     var i, y;
+    var maxZCount = 0;
+    var maxCircleSize = 40;
     var r = d3.layout.tree().size([360, h / 2 - R]).separation(function(Y, X) {
         return (Y.parent == X.parent ? 1 : 2) / Y.depth;
     });
@@ -338,6 +341,7 @@ echo "<script type='text/javascript'>
         L.node.children = j.get(Y.canonicalKey);
         L.map = {};
         var Z = 0;
+        maxCircleSize = getMaxCircleSize(L.node.children.length);
         L.node.children.forEach(function(ac) {
             L.map[ac.key] = true;
             ac._children = j.get(ac.key).filter(function(ad) {
@@ -359,6 +363,9 @@ echo "<script type='text/javascript'>
                 count: ab,
                 xOffset: 0
             }];
+            if (ab > maxZCount) {
+                maxZCount = ab;
+            }
             L.map[aa] = true;
             Z += ab;
         });
@@ -375,6 +382,20 @@ echo "<script type='text/javascript'>
             map: {}
         };
         z();
+    }
+    
+    function getMaxCircleSize(numNodes) {
+        if (numNodes < 20) {
+            return 70;
+        } else if (numNodes < 30) {
+            return 50;
+        } else if (numNodes < 40) {
+            return 30;
+        } else if (numNodes < 60) {
+            return 25;
+        } else {
+            return 20;
+        }
     }
 
     function g(X) {
@@ -527,7 +548,7 @@ echo "<script type='text/javascript'>
                 return 100;
             } else {
                 if (Z.isGroup) {
-                    return 7 + Z.count;
+                    return 7 + (Z.count * maxCircleSize / maxZCount);
                 } else {
                     return 4.5;
                 }
@@ -863,7 +884,7 @@ echo "<script type='text/javascript'>
             } else if (X.type === 'scholar') {
                 return l(X, boxColor, accentColor, '#999')
             }
-            return l(X, '#ebebf8', accentColor, '#999')
+            return l(X, peripheralCircleColor, accentColor, '#999')
         }).attr('stroke', function(X) {
             if (X === L.node) {
                 return l(X, null, accentColor, null);
