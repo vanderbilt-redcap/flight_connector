@@ -540,7 +540,7 @@ echo "<script type='text/javascript'>
             if (Z === L.node) {
                 return null;
             }
-            var aa = Z.isGroup ? Z.y + (7 + Z.count) : Z.y;
+            var aa = Z.isGroup ? Z.y + getScaledSize(Z.count) : Z.y;
             return 'translate(' + Z.xOffset + ',0)rotate(' + (Z.x - 90) + ')translate(' + aa + ')';
         });
         X.selectAll('circle').transition().duration(w).ease(F).attr('r', function(Z) {
@@ -549,7 +549,7 @@ echo "<script type='text/javascript'>
             } else {
                 if (Z.isGroup) {
                     console.log('maxCircleSize: '+maxCircleSize+'; maxZCount: '+maxZCount);
-                    return 7 + (Z.count * maxCircleSize / maxZCount);
+                    return 7 + getScaledSize(Z.count);
                 } else {
                     return 4.5;
                 }
@@ -680,6 +680,10 @@ echo "<script type='text/javascript'>
         } else {
             hideHeaders();
         }
+    }
+    
+    function getScaledSize(ZCount) {
+        return (ZCount * maxCircleSize / maxZCount);
     }
     
     function increaseFontSizeIfSmall(Z) {
