@@ -548,8 +548,7 @@ echo "<script type='text/javascript'>
                 return 100;
             } else {
                 if (Z.isGroup) {
-                    console.log('maxCircleSize: '+maxCircleSize+'; maxZCount: '+maxZCount);
-                    return 7 + getScaledSize(Z.count);
+                    return getScaledSize(Z.count);
                 } else {
                     return 4.5;
                 }
@@ -683,7 +682,7 @@ echo "<script type='text/javascript'>
     }
     
     function getScaledSize(ZCount) {
-        return (ZCount * maxCircleSize / maxZCount);
+        return 7 + (ZCount * maxCircleSize / maxZCount);
     }
     
     function increaseFontSizeIfSmall(Z) {
