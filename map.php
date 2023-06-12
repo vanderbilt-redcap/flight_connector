@@ -548,6 +548,7 @@ echo "<script type='text/javascript'>
                 return 100;
             } else {
                 if (Z.isGroup) {
+                    console.log('maxCircleSize: '+maxCircleSize+'; maxZCount: '+maxZCount);
                     return 7 + (Z.count * maxCircleSize / maxZCount);
                 } else {
                     return 4.5;
