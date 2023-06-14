@@ -344,6 +344,7 @@ echo "<script type='text/javascript'>
         var Z = 0;
         maxCircleSize = getMaxCircleSize(L.node.children.length);
         L.node.children.forEach(function(ac) {
+            const objectType = (ac.type === 'scholar') ? 'Domains' : '$peopleLabel';
             L.map[ac.key] = true;
             ac._children = j.get(ac.key).filter(function(ad) {
                 return ad.canonicalKey !== Y.canonicalKey;
@@ -361,6 +362,7 @@ echo "<script type='text/javascript'>
                 key: aa + '-group-key',
                 canonicalKey: aa,
                 name: ab,
+                groupType: objectType,
                 count: ab,
                 xOffset: 0
             }];
@@ -559,8 +561,8 @@ echo "<script type='text/javascript'>
             if (Z == L.node) {
                 return '-0.5em';
             }
-            if (!Z.type) {
-                return '0.3em';
+            if (Z.isGroup) {
+                return '0';
             }
             if (!window.location.hash) {
                 return '0em';
@@ -609,11 +611,14 @@ echo "<script type='text/javascript'>
                 });
         });
         X.selectAll('text.label').attr('class', function(Z) {
+            let className = 'label';
             if ((Z.type === 'method' || Z.type === 'content') && window.location.hash && Z.name.length > 25) {
-                return 'label multiline';
-            } else {
-                return 'label';
+                className += ' multiline';
             }
+            if (Z.isGroup) {
+                className += ' twoLine';
+            }
+            return className;
         });
         X.selectAll('text.label-stroke').attr('class', function(Z) {
             if ((Z.type === 'method' || Z.type === 'content') && window.location.hash && Z.name.length > 25) {
@@ -624,6 +629,16 @@ echo "<script type='text/javascript'>
         });
         setTimeout(() => {
             var ml = X.selectAll('text.multiline');
+            X.selectAll('.twoLine tspan').remove();
+            var twoLine = X.selectAll('.twoLine');
+            twoLine.append('tspan')
+                .attr('dy', 8)
+                .attr('x', 0)
+                .text(function(Z) {
+                    return Z.groupType;
+                })
+                .attr('font-size', 10);
+            
             ml.text(function(Z) {
                 const lines = FlightConnector.wrap(Z.name).split(/[\\n\\r]+/);
                 return lines[0].trim();
@@ -917,7 +932,7 @@ echo "<script type='text/javascript'>
             return (X === L.node || X.isGroup) ? '#444' : l(X, '#000', accentColor, '#999');
         })
     }
-
+    
     function p(X) {
         return FlightConnector.makeHash(X);
     }
