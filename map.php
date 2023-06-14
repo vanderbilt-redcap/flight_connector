@@ -344,7 +344,6 @@ echo "<script type='text/javascript'>
         var Z = 0;
         maxCircleSize = getMaxCircleSize(L.node.children.length);
         L.node.children.forEach(function(ac) {
-            const objectType = (ac.type === 'scholar') ? 'Domains' : '$peopleLabel';
             L.map[ac.key] = true;
             ac._children = j.get(ac.key).filter(function(ad) {
                 return ad.canonicalKey !== Y.canonicalKey;
@@ -357,6 +356,11 @@ echo "<script type='text/javascript'>
             });
             var aa = ac.key + '-group',
                 ab = ac._children.length;
+                
+            let objectType = (ac.type === 'scholar') ? 'Domains' : '$peopleLabel';
+            if (ab === 1) {
+                objectType = (ac.type === 'scholar') ? 'Domain' : 'Person';
+            }
             ac._group = [{
                 isGroup: true,
                 key: aa + '-group-key',
