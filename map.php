@@ -632,12 +632,12 @@ echo "<script type='text/javascript'>
             X.selectAll('.twoLine tspan').remove();
             var twoLine = X.selectAll('.twoLine');
             twoLine.append('tspan')
-                .attr('dy', 8)
+                .attr('dy', 7)
                 .attr('x', 0)
                 .text(function(Z) {
                     return Z.groupType;
                 })
-                .attr('font-size', 10);
+                .attr('font-size', 9);
             
             ml.text(function(Z) {
                 const lines = FlightConnector.wrap(Z.name).split(/[\\n\\r]+/);
