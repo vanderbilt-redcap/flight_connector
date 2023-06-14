@@ -149,11 +149,12 @@ echo "<script type='text/javascript'>
             this.parentNode.appendChild(this);
         });
     };
+    var maxScholarsWithNamesShown = 120;
     var a = $width,
         c = $height,
         h = c,
         U = 150,
-        K = ($numRows < 60) ? 16 : ($numRows < 75) ? 14 : ($numRows < 90) ? 12 : ($numRows < 100) ? 10 : ($numRows < 120) ? 8 : ($numRows < 240) ? 4 : 2,
+        K = ($numRows < 60) ? 16 : ($numRows < 75) ? 14 : ($numRows < 90) ? 12 : ($numRows < 100) ? 10 : ($numRows < maxScholarsWithNamesShown) ? 8 : ($numRows < 240) ? 4 : 2,
         S = 20,
         s = 8,
         R = 110,
@@ -755,6 +756,7 @@ echo "<script type='text/javascript'>
         d.selectAll('#contentHeader').attr('display', 'none');
         d.selectAll('#methodHeader').attr('display', 'none');
         d.selectAll('#peopleHeader').attr('display', 'none');
+        d.selectAll('#peopleSubHeader').attr('display', 'none');
     }
     
     function addHeaders(Z) {
@@ -774,6 +776,9 @@ echo "<script type='text/javascript'>
         X = d.selectAll('#a').data(Z);
         X.attr('display', 'block');
         X.enter().append('text').attr('id', 'peopleHeader').attr('text-anchor', 'middle').attr('x', 0).attr('y', 0 - (c / 2 - 2 * t)).text(numScholars+' $peopleLabel').attr('class', 'header').attr('font-size', headerFontSize).on('click', O);
+        if (numScholars >= maxScholarsWithNamesShown) {
+            X.enter().append('text').attr('id', 'peopleSubHeader').attr('text-anchor', 'middle').attr('x', 0).attr('y', 0 - (c / 2 - 2 * t) + headerFontSize - 8).attr('class', 'header').text('(Scroll over names to view)').attr('class', 'header').attr('font-size', 12).on('click', O);
+        }
         X.exit().remove();
 
     }
@@ -796,7 +801,7 @@ echo "<script type='text/javascript'>
         X.append('text').attr('x', function(Z) {
             return U / -2 + t;
         }).attr('fill', '#fff').text(function(Z) {
-            return ($numRows < 120) ? Z.name : '';
+            return ($numRows < maxScholarsWithNamesShown) ? Z.name : '';
         }).attr('font-size', fontSize).transition().duration(w).ease(F).attr('x', function(Z) {
             return Z.x + t;
         }).attr('y', function(Z) {
@@ -820,7 +825,7 @@ echo "<script type='text/javascript'>
                 .attr('height', K);
             sel.select('text')
                 .text(function(Z) {
-                    return ($numRows < 120) ? Z.name : '';
+                    return ($numRows < maxScholarsWithNamesShown) ? Z.name : '';
                 });
         });
 
