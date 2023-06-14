@@ -728,9 +728,9 @@ echo "<script type='text/javascript'>
             if (L.node.count > 80) {
                 return 12;
             } else if (L.node.count > 60) {
-                return 14;
+                return 13;
             } else {
-                return 15;
+                return 14;
             }
         } else {
             return 15;
