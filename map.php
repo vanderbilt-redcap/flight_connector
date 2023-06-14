@@ -134,7 +134,7 @@ if ((count($choices['methods']) > 80) || (count($choices['contents']) > 80)) {
 } else if ((count($choices['methods']) > 40) || (count($choices['contents']) > 40)) {
     $defaultFontSize = 12;
 } else {
-    $defaultFontSize = 13;
+    $defaultFontSize = 14;
 }
 $ucContentLabel = strtoupper(preg_replace("/s$/", "", $contentsLabel));
 $ucMethodLabel = strtoupper(preg_replace("/s$/", "", $methodsLabel));
@@ -720,18 +720,20 @@ echo "<script type='text/javascript'>
             if (window.location.hash && (L.node.type === 'method'  || L.node.type === 'theme')) {
                 return 12;
             } else if (window.location.hash) {
-                return 13;
+                return 14;
             } else {
                 return $defaultFontSize;
             }
         } else if (Z.type === 'scholar' && L.node.type === 'method') {
             if (L.node.count > 80) {
                 return 12;
+            } else if (L.node.count > 60) {
+                return 13;
             } else {
-                return $defaultFontSize;
+                return 14;
             }
         } else {
-            return $defaultFontSize;
+            return 14;
         }
     }
 
