@@ -134,7 +134,7 @@ if ((count($choices['methods']) > 80) || (count($choices['contents']) > 80)) {
 } else if ((count($choices['methods']) > 40) || (count($choices['contents']) > 40)) {
     $defaultFontSize = 12;
 } else {
-    $defaultFontSize = 15;
+    $defaultFontSize = 14;
 }
 $ucContentLabel = strtoupper(preg_replace("/s$/", "", $contentsLabel));
 $ucMethodLabel = strtoupper(preg_replace("/s$/", "", $methodsLabel));
@@ -733,7 +733,7 @@ echo "<script type='text/javascript'>
                 return 14;
             }
         } else {
-            return 15;
+            return 14;
         }
     }
 
