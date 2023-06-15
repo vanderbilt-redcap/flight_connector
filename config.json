@@ -36,7 +36,8 @@
 		"redcap-version-max": ""
 	},
 	"no-auth-pages": [
-		"map"
+		"map",
+		"lookupMatches"
 	],
 	"project-settings": [
 	],

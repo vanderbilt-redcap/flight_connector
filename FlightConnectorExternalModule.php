@@ -126,9 +126,57 @@ $(document).ready(() => {
             $line = "$('#'+row).find('div[data-kind=field-value]').append(\"<div id='\"+row+\"-left' class='leftCol'></div><div id='\"+row+\"-right' class='rightCol'></div>\");";
         }
         $header = makeHeader($this, "Flight Connector", 650);
+        $url = $this->getUrl("lookupMatches.php");
+        if (!preg_match("/NOAUTH/", $url)) {
+            $url .= "&NOAUTH";
+        }
+        $jqueryUI = $this->getUrl("jquery-ui.min.js");
 
+        $csrfToken = $this->getCSRFToken();
         echo "
+<script src='$jqueryUI'></script>
+<div id='dialog' title='Matches from Prior Entries'>
+    <div id='choices'></div>
+</div>
 <script>
+        let dialog;
+        let matches = [];
+
+        function searchForMatches(field) {
+            const item = $('[name='+field+']').val().trim();
+            if (item.trim()) {
+                const url = '$url';
+                const postData = {};
+                postData[field] = item;
+                postData['redcap_csrf_token'] = '$csrfToken';
+                $.post(url, postData, (json) => {
+                    console.log(json);
+                    const m = JSON.parse(json);
+                    if (m.length > 0) {
+                        displayMatches(m);
+                    }                    
+                });
+            }
+        }
+        
+        function displayMatches(m) {
+            matches = m;
+
+            let html = '<p>Do you want to use any of these prior entries as a starting point?</p>';
+            for (let i=0; i < matches.length; i++) {
+                const match = matches[i];
+                html += makeChoiceText(i, 'Name: '+match['name']+'<br/>Email: '+match['email']);
+            }
+            html += makeChoiceText(-1, 'I do not want to pre-fill anything more.');
+
+            $('#choices').html(html);
+            dialog.dialog('open');
+        }
+        
+        function makeChoiceText(i, text) {
+            return '<div style=\"text-align: center; margin: 8px 0; padding: 4px; border: 1px solid #888; background-color: #eeeeee; cursor: pointer;\" onclick=\"chooseName('+i+');\">'+text+'</div>';
+        }
+
         function twoColumnCheckboxes() {
             const checkboxes = {};
             $('tr td div.choicevert').each(function(index, ob) {
@@ -158,9 +206,49 @@ $(document).ready(() => {
                 }
             }
         }
+        
+        function chooseName(i) {
+            if ((i >= 0) && (i < matches.length)) {
+                const match = matches[i];
+                const fields = ['contents', 'methods'];
+                
+                for (let i=0; i < fields.length; i++) {
+                    const field = fields[i];
+                    const regex = new RegExp('__chk__'+field);
+                    $('input[type=hidden]').each((idx, ob) => {
+                        const name = $(ob).attr('name');
+                        if (name.match(regex) && $(ob).val()) {
+                            $('#id-'+name).click();
+                        }
+                    });
+                }
+                
+                for (let i=0; i < fields.length; i++) {
+                    const field = fields[i];
+                    const checks = match[field] ?? [];
+                    for (let j=0; j < checks.length; j++) {
+                        const id = '__chk__'+field+'_RC_'+checks[j];
+                        $('#id-'+id).click();
+                    }
+                }
+                $('#name').val(match['name']);
+                $('#email').val(match['email']);
+            }
+            dialog.dialog('close');
+         }
+        
         $(document).ready(function() {
             twoColumnCheckboxes();
             $('#surveytitle').replaceWith(\"<div id='surveytitle'>$header</div>\");
+            $('[name=name]').on('blur', () => { searchForMatches('name'); });
+            $('[name=email]').on('blur', () => { searchForMatches('email'); });
+            
+            dialog = $('#dialog').dialog({
+                autoOpen: false,
+                height: 400,
+                width: 400,
+                modal: true
+            });
         });
 </script>
 <style>
