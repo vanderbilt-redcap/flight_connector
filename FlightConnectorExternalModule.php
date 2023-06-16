@@ -231,8 +231,8 @@ $(document).ready(() => {
                         $('#id-'+id).click();
                     }
                 }
-                $('#name').val(match['name']);
-                $('#email').val(match['email']);
+                $('[name=name]').val(match['name']);
+                $('[name=email]').val(match['email']);
             }
             dialog.dialog('close');
          }
