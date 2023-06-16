@@ -141,10 +141,20 @@ $(document).ready(() => {
 <script>
         let dialog;
         let matches = [];
+        let prevName = '';
+        let prevEmail = '';
 
         function searchForMatches(field) {
             const item = $('[name='+field+']').val().trim();
-            if (item.trim()) {
+            if (
+                item.trim()
+                && (
+                    (prevName !== $('[name=name]').val())
+                    || (prevEmail !== $('[name=email]').val())
+                )
+            ) {
+                prevName = $('[name=name]').val();
+                prevEmail = $('[name=email]').val();
                 const url = '$url';
                 const postData = {};
                 postData[field] = item;
@@ -231,6 +241,9 @@ $(document).ready(() => {
                         $('#id-'+id).click();
                     }
                 }
+
+                prevName = match['name'];
+                prevEmail = match['email'];
                 $('[name=name]').val(match['name']);
                 $('[name=email]').val(match['email']);
             }
