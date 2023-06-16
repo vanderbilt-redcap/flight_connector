@@ -167,7 +167,7 @@ $(document).ready(() => {
                 const match = matches[i];
                 html += makeChoiceText(i, 'Name: '+match['name']+'<br/>Email: '+match['email']);
             }
-            html += makeChoiceText(-1, 'I do not want to pre-fill anything more.');
+            html += makeChoiceText(-1, 'I do not want to pre-fill any additional fields.');
 
             $('#choices').html(html);
             dialog.dialog('open');
