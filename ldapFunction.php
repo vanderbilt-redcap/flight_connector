@@ -9,6 +9,7 @@ function getLDAP($pid) {
     $json = \REDCap::getDataDictionary($pid, "json");
     $metadata = json_decode($json, TRUE);
     $ldapField = "in_ldap";
+    $deptField = "department";
     $hasLDAPField = FALSE;
     foreach ($metadata as $row) {
         if ($row['field_name'] == $ldapField) {
@@ -31,26 +32,30 @@ function getLDAP($pid) {
         $vumcEmail = preg_replace("/@vanderbilt\.edu$/i", "@vumc.org", $email);
         list($first, $last) = NameMatcher::splitName($name, 2);
         $first = preg_replace("/\s+\(\w+\)/", "", $first);    // parentheses throw off LDAP
-        $priorInLDAP = $row[$ldapField];
-        if ($name && LDAP::getEmailFromName($first, $last)) {
+        $key = LDAP::getNameAssociations($first, $last);
+        $nameInfo = LDAP::getLDAPByMultiple(array_keys($key), array_values($key));
+        $vuInfo = LDAP::getLDAP("mail", $vuEmail);
+        $vumcInfo = LDAP::getLDAP("mail", $vumcEmail);
+
+
+        if ($name && ($nameInfo['count'] > 0)) {
             $newInLDAP = 1;
         } else if (
             $email
-            && (
-                LDAP::getNameFromEmail($vuEmail)
-                || LDAP::getNameFromEmail($vumcEmail)
-            )
+            && ($vumcInfo['count'] > 0)
         ) {
             $newInLDAP = 1;
+            $dept = LDAP::findField($vumcInfo, "department", 0);
+        } else if ($email && ($vuInfo['count'] > 0)) {
         } else {
             $newInLDAP = 0;
+            $dept = LDAP::findField($vuInfo, "department", 0);
         }
-        if ($priorInLDAP !== $newInLDAP) {
-            $upload[] = [
-                "record_id" => $recordId,
-                $ldapField => "$newInLDAP",
-            ];
-        }
+        $upload[] = [
+            "record_id" => $recordId,
+            $ldapField => "$newInLDAP",
+            $deptField => "$dept",
+        ];
     }
 
     if (!empty($upload)) {
