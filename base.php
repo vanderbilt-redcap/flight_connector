@@ -274,7 +274,7 @@ function makeD3Data($data, $choices) {
             $outData['scholars'][] = [
                 "type" => "scholar",
                 "name" => $name,
-                "description" => "$departmentText<a href='mailto:$email'>Contact by Email</a> - <a href='$pubMedLink' target='_blank'>Search PubMed</a>",
+                "description" => "$departmentText<a href='mailto:$email'>$email</a> - <a href='$pubMedLink' target='_blank'>Search PubMed</a>",
                 "links" => $checks,
             ];
         }
