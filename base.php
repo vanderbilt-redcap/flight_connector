@@ -128,6 +128,9 @@ function filterOutDuplicateNames($data) {
     foreach ($data as $row) {
         if ($row['name']) {
             $newDataByName[$row['name']] = $row;
+        } else if ($row['firstname'] && $row['lastname']) {
+            $name = $row['firstname']." ".$row['lastname'];
+            $newDataByName[$name] = $row;
         }
     }
     return array_values($newDataByName);
