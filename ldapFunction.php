@@ -41,9 +41,15 @@ function getLDAP($pid) {
         $vumcInfo = LDAP::getLDAP("mail", $vumcEmail);
 
 
+        $dept = "";
         if ($name && ($nameInfo['count'] > 0)) {
-            $newInLDAP = 1;
-            $dept = LDAP::findField($nameInfo, "department", 0);
+            $employeeType = LDAP::findField($nameInfo, "employeetype", 0);
+            if ($employeeType == "Non-Employee") {
+                $newInLDAP = 0;
+            } else {
+                $newInLDAP = 1;
+                $dept = LDAP::findField($nameInfo, "department", 0);
+            }
         } else if (
             $email
             && ($vumcInfo['count'] > 0)
@@ -54,6 +60,10 @@ function getLDAP($pid) {
             $newInLDAP = 1;
             $dept = LDAP::findField($vuInfo, "department", 0);
         } else {
+            $newInLDAP = 0;
+        }
+        if ($dept == "Terminated_Organization") {
+            $dept = "";
             $newInLDAP = 0;
         }
         $uploadRow = [
