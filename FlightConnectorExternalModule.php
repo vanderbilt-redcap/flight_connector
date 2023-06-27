@@ -142,7 +142,7 @@ $(document).ready(() => {
         }
         $jqueryUI = $this->getUrl("jquery-ui.min.js");
 
-        $fieldsJSON = json_encode(array_keys(self::FIELDS));
+        $fieldsJSON = json_encode(array_keys($this->getFields($project_id)));
 
         $csrfToken = $this->getCSRFToken();
         echo "

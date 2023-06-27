@@ -43,7 +43,7 @@ $choices = getChoices($metadata);
 
 $upload = [];
 $recordId = 1;
-$fields = array_keys(FlightConnectorExternalModule::FIELDS);
+$fields = array_keys($module->getFields($pid));
 foreach ($vfrsData as $row) {
     $uploadRow = [
         "record_id" => $recordId,
