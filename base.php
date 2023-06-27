@@ -234,11 +234,16 @@ function downloadChoicesForField($module, $pid, $field) {
     return [];
 }
 
-function makeD3Data($data, $choices) {
+function makeD3Data($data, $choices, $module) {
     $outData = [];
     $outData['scholars'] = [];
-    $outData['types'] = [];
-    $outData['perspectives'] = [];
+    $outData['contents'] = [];
+    $outData['methods'] = [];
+    $pid = getPid();
+
+    $fields = array_keys($module->getFields($pid));
+    $contentsField = $fields[0];
+    $methodsField = $fields[1];
 
     $counts = [];
     foreach ($choices as $field => $indices) {
@@ -280,25 +285,25 @@ function makeD3Data($data, $choices) {
         }
     }
 
-    foreach ($choices['contents'] as $index => $label) {
+    foreach ($choices[$contentsField] as $index => $label) {
         $label = clearHTML($label);
-        if ($counts['contents'][$index] > 0) {
+        if ($counts[$contentsField][$index] > 0) {
             $slug = $index;
             $outData['contents'][] = [
                 "type" => "content",
                 "name" => $label,
-                "description" => $label." - ".$counts['contents'][$index]." people - click to explore",
+                "description" => $label." - ".$counts[$contentsField][$index]." people - click to explore",
                 "slug" => $slug,
             ];
         }
     }
-    foreach ($choices['methods'] as $index => $label) {
+    foreach ($choices[$methodsField] as $index => $label) {
         $label = clearHTML($label);
-        if ($counts['methods'][$index] > 0) {
+        if ($counts[$methodsField][$index] > 0) {
             $outData['methods'][] = [
                 "type" => "method",
                 "name" => $label,
-                "description" => $label." - ".$counts['methods'][$index]." people - click to explore",
+                "description" => $label." - ".$counts[$methodsField][$index]." people - click to explore",
                 "count" => $counts['methods'][$index],
             ];
         }

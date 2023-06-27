@@ -13,14 +13,21 @@ $cssUrl = $module->getUrl("connect.css");
 $ftLogo = $module->getUrl("flight_tracker_icon.png");
 $json = \REDCap::getDataDictionary($pid, "json");
 $metadata = json_decode($json, TRUE);
+
+$fields = array_keys($module->getFields($pid));
+$contentsField = $fields[0];
+$methodsField = $fields[1];
+
 $contentsLabel = "Contents";
 $methodsLabel = "Methods";
 $peopleLabel = "People";
-foreach ($metadata as $row) {
-    if ($row['field_name'] == "contents") {
-        $contentsLabel = $row['field_label'];
-    } else if ($row['field_name'] == "methods") {
-        $methodsLabel = $row['field_label'];
+if (!FlightConnectorExternalModule::isEFSRetreat($pid)) {
+    foreach ($metadata as $row) {
+        if ($row['field_name'] == $contentsField) {
+            $contentsLabel = $row['field_label'];
+        } else if ($row['field_name'] == $methodsField) {
+            $methodsLabel = $row['field_label'];
+        }
     }
 }
 
@@ -65,7 +72,7 @@ $choices = [];
 foreach (array_keys($module->getFields($pid)) as $field) {
     $choices[$field] = downloadChoicesForField($module, $pid, $field);
 }
-$inputData = makeD3Data($redcapData, $choices);
+$inputData = makeD3Data($redcapData, $choices, $module);
 $matchedItems = [];
 foreach (array_keys($module->getFields($pid)) as $field) {
     $matchedItems[$field] = [];
