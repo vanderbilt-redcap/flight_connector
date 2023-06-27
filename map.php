@@ -99,7 +99,8 @@ foreach ($choices as $field => $fieldChoices) {
     }
 }
 foreach ($redcapData as $row) {
-    $name = str_replace("'", "\\'", $row['name']);
+    $name = $row['name'] ?: $row['firstname']." ".$row['lastname'];
+    $name = str_replace("'", "\\'", $name);
     $options[] = "<option value='$name' class='select_scholars'>$name</option>";
 }
 $optionHTML = implode("", $options);

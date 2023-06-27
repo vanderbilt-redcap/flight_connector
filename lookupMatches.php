@@ -13,7 +13,12 @@ if ($pid && isset($_POST['name'])) {
     try {
         list($firstName, $lastName) = NameMatcher::splitName($name, 2);
         foreach ($redcapData as $row) {
-            list($first, $last) = NameMatcher::splitName($row['name'], 2);
+            if ($row['name']) {
+                list($first, $last) = NameMatcher::splitName($name, 2);
+            } else {
+                $first = $row['firstname'] ?? "";
+                $last = $row['lastname'] ?? "";
+            }
             if ($first && $last && NameMatcher::matchName($first, $last, $firstName, $lastName)) {
                 addRow($dataByName, $row);
             }
@@ -54,9 +59,10 @@ function getChecks($row, $checkField) {
 }
 
 function addRow(&$dataByName, $row) {
-    $dataByName[$row['name']."|".$row['email']] = [
+    $name = $row['name'] ?: $row['firstname']." ".$row['lastname'];
+    $dataByName[$name."|".$row['email']] = [
         "record" => $row['record_id'],
-        "name" => $row['name'],
+        "name" => $name,
         "email" => $row['email'],
         "contents" => getChecks($row, "contents"),
         "methods" => getChecks($row, "methods"),

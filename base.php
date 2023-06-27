@@ -94,7 +94,8 @@ function screenOutEFSStaff($data) {
 
     $newData = [];
     foreach ($data as $row) {
-        if (!in_array(strtolower($row['name']), $staffInLower)) {
+        $name = $row['name'] ?: $row['firstname']." ".$row['lastname'];
+        if (!in_array(strtolower($name), $staffInLower)) {
             $newData[] = $row;
         }
     }
@@ -106,6 +107,10 @@ function alphabetizeByLastName($data) {
     foreach ($data as $row) {
         if ($row['name']) {
             list($first, $last) = splitName($row['name'], 2);
+            $dataByLastName[strtolower($last.", ".$first)] = $row;
+        } else if ($row['firstname'] && $row['lastname']) {
+            $first = $row['firstname'];
+            $last = $row['lastname'];
             $dataByLastName[strtolower($last.", ".$first)] = $row;
         }
     }
@@ -257,7 +262,7 @@ function makeD3Data($data, $choices, $module) {
     }
 
     foreach ($data as $row) {
-        $name = $row['name'];
+        $name = $row['name'] ?: $row['firstname']." ".$row['lastname'];
         $email = $row['email'];
         $department = $row['department'] ?? "";
         $checks = [];

@@ -25,7 +25,7 @@ function getLDAP($pid) {
     $upload = [];
     foreach ($redcapData as $row) {
         $recordId = $row['record_id'];
-        $name = $row['name'];
+        $name = $row['name'] ?: $row['firstname']." ".$row['lastname'];
         $email = $row['email'];
         $vuEmail = preg_replace("/@vumc\.org$/i", "@vanderbilt.edu", $email);
         $vumcEmail = preg_replace("/@vanderbilt\.edu$/i", "@vumc.org", $email);
