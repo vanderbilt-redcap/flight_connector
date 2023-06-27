@@ -11,10 +11,13 @@ function getLDAP($pid) {
     $ldapField = "in_ldap";
     $deptField = "department";
     $hasLDAPField = FALSE;
+    $hasDepartmentField = FALSE;
     foreach ($metadata as $row) {
         if ($row['field_name'] == $ldapField) {
             $hasLDAPField = TRUE;
-            break;
+        }
+        if ($row['field_name'] == $deptField) {
+            $hasDepartmentField = TRUE;
         }
     }
 
@@ -47,15 +50,19 @@ function getLDAP($pid) {
             $newInLDAP = 1;
             $dept = LDAP::findField($vumcInfo, "department", 0);
         } else if ($email && ($vuInfo['count'] > 0)) {
+            $newInLDAP = 1;
+            $dept = LDAP::findField($vuInfo, "department", 0);
         } else {
             $newInLDAP = 0;
-            $dept = LDAP::findField($vuInfo, "department", 0);
         }
-        $upload[] = [
+        $uploadRow = [
             "record_id" => $recordId,
             $ldapField => "$newInLDAP",
-            $deptField => "$dept",
         ];
+        if ($hasDepartmentField) {
+            $uploadRow[$deptField] = $dept;
+        }
+        $upload[] = $uploadRow;
     }
 
     if (!empty($upload)) {
