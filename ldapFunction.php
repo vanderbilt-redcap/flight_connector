@@ -43,6 +43,7 @@ function getLDAP($pid) {
 
         if ($name && ($nameInfo['count'] > 0)) {
             $newInLDAP = 1;
+            $dept = LDAP::findField($nameInfo, "department", 0);
         } else if (
             $email
             && ($vumcInfo['count'] > 0)
