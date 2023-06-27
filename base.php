@@ -251,6 +251,7 @@ function makeD3Data($data, $choices) {
     foreach ($data as $row) {
         $name = $row['name'];
         $email = $row['email'];
+        $department = $row['department'] ?? "";
         $checks = [];
         foreach ($row as $field => $value) {
             if (($value == "1") && preg_match("/___/", $field)) {
@@ -266,15 +267,14 @@ function makeD3Data($data, $choices) {
                 }
             }
         }
-        $resetLink = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}";
-        $reset = "<a href='$resetLink'>View All</a>";
 
+        $departmentText = $department ? $department." - " : "";
         $pubMedLink = "https://pubmed.ncbi.nlm.nih.gov/?term=".urlencode(strtolower($name));
         if ($name && !empty($checks)) {
             $outData['scholars'][] = [
                 "type" => "scholar",
                 "name" => $name,
-                "description" => "<a href='mailto:$email'>Contact $name by Email</a> - <a href='$pubMedLink' target='_blank'>Search PubMed for $name</a> - $reset",
+                "description" => "$departmentText<a href='mailto:$email'>Contact by Email</a> - <a href='$pubMedLink' target='_blank'>Search PubMed</a>",
                 "links" => $checks,
             ];
         }
@@ -287,7 +287,7 @@ function makeD3Data($data, $choices) {
             $outData['contents'][] = [
                 "type" => "content",
                 "name" => $label,
-                "description" => $label." - ".$counts['contents'][$index]." people - click to explore - $reset",
+                "description" => $label." - ".$counts['contents'][$index]." people - click to explore",
                 "slug" => $slug,
             ];
         }
@@ -298,7 +298,7 @@ function makeD3Data($data, $choices) {
             $outData['methods'][] = [
                 "type" => "method",
                 "name" => $label,
-                "description" => $label." - ".$counts['methods'][$index]." people - click to explore - $reset",
+                "description" => $label." - ".$counts['methods'][$index]." people - click to explore",
                 "count" => $counts['methods'][$index],
             ];
         }

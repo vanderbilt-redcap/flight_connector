@@ -107,6 +107,7 @@ foreach ($radioConfig as $filterTerm => $label) {
     $radios[] = "<input type='radio' name='filter' value='$filterTerm' id='$filterTerm' onclick='FlightConnector.filterSelect(this);' /><label for='$filterTerm'>$label</label>";
 }
 $radioHTML = implode("&nbsp;&nbsp;&nbsp;&nbsp;", $radios);
+$resetLink = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}";
 
 $conjugation = makeConjunction([$contentsLabel, $methodsLabel, $peopleLabel]);
 
@@ -116,7 +117,7 @@ echo "
 		<div class='wrap'>
 			<div id='main'>
 			    <p style='text-align: center;'>$radioHTML<br/>
-			    <select items='$conjugation' class='combobox' id='search'>$optionHTML</select> <button onclick='const val = $(\"#search option:selected\").val(); window.location.hash = FlightConnector.makeHash(val); return false;' style='margin-left: 50px;'>Search</button></p>
+			    <select items='$conjugation' class='combobox' id='search'>$optionHTML</select> <button onclick='const val = $(\"#search option:selected\").val(); window.location.hash = FlightConnector.makeHash(val); return false;' style='margin-left: 50px;'>Search</button> <button style='margin-left: 25px;' onclick='location.href=\"$resetLink\"; return false;'>Reset</button></p>
 				<div id='main-graph-info' class='graph-info'></div>
 				<div id='graph'></div>
 				$saveDiv
