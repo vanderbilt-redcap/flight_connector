@@ -21,10 +21,6 @@ function getLDAP($pid) {
         }
     }
 
-    if (!$hasLDAPField) {
-        return ["error" => "Does not have LDAP field!"];
-    }
-
     $redcapData = \REDCap::getData($pid, "json-array");
     $upload = [];
     foreach ($redcapData as $row) {
@@ -68,12 +64,16 @@ function getLDAP($pid) {
         }
         $uploadRow = [
             "record_id" => $recordId,
-            $ldapField => "$newInLDAP",
         ];
+        if ($hasLDAPField) {
+            $uploadRow[$ldapField] = $newInLDAP;
+        }
         if ($hasDepartmentField) {
             $uploadRow[$deptField] = $dept;
         }
-        $upload[] = $uploadRow;
+        if (count($uploadRow) > 1) {
+            $upload[] = $uploadRow;
+        }
     }
 
     if (!empty($upload)) {

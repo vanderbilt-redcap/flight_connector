@@ -62,12 +62,12 @@ if (empty($redcapData)) {
     exit;
 }
 $choices = [];
-foreach (array_keys(FlightConnectorExternalModule::FIELDS) as $field) {
+foreach (array_keys($module->getFields($pid)) as $field) {
     $choices[$field] = downloadChoicesForField($module, $pid, $field);
 }
 $inputData = makeD3Data($redcapData, $choices);
 $matchedItems = [];
-foreach (array_keys(FlightConnectorExternalModule::FIELDS) as $field) {
+foreach (array_keys($module->getFields($pid)) as $field) {
     $matchedItems[$field] = [];
     foreach ($inputData[$field] as $ary) {
         $matchedItems[$field][] = $ary['name'];

@@ -13,7 +13,7 @@ $cssUrl = $module->getUrl("connect.css");
 $ftLogo = $module->getUrl("flight_tracker_icon.png");
 $thisUrl = $module->getUrl("install.php");
 
-$fields = FlightConnectorExternalModule::FIELDS;
+$fields = $module->getFields($pid);
 $applicableInstrument = FlightConnectorExternalModule::INSTRUMENT;
 $hashSetting = FlightConnectorExternalModule::UNIQUE_HASH_SETTING;
 $instrumentLabel = "Flight Connector";

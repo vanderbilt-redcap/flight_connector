@@ -11,11 +11,28 @@ use \ExternalModules\AbstractExternalModule;
 class FlightConnectorExternalModule extends AbstractExternalModule
 {
     const INSTRUMENT = "flight_connector_survey";
-    const FIELDS = ["contents" => "Concepts or Content Areas", "methods" => "Methods or Tools"];
     const UNIQUE_HASH_SETTING = "unique_hash";
 
+    public function getFields($pid) {
+        $option1 = ["contents" => "Concepts or Content Areas", "methods" => "Methods or Tools"];
+        $option2 = ["c" => "Content Areas", "m" => "Methods"];
+
+        foreach([$option1, $option2] as $option) {
+            $fields = array_keys($option);
+            $sql = "SELECT field_name FROM redcap_metadata WHERE project_id = ? AND field_name IN (?, ?)";
+            $q = $this->query($sql, [$pid, $fields[0], $fields[1]]);
+            if ($q->fetch_assoc()) {
+                return $option;
+            }
+        }
+        return $option1;
+    }
+
     function isSetup($project_id) {
-        $fields = array_keys(self::FIELDS);
+        if (($project_id == 172325) && self::isVanderbilt()) {
+            return TRUE;
+        }
+        $fields = array_keys(self::getFields($project_id));
         $sql = "SELECT field_name FROM redcap_metadata WHERE project_id = ? AND form_name = ? AND field_name IN (?, ?)";
         $q = $this->query($sql, [$project_id, "flight_connector_survey", $fields[0], $fields[1]]);
         return $q->fetch_assoc();
@@ -40,23 +57,16 @@ $(document).ready(() => {
         }
     }
 
+    private static function isVanderbilt() {
+        return in_array(SERVER_NAME, ["redcap.vanderbilt.edu", "redcaptest.vanderbilt.edu"]);
+    }
+
     public function cron() {
-        if (in_array(SERVER_NAME, ["redcap.vanderbilt.edu", "redcaptest.vanderbilt.edu"])) {
+        if (self::isVanderbilt()) {
             $allPids = $this->framework->getProjectsWithModuleEnabled();
             foreach ($allPids as $pid) {
                 if ($this->isActiveProject($pid)) {
-                    $json = \REDCap::getDataDictionary($pid, "json");
-                    $metadata = json_decode($json, TRUE);
-                    $hasLDAPField = FALSE;
-                    foreach ($metadata as $row) {
-                        if ($row['field_name'] == "in_ldap") {
-                            $hasLDAPField = TRUE;
-                            break;
-                        }
-                    }
-                    if ($hasLDAPField) {
-                        getLDAP($pid);
-                    }
+                    getLDAP($pid);
                 }
             }
         }
@@ -131,6 +141,8 @@ $(document).ready(() => {
             $url .= "&NOAUTH";
         }
         $jqueryUI = $this->getUrl("jquery-ui.min.js");
+
+        $fieldsJSON = json_encode(array_keys(self::FIELDS));
 
         $csrfToken = $this->getCSRFToken();
         echo "
@@ -220,7 +232,7 @@ $(document).ready(() => {
         function chooseName(i) {
             if ((i >= 0) && (i < matches.length)) {
                 const match = matches[i];
-                const fields = ['contents', 'methods'];
+                const fields = $fieldsJSON;
                 
                 for (let i=0; i < fields.length; i++) {
                     const field = fields[i];
