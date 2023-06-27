@@ -28,8 +28,12 @@ class FlightConnectorExternalModule extends AbstractExternalModule
         return $option1;
     }
 
+    static function isEFSRetreat($pid) {
+        return ($pid == 172325) && self::isVanderbilt();
+    }
+
     function isSetup($project_id) {
-        if (($project_id == 172325) && self::isVanderbilt()) {
+        if (self::isEFSRetreat($project_id)) {
             return TRUE;
         }
         $fields = array_keys(self::getFields($project_id));
@@ -130,6 +134,9 @@ $(document).ready(() => {
     }
 
     function hook_survey_page ($project_id, $record,$instrument,$event_id, $group_id, $survey_hash,$response_id, $repeat_instance) {
+        if (self::isEFSRetreat($project_id)) {
+            return;
+        }
         if (version_compare(REDCAP_VERSION, '12.0.0', '<')) {
             $line = "$(ob).parent().find('label.fl').after(\"<div id='\"+row+\"-left' class='leftCol'></div><div id='\"+row+\"-right' class='rightCol'></div>\");";
         } else {
