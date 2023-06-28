@@ -37,7 +37,8 @@
 	},
 	"no-auth-pages": [
 		"map",
-		"lookupMatches"
+		"lookupMatches",
+		"generateQR"
 	],
 	"project-settings": [
 	],

@@ -163,8 +163,8 @@ function makeBothLinks($module, $publicSurveyLink = "") {
         $publicSurveyLink = $module->getPublicSurveyUrl($pid) ?? "";
     }
     if ($publicSurveyLink && $mapUrl) {
-        $mapQRCode = getQRCodeUrl($mapUrl);
-        $surveyQRCode = getQRCodeUrl($publicSurveyLink);
+        $mapQRCode = getQRCodeUrl($module, $mapUrl);
+        $surveyQRCode = getQRCodeUrl($module, $publicSurveyLink);
         $html = "<table class='centered max-width'><tr>";
         $html .= "<td class='centered'><p class='centered'>Share this public link with others to populate your data.<br/><input id='surveyUrl' value='$publicSurveyLink' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#surveyUrl\"));'>Copy</a></span></p><p class='centered'>Share this public link to see the Flight Tracker Map real-time as the data grows. <br/><input id='mapUrl' value='$mapUrl' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#mapUrl\"));'>Copy</a> <a href='javascript:;' onclick='$(\"#mapQR\").show(); $(\"#surveyQR\").show();' >Show QR Codes</a></span></p></td>";
         $html .= "<td id='surveyQR' style='display: none;'><div class='smallest'>Survey Link:</div><img src='$surveyQRCode' alt='Survey QR Code' /></td>";
@@ -177,8 +177,8 @@ function makeBothLinks($module, $publicSurveyLink = "") {
 
 }
 
-function getQRCodeUrl($value) {
-    return APP_PATH_WEBROOT_FULL."redcap_v".REDCAP_VERSION."/Authentication/generate_qrcode.php?value=".urlencode($value);
+function getQRCodeUrl($module, $value) {
+    return $module->getUrl("generateQR.php")."&NOAUTH&value=".urlencode($value);
 }
 
 function getChoices($metadata) {
