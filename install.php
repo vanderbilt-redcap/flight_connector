@@ -191,8 +191,7 @@ if ($publicSurveyLink) {
     $projectHomeUrl = APP_PATH_WEBROOT."index.php?pid=$pid";
     echo makeHeader($module, "Flight Connector");
     echo "<h2>Setup Complete!</h2>";
-    echo makePublicSurveyLink($module, $publicSurveyLink);
-    echo makeMapLink($module);
+    echo makeBothLinks($module, $publicSurveyLink);
     echo "<p class='centered max-width'>Both of these links are available in REDCap's left-hand toolbar. The Public Survey Link is available under Survey Distribution Tools, and the Flight Connector Map is under Bookmarks.</p>";
     echo "<p class='bolded centered max-width'><a href='$projectHomeUrl'>REDCap Project's Home Page</a></p>";
 } else {

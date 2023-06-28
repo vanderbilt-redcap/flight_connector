@@ -162,7 +162,8 @@ function makePublicSurveyLink($module, $publicSurveyLink = "") {
         $publicSurveyLink = $module->getPublicSurveyUrl($pid) ?? "";
     }
     if ($publicSurveyLink) {
-        return "<p class='centered max-width' style='margin-top: 0; margin-bottom: 0;'>Share this public link with others to populate your data.<br/><input id='surveyUrl' value='$publicSurveyLink' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#surveyUrl\"));'>Copy</a></span></p>";
+        $qrCodeUrl = getQRCodeUrl($publicSurveyLink);
+        return "<table class='centered max-width' style='margin-top: 0; margin-bottom: 0;'><tr><td class='centered'>Share this public link with others to populate your data.<br/><input id='surveyUrl' value='$publicSurveyLink' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#surveyUrl\"));'>Copy</a></span></td><td><div class='smallest'>Survey Link:</div><img src='$qrCodeUrl' alt='QR Code' /></td></tr></table>";
     } else {
         return "";
     }
@@ -170,7 +171,33 @@ function makePublicSurveyLink($module, $publicSurveyLink = "") {
 
 function makeMapLink($module) {
     $mapUrl = $module->getMapURL();
-    return "<p class='centered max-width'>Share this public link to see the Flight Tracker Map real-time as the data grows. <br/><input id='mapUrl' value='$mapUrl' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#mapUrl\"));'>Copy</a></span></p>";
+    $qrCodeUrl = getQRCodeUrl($mapUrl);
+    return "<table class='centered max-width'><tr><td class='centered'>Share this public link to see the Flight Tracker Map real-time as the data grows. <br/><input id='mapUrl' value='$mapUrl' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#mapUrl\"));'>Copy</a></span></td><td><div class='smallest'>Map Link:</div><img src='$qrCodeUrl' alt='QR Code' /></td></tr></table>";
+}
+
+function makeBothLinks($module, $publicSurveyLink = "") {
+    $mapUrl = $module->getMapURL();
+    $pid = getPid();
+    if (!$publicSurveyLink && $pid) {
+        $publicSurveyLink = $module->getPublicSurveyUrl($pid) ?? "";
+    }
+    if ($publicSurveyLink && $mapUrl) {
+        $mapQRCode = getQRCodeUrl($mapUrl);
+        $surveyQRCode = getQRCodeUrl($publicSurveyLink);
+        $html = "<table class='centered max-width'><tr>";
+        $html .= "<td><div class='smaller'>Map Link:</div><img src='$mapQRCode' alt='Map QR Code' /></td>";
+        $html .= "<td class='centered'><p class='centered'>Share this public link with others to populate your data.<br/><input id='surveyUrl' value='$publicSurveyLink' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#surveyUrl\"));'>Copy</a></span></p><p class='centered'>Share this public link to see the Flight Tracker Map real-time as the data grows. <br/><input id='mapUrl' value='$mapUrl' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#mapUrl\"));'>Copy</a></span></p></td>";
+        $html .= "<td><div class='smallest'>Survey Link:</div><img src='$surveyQRCode' alt='Survey QR Code' /></td>";
+        $html .= "</tr></table>";
+        return $html;
+    } else {
+        return "";
+    }
+
+}
+
+function getQRCodeUrl($value) {
+    return APP_PATH_WEBROOT_FULL."redcap_v".REDCAP_VERSION."/Authentication/generate_qrcode.php?value=".urlencode($value);
 }
 
 function getChoices($metadata) {
