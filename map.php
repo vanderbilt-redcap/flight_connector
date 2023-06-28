@@ -65,7 +65,7 @@ echo makeHeader($module, "Flight Connector");
 $redcapData = getData($pid);
 if (empty($redcapData)) {
     echo "<p class='centered max-width thickBorder padded'>No data have been entered.</p>";
-    echo makePublicSurveyLink($module);
+    echo makeBothLinks($module);
     exit;
 }
 $choices = [];
@@ -82,7 +82,7 @@ foreach (array_keys($module->getFields($pid)) as $field) {
 }
 $inputJSON = json_encode($inputData);
 
-echo makePublicSurveyLink($module);
+echo makeBothLinks($module);
 
 $d3Link = $module->getUrl("d3.v3.min.js");
 
