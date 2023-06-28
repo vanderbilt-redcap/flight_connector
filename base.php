@@ -163,7 +163,7 @@ function makePublicSurveyLink($module, $publicSurveyLink = "") {
     }
     if ($publicSurveyLink) {
         $qrCodeUrl = getQRCodeUrl($publicSurveyLink);
-        return "<table class='centered max-width' style='margin-top: 0; margin-bottom: 0;'><tr><td class='centered'>Share this public link with others to populate your data.<br/><input id='surveyUrl' value='$publicSurveyLink' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#surveyUrl\"));'>Copy</a></span> <a href='javascript:;' onclick='$(\"#surveyQR\").show();'>Display QR Code</a></span></td><td id='surveyQR' style='display: none;'></tr></table>";
+        return "<table class='centered max-width' style='margin-top: 0; margin-bottom: 0;'><tr><td class='centered'>Share this public link with others to populate your data.<br/><input id='surveyUrl' value='$publicSurveyLink' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#surveyUrl\"));'>Copy</a> <a href='javascript:;' onclick='$(\"#surveyQR\").show();'>Display QR Code</a></span></td><td id='surveyQR' style='display: none;'><div class='smallest'>Survey Link:</div><img src='$qrCodeUrl' alt='QR Code' /></td></tr></table>";
     } else {
         return "";
     }
