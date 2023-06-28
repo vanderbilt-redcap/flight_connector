@@ -40,6 +40,7 @@ function getLDAP($pid) {
         $dept = "";
         if ($name && ($nameInfo['count'] > 0)) {
             $employeeType = LDAP::findField($nameInfo, "employeetype", 0);
+            $jobTitle = LDAP::findField($nameInfo, "title", 0);
             if ($employeeType == "Non-Employee") {
                 $newInLDAP = 0;
             } else {

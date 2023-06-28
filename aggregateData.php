@@ -3,6 +3,7 @@
 namespace Vanderbilt\FlightConnectorExternalModule;
 
 require_once(__DIR__."/base.php");
+require_once(__DIR__."/ldapFunction.php");
 
 $identifyingFields = [
     15941 => ["record_id" => "participant_id", "first_name" => "name_first", "last_name" => "name_last", "email" => "email"],
@@ -31,42 +32,44 @@ foreach ($identifyingFields as $pid => $fieldMappings) {
     $pidChoices = getChoices($pidMetadata);
     $redcapData = \REDCap::getData($pid, "json-array");
     foreach ($redcapData as $row) {
-        $translation = [];
-        foreach ($fieldMappings as $to => $from) {
-            $translation[$to] = $row[$from];
-        }
-        if ($translation["first_name"] && $translation['last_name']) {
-            $name = $translation['first_name']." ".$translation['last_name'];
-            $email = $translation['email'];
-            $uploadRow = [
-                "record_id" => $recordId,
-                "name" => $name,
-                "email" => $email,
-                "flight_connector_survey_complete" => "2",
-            ];
-            $recordId++;
-            foreach ($row as $fullField => $value) {
-                if (($value === "1") && preg_match("/___/", $fullField)) {
-                    list($field, $index) = explode("___", $fullField);
-                    if (isset($checkboxFields[$field])) {
-                        $destField = $checkboxFields[$field];
-                        $label = $pidChoices[$field][$index];
-                        $newIndex = FALSE;
-                        foreach ($choices[$destField] as $destIndex => $destLabel) {
-                            if ($label == $destLabel) {
-                                $newIndex = $destIndex;
-                                break;
+        if (($pid !== 72516) || ($row['is_archived'] !== '1')) {
+            $translation = [];
+            foreach ($fieldMappings as $to => $from) {
+                $translation[$to] = $row[$from];
+            }
+            if ($translation["first_name"] && $translation['last_name']) {
+                $name = $translation['first_name']." ".$translation['last_name'];
+                $email = $translation['email'];
+                $uploadRow = [
+                    "record_id" => $recordId,
+                    "name" => $name,
+                    "email" => $email,
+                    "flight_connector_survey_complete" => "2",
+                ];
+                $recordId++;
+                foreach ($row as $fullField => $value) {
+                    if (($value === "1") && preg_match("/___/", $fullField)) {
+                        list($field, $index) = explode("___", $fullField);
+                        if (isset($checkboxFields[$field])) {
+                            $destField = $checkboxFields[$field];
+                            $label = $pidChoices[$field][$index];
+                            $newIndex = FALSE;
+                            foreach ($choices[$destField] as $destIndex => $destLabel) {
+                                if ($label == $destLabel) {
+                                    $newIndex = $destIndex;
+                                    break;
+                                }
                             }
-                        }
-                        if ($newIndex !== FALSE) {
-                            $uploadRow[$destField."___".$newIndex] = "1";
-                        } else {
-                            echo "Skipping $pid:{$row['record_id']} $field: $index '$label'<br/>";
+                            if ($newIndex !== FALSE) {
+                                $uploadRow[$destField."___".$newIndex] = "1";
+                            } else {
+                                echo "Skipping $pid:{$row['record_id']} $field: $index '$label'<br/>";
+                            }
                         }
                     }
                 }
+                $uploadByName[$name] = $uploadRow;
             }
-            $uploadByName[$name] = $uploadRow;
         }
     }
 }
@@ -75,3 +78,5 @@ $json = json_encode(array_values($uploadByName));
 $feedback = \REDCap::saveData($destPid, "json", $json, "overwrite");
 echo "Uploaded ".count($uploadByName)." rows with last record = ".($recordId - 1)."<br/>";
 echo json_encode($feedback)."<br/>";
+
+getLDAP($destPid);
