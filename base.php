@@ -163,7 +163,7 @@ function makePublicSurveyLink($module, $publicSurveyLink = "") {
     }
     if ($publicSurveyLink) {
         $qrCodeUrl = getQRCodeUrl($publicSurveyLink);
-        return "<table class='centered max-width' style='margin-top: 0; margin-bottom: 0;'><tr><td class='centered'>Share this public link with others to populate your data.<br/><input id='surveyUrl' value='$publicSurveyLink' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#surveyUrl\"));'>Copy</a></span></td><td><div class='smallest'>Survey Link:</div><img src='$qrCodeUrl' alt='QR Code' /></td></tr></table>";
+        return "<table class='centered max-width' style='margin-top: 0; margin-bottom: 0;'><tr><td class='centered'>Share this public link with others to populate your data.<br/><input id='surveyUrl' value='$publicSurveyLink' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#surveyUrl\"));'>Copy</a></span></td><!-- <td><div class='smallest'>Survey Link:</div><img src='$qrCodeUrl' alt='QR Code' /></td> --></tr></table>";
     } else {
         return "";
     }
@@ -172,7 +172,7 @@ function makePublicSurveyLink($module, $publicSurveyLink = "") {
 function makeMapLink($module) {
     $mapUrl = $module->getMapURL();
     $qrCodeUrl = getQRCodeUrl($mapUrl);
-    return "<table class='centered max-width'><tr><td class='centered'>Share this public link to see the Flight Tracker Map real-time as the data grows. <br/><input id='mapUrl' value='$mapUrl' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#mapUrl\"));'>Copy</a></span></td><td><div class='smallest'>Map Link:</div><img src='$qrCodeUrl' alt='QR Code' /></td></tr></table>";
+    return "<table class='centered max-width'><tr><td class='centered'>Share this public link to see the Flight Tracker Map real-time as the data grows. <br/><input id='mapUrl' value='$mapUrl' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#mapUrl\"));'>Copy</a></span></td><!-- <td><div class='smallest'>Map Link:</div><img src='$qrCodeUrl' alt='QR Code' /></td> --></tr></table>";
 }
 
 function makeBothLinks($module, $publicSurveyLink = "") {
