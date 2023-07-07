@@ -7,6 +7,7 @@ require_once(__DIR__."/ldapFunction.php");
 
 use \ExternalModules\ExternalModules;
 use \ExternalModules\AbstractExternalModule;
+use http\Params;
 
 class FlightConnectorExternalModule extends AbstractExternalModule
 {
@@ -93,7 +94,9 @@ $(document).ready(() => {
             if ($row['record_id'] > $maxRecordId) {
                 $maxRecordId = $row['record_id'];
             }
-            $destDataByName[$name] = $row;
+            if (!isset($row['in_ldap']) || ($row['in_ldap'] == "1")) {
+                $destDataByName[$name] = $row;
+            }
         }
         $recordId = $maxRecordId + 1;
 
@@ -137,8 +140,6 @@ $(document).ready(() => {
                                     }
                                     if ($newIndex !== FALSE) {
                                         $uploadRow[$destField."___".$newIndex] = "1";
-                                    } else {
-                                        echo "Skipping $pid:{$row['record_id']} $field: $index '$label'<br/>";
                                     }
                                 }
                             }
@@ -149,9 +150,12 @@ $(document).ready(() => {
             }
         }
 
-        $json = json_encode(array_values($uploadByName));
-        $feedback = \REDCap::saveData($destPid, "json", $json, "overwrite");
-        return $feedback;
+        if (!empty($uploadByName)) {
+            $json = json_encode(array_values($uploadByName));
+            return \REDCap::saveData($destPid, "json", $json, "overwrite");
+        } else {
+            return [];
+        }
     }
 
     public function getFieldsForMainProject() {
