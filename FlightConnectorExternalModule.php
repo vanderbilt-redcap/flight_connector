@@ -127,8 +127,8 @@ $(document).ready(() => {
                         $email = $translation['email'];
                         $uploadRow = [
                             "record_id" => $recordId,
-                            "name" => $name,
-                            "email" => $email,
+                            "name" => trim($name),
+                            "email" => trim($email),
                             "flight_connector_survey_complete" => "2",
                         ];
                         $recordId++;
