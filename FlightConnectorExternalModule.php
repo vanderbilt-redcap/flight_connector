@@ -99,6 +99,7 @@ $(document).ready(() => {
             }
         }
         $recordId = $maxRecordId + 1;
+        $excludeList = self::getExcludeList();
 
         $uploadByName = [];
         foreach ($identifyingFields as $pid => $fieldMappings) {
@@ -144,7 +145,9 @@ $(document).ready(() => {
                                 }
                             }
                         }
-                        $uploadByName[$name] = $uploadRow;
+                        if (!in_array($name, $excludeList)) {
+                            $uploadByName[$name] = $uploadRow;
+                        }
                     }
                 }
             }
@@ -223,7 +226,7 @@ $(document).ready(() => {
         return FALSE;
     }
 
-    function hook_survey_page ($project_id, $record,$instrument,$event_id, $group_id, $survey_hash,$response_id, $repeat_instance) {
+    function hook_survey_page($project_id, $record,$instrument,$event_id, $group_id, $survey_hash,$response_id, $repeat_instance) {
         if (self::isEFSRetreat($project_id)) {
             return;
         }
@@ -377,5 +380,89 @@ $(document).ready(() => {
     div.leftCol { width: 50%; float: left; }
     div.rightCol { width: 50%; float: right; }
 </style>";
+    }
+
+    public static function getExcludeList() {
+        if (self::isVanderbilt()) {
+            return [
+                "Amy Arnold",
+                "David Aronoff",
+                "Shari Barkin",
+                "Martin Blakely",
+                "Jordan Bley",
+                "Nancy Brown",
+                "Maciej Buchowski",
+                "James Carlucci",
+                "Roger Colbran",
+                "Rebecca Cook",
+                "Sierra Cullati",
+                "Bruce Damon",
+                "Wonder Drake",
+                "Amy Engevik",
+                "Michelle Failla",
+                "Dan Foster",
+                "Daniel Foster",
+                "Leslie S Gewin",
+                "Rocco Gogliotti",
+                "Jose Gomez",
+                "Marie Griffin",
+                "Daniel Gustavson",
+                "Kenneth Hande",
+                "Pamela Carmen Hull",
+                "Kevin Johnson",
+                "Sahar Kohanim",
+                "Christine Konradi",
+                "Munir Gunes Kutlu",
+                "Jonathan Lehman",
+                "Christopher Lindsell",
+                "Christine Lovly",
+                "Susan Majka",
+                "Liz Mallott",
+                "Pierre Massion",
+                "Eva Mistry",
+                "Todd Monroe",
+                "Sayeh Nikpay",
+                "Sachin Patel",
+                "Naeem Patil",
+                "Lauren Peetluk",
+                "Daniel S. Perrien",
+                "Sabrina Poon",
+                "Danielle Rankin",
+                "Inga Saknite",
+                "Rebecca M Sappington",
+                "Sarika Saraswati",
+                "Max Schiff",
+                "Michael Schulte",
+                "Shaun R Stauffer",
+                "Maame Yaa Yiadom",
+                "Maame Yaa \"Maya\" Yiadom",
+                "Lisa Young",
+                "Andries Zijlstra",
+                "Terrah Foster Akard",
+                "Matt Alexander",
+                "Frederic Billings",
+                "Alison (Ali) Carroll",
+                "Cecilia Pilar Chung",
+                "James Richard Goldenring",
+                "Jake Hughey",
+                "Michael Hutson",
+                "Vern Kerchberger",
+                "Meenakshi Swaminathan Madhur",
+                "Danyvid Olivares-Villagómez",
+                "Ray Peebles",
+                "Rena Robinson",
+                "Samuel Rosenbloom",
+                "Jeffrey Schmeckpeper",
+                "Carlos Serezani",
+                "Cyndya Adriana Shibao",
+                "William-May Stubblefield",
+                "William Stubblefield",
+                "Helen Talbot",
+                "Juan Arroyo Ornelas",
+                "Wendy Rathmell",
+            ];
+        } else {
+            return [];
+        }
     }
 }
