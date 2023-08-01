@@ -76,7 +76,8 @@ $(document).ready(() => {
                     getLDAP($pid);
                 }
             }
-            $this->refreshMainFlightConnector(self::VANDERBILT_MAIN_PROJECT);
+            $feedback = $this->refreshMainFlightConnector(self::VANDERBILT_MAIN_PROJECT);
+            error_log(json_encode($feedback));
         }
     }
 
