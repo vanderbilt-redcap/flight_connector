@@ -14,6 +14,7 @@ class FlightConnectorExternalModule extends AbstractExternalModule
     const INSTRUMENT = "flight_connector_survey";
     const UNIQUE_HASH_SETTING = "unique_hash";
     const VANDERBILT_MAIN_PROJECT = 172928;
+    const EFS_RETREAT_2023_PROJECT = 172325;
 
     public function getFields($pid) {
         $option1 = ["contents" => "Concepts or Content Areas", "methods" => "Methods or Tools"];
@@ -31,7 +32,7 @@ class FlightConnectorExternalModule extends AbstractExternalModule
     }
 
     static function isEFSRetreat($pid) {
-        return ($pid == 172325) && self::isVanderbilt();
+        return ($pid == self::EFS_RETREAT_2023_PROJECT) && self::isVanderbilt();
     }
 
     function isSetup($project_id) {
@@ -108,7 +109,11 @@ $(document).ready(() => {
             $pidChoices = getChoices($pidMetadata);
             $redcapData = \REDCap::getData($pid, "json-array");
             foreach ($redcapData as $row) {
-                if (($pid !== 72516) || ($row['is_archived'] !== '1')) {
+                if (($pid == self::EFS_RETREAT_2023_PROJECT) && in_array($row['newman_or_not'], [2, 3])) {
+                    # skip mentors (2) and other (3)
+                } else if ($pid == 72516) {
+                } else if ($row['is_archived'] == '1') {
+                } else {
                     $translation = [];
                     foreach ($fieldMappings as $to => $from) {
                         $translation[$to] = $row[$from];
@@ -166,6 +171,7 @@ $(document).ready(() => {
             15941 => ["record_id" => "participant_id", "first_name" => "name_first", "last_name" => "name_last", "email" => "email"],
             72575 => ["record_id" => "record_id", "first_name" => "first_name", "last_name" => "last_name", "email" => "email"],
             72516 => ["record_id" => "record_id", "first_name" => "first_name", "last_name" => "last_name", "email" => "email"],
+            self::EFS_RETREAT_2023_PROJECT => ["record_id" => "record_id", "first_name" => "firstname", "last_name" => "lastname", "email" => "email"],
         ];
     }
 
