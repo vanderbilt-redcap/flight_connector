@@ -77,7 +77,7 @@ $(document).ready(() => {
                 }
             }
             $feedback = $this->refreshMainFlightConnector(self::VANDERBILT_MAIN_PROJECT);
-            error_log(json_encode($feedback));
+            echo json_encode($feedback);
         }
     }
 
