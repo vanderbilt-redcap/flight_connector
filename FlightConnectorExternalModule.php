@@ -128,11 +128,10 @@ $(document).ready(() => {
                         if (isset($destDataByName[$name])) {
                             continue;
                         }
-                        $suffix = in_array($name, $meharryList) ? " (Meharry)" : "";
                         $email = $translation['email'];
                         $uploadRow = [
                             "record_id" => $recordId,
-                            "name" => $name.$suffix,
+                            "name" => $name,
                             "email" => trim($email),
                             "flight_connector_survey_complete" => "2",
                         ];

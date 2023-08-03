@@ -269,8 +269,10 @@ function makeD3Data($data, $choices, $module) {
         }
     }
 
+    $meharryList = FlightConnectorExternalModule::getMeharryList();
     foreach ($data as $row) {
         $name = $row['name'] ?: $row['firstname']." ".$row['lastname'];
+        $name = in_array($name, $meharryList) ? $name." (Meharry)" : $name;
         $email = $row['email'];
         $department = $row['department'] ?? "";
         $checks = [];
