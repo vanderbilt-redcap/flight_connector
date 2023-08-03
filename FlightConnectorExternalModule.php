@@ -122,6 +122,9 @@ $(document).ready(() => {
                     }
                     if ($translation["first_name"] && $translation['last_name']) {
                         $name = $translation['first_name']." ".$translation['last_name'];
+                        $name = trim($name);
+                        list($fn, $mn, $ln) = NameMatcher::splitName($name, 3);
+                        $name = NameMatcher::formatName($fn, $mn, $ln);
                         if (isset($destDataByName[$name])) {
                             continue;
                         }
@@ -129,7 +132,7 @@ $(document).ready(() => {
                         $email = $translation['email'];
                         $uploadRow = [
                             "record_id" => $recordId,
-                            "name" => trim($name).$suffix,
+                            "name" => $name.$suffix,
                             "email" => trim($email),
                             "flight_connector_survey_complete" => "2",
                         ];
