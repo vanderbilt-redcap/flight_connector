@@ -273,7 +273,6 @@ function makeD3Data($data, $choices, $module) {
     $meharryList = FlightConnectorExternalModule::getMeharryList();
     foreach ($data as $row) {
         $name = $row['name'] ?: $row['firstname']." ".$row['lastname'];
-        $name = in_array($name, $meharryList) ? $name." (Meharry)" : $name;
         $email = $row['email'];
         $department = $row['department'] ?? "";
         $checks = [];
@@ -293,6 +292,9 @@ function makeD3Data($data, $choices, $module) {
         }
 
         $departmentText = $department ? $department." - " : "";
+        if (!$departmentText && in_array($name, $meharryList)) {
+            $departmentText = "Meharry - ";
+        }
         $pubMedLink = "https://pubmed.ncbi.nlm.nih.gov/?term=".urlencode(strtolower($name));
         if ($name && !empty($checks)) {
             $outData['scholars'][] = [
