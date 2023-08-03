@@ -38,7 +38,7 @@ function getLDAP($pid) {
 
 
         $dept = "";
-        if ($name && ($nameInfo['count'] > 0)) {
+        if ($name && ($nameInfo['count'] == 1)) {
             $employeeType = LDAP::findField($nameInfo, "employeetype", 0);
             $jobTitle = LDAP::findField($nameInfo, "title", 0);
             if (($employeeType == "Non-Employee") || ($jobTitle == "Adjunct Professor")) {
@@ -56,6 +56,15 @@ function getLDAP($pid) {
         } else if ($email && ($vuInfo['count'] > 0)) {
             $newInLDAP = 1;
             $dept = LDAP::findField($vuInfo, "department", 0);
+        } else if ($name && ($nameInfo['count'] > 1)) {
+            $employeeType = LDAP::findField($nameInfo, "employeetype", 0);
+            $jobTitle = LDAP::findField($nameInfo, "title", 0);
+            if (($employeeType == "Non-Employee") || ($jobTitle == "Adjunct Professor")) {
+                $newInLDAP = 0;
+            } else {
+                $newInLDAP = 1;
+                $dept = LDAP::findField($nameInfo, "department", 0);
+            }
         } else {
             $newInLDAP = 0;
         }
