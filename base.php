@@ -120,8 +120,9 @@ function alphabetizeByLastName($data) {
 
 function filterOutViaLDAP($data) {
     $newData = [];
+    $meharryList = FlightConnectorExternalModule::getMeharryList();
     foreach ($data as $row) {
-        if (!isset($row['in_ldap']) || ($row['in_ldap'] !== "0")) {
+        if (!isset($row['in_ldap']) || ($row['in_ldap'] !== "0") || in_array($row['name'], $meharryList)) {
             $newData[] = $row;
         }
     }
