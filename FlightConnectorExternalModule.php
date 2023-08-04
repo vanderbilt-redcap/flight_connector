@@ -83,6 +83,15 @@ $(document).ready(() => {
 
     public function refreshMainFlightConnector($destPid) {
         $identifyingFields = $this->getFieldsForMainProject();
+        $this->refreshFlightConnector($destPid, $identifyingFields);
+    }
+
+    public function refreshEFSFlightConnector($destPid) {
+        $identifyingFields = $this->getFieldsForEFSProject();
+        $this->refreshFlightConnector($destPid, $identifyingFields, FALSE);
+    }
+
+    private function refreshFlightConnector($destPid, $identifyingFields, $skipEFSMentors = TRUE) {
         $checkboxFields = ["c" => "contents", "m" => "methods"];
 
         $json = \REDCap::getDataDictionary($destPid, "json");
@@ -102,7 +111,6 @@ $(document).ready(() => {
         }
         $recordId = $maxRecordId + 1;
         $excludeList = self::getExcludeList();
-        $meharryList = self::getMeharryList();
 
         $uploadByName = [];
         foreach ($identifyingFields as $pid => $fieldMappings) {
@@ -111,7 +119,7 @@ $(document).ready(() => {
             $pidChoices = getChoices($pidMetadata);
             $redcapData = \REDCap::getData($pid, "json-array");
             foreach ($redcapData as $row) {
-                if (($pid == self::EFS_RETREAT_2023_PROJECT) && in_array($row['newman_or_not'], [2, 3])) {
+                if ($skipEFSMentors && ($pid == self::EFS_RETREAT_2023_PROJECT) && in_array($row['newman_or_not'], [2, 3])) {
                     # skip mentors (2) and other (3)
                 } else if ($pid == 72516) {
                 } else if ($row['is_archived'] == '1') {
@@ -169,6 +177,12 @@ $(document).ready(() => {
         } else {
             return [];
         }
+    }
+
+    public function getFieldsForEFSProject() {
+        return [
+            self::EFS_RETREAT_2023_PROJECT => ["record_id" => "record_id", "first_name" => "firstname", "last_name" => "lastname", "email" => "email"],
+        ];
     }
 
     public function getFieldsForMainProject() {
