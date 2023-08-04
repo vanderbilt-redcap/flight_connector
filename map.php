@@ -55,7 +55,7 @@ echo "	<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
 	<script type='text/javascript' src='$migrateLink'></script>
 	<script type='text/javascript' src='$jqueryUIJS'></script>
 	<script type='text/javascript' src='$autocompleteJS'></script>
-	<title>Flight Connector</title>
+	<title>Flight Connector: $projectTitle</title>
 	<link rel='stylesheet' href='$cssUrl' />
 	<link rel='icon' href='$ftLogo' />";
 echo "</head>";
