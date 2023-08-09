@@ -176,8 +176,6 @@ $(document).ready(() => {
                             } else {
                                 echo "$name in exclude list: $excludeList<br/>";
                             }
-                        } else {
-                            echo "Excluding '".$name."' ".strlen($name)." from ".json_encode($onlyIncludeNames)."<br/>";
                         }
                     }
                 }
