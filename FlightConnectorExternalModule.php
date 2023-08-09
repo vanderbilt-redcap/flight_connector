@@ -163,6 +163,7 @@ $(document).ready(() => {
                             if (isset($destDataByName[$name])) {
                                 echo "$name already present.<br/>";
                                 if (in_array($name, $onlyIncludeNames)) {
+                                    echo "$name has row ".json_encode($row)."<br/>";
                                     $destRecordId = $destDataByName[$name]["record_id"];
                                     $this->copyCheckboxes($destPid, $destRecordId, $uploadRow);
                                 }
