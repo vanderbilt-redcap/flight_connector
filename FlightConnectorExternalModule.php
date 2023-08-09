@@ -129,8 +129,7 @@ $(document).ready(() => {
                         $translation[$to] = $row[$from];
                     }
                     if ($translation["first_name"] && $translation['last_name']) {
-                        $name = $translation['first_name']." ".$translation['last_name'];
-                        $name = trim($name);
+                        $name = trim($translation['first_name'])." ".trim($translation['last_name']);
                         if (empty($onlyIncludeNames) || in_array($name, $onlyIncludeNames)) {
                             echo "Including ".$name."<br/>";
                             list($fn, $mn, $ln) = NameMatcher::splitName($name, 3);
