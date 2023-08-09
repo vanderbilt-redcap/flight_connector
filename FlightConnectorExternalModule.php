@@ -134,10 +134,6 @@ $(document).ready(() => {
                             echo "Including ".$name."<br/>";
                             list($fn, $mn, $ln) = NameMatcher::splitName($name, 3);
                             $name = NameMatcher::formatName($fn, $mn, $ln);
-                            if (isset($destDataByName[$name])) {
-                                echo "$name already present.<br/>";
-                                continue;
-                            }
                             $email = $translation['email'];
                             $uploadRow = [
                                 "record_id" => $recordId,
@@ -145,7 +141,6 @@ $(document).ready(() => {
                                 "email" => trim($email),
                                 "flight_connector_survey_complete" => "2",
                             ];
-                            $recordId++;
                             foreach ($row as $fullField => $value) {
                                 if (($value === "1") && preg_match("/___/", $fullField)) {
                                     list($field, $index) = explode("___", $fullField);
@@ -165,9 +160,18 @@ $(document).ready(() => {
                                     }
                                 }
                             }
+                            if (isset($destDataByName[$name])) {
+                                echo "$name already present.<br/>";
+                                if (in_array($name, $onlyIncludeNames)) {
+                                    $destRecordId = $destDataByName[$name]["record_id"];
+                                    $this->copyCheckboxes($destPid, $destRecordId, $uploadRow);
+                                }
+                                continue;
+                            }
                             if (!in_array($name, $excludeList)) {
                                 echo "Adding $name<br/>";
                                 $uploadByName[$name] = $uploadRow;
+                                $recordId++;
                             } else {
                                 echo "$name in exclude list: $excludeList<br/>";
                             }
@@ -184,6 +188,24 @@ $(document).ready(() => {
             return \REDCap::saveData($destPid, "json", $json, "overwrite");
         } else {
             return [];
+        }
+    }
+
+    private function copyCheckboxes($destPid, $destRecordId, $checkboxRow) {
+        $uploadRow = [
+            "record_id" => $destRecordId,
+        ];
+        $hasCheckboxes = FALSE;
+        foreach ($checkboxRow as $field => $value) {
+            if (preg_match("/___/", $field)) {
+                $uploadRow[$field] = $value;
+                $hasCheckboxes = TRUE;
+            }
+        }
+        if ($hasCheckboxes) {
+            $json = json_encode([$uploadRow]);
+            $feedback = \REDCap::saveData($destPid, "json", $json, "overwrite");
+            echo json_encode($feedback)."<br/>";
         }
     }
 
