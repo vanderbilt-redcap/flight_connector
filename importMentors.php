@@ -5,10 +5,10 @@ namespace Vanderbilt\FlightConnectorExternalModule;
 require_once(__DIR__."/FlightConnectorExternalModule.php");
 
 $mentors = [
-    "Ray Blind",
+    "Raymond Blind",
     "Fiona Harrison",
     "Alyssa Hasty",
-    "Tim Hohman",
+    "Timothy Hohman",
     "James West",
 ];
 

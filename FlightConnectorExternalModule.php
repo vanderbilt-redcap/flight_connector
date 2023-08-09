@@ -136,6 +136,7 @@ $(document).ready(() => {
                             list($fn, $mn, $ln) = NameMatcher::splitName($name, 3);
                             $name = NameMatcher::formatName($fn, $mn, $ln);
                             if (isset($destDataByName[$name])) {
+                                echo "$name already present.<br/>";
                                 continue;
                             }
                             $email = $translation['email'];
@@ -166,10 +167,13 @@ $(document).ready(() => {
                                 }
                             }
                             if (!in_array($name, $excludeList)) {
+                                echo "Adding $name<br/>";
                                 $uploadByName[$name] = $uploadRow;
+                            } else {
+                                echo "$name in exclude list: $excludeList<br/>";
                             }
                         } else {
-                            echo "Excluding ".$name." from ".json_encode($onlyIncludeNames)."<br/>";
+                            echo "Excluding '".$name."' ".strlen($name)." from ".json_encode($onlyIncludeNames)."<br/>";
                         }
                     }
                 }
