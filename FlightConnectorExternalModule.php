@@ -131,8 +131,8 @@ $(document).ready(() => {
                     if ($translation["first_name"] && $translation['last_name']) {
                         $name = $translation['first_name']." ".$translation['last_name'];
                         $name = trim($name);
-                        echo $name."<br/>";
                         if (empty($onlyIncludeNames) || in_array($name, $onlyIncludeNames)) {
+                            echo "Including ".$name."<br/>";
                             list($fn, $mn, $ln) = NameMatcher::splitName($name, 3);
                             $name = NameMatcher::formatName($fn, $mn, $ln);
                             if (isset($destDataByName[$name])) {
@@ -168,6 +168,8 @@ $(document).ready(() => {
                             if (!in_array($name, $excludeList)) {
                                 $uploadByName[$name] = $uploadRow;
                             }
+                        } else {
+                            echo "Excluding ".$name." from ".json_encode($onlyIncludeNames)."<br/>";
                         }
                     }
                 }
