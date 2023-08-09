@@ -206,6 +206,8 @@ $(document).ready(() => {
             $json = json_encode([$uploadRow]);
             $feedback = \REDCap::saveData($destPid, "json", $json, "overwrite");
             echo json_encode($feedback)."<br/>";
+        } else {
+            echo "Record $destRecordId has no checkbox data<br/>";
         }
     }
 
