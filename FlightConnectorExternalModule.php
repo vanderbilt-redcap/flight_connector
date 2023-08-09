@@ -121,7 +121,7 @@ $(document).ready(() => {
             foreach ($redcapData as $row) {
                 if ($skipEFSMentors && ($pid == self::EFS_RETREAT_2023_PROJECT) && in_array($row['newman_or_not'], [2, 3])) {
                     # skip mentors (2) and other (3)
-                } else if ($pid == 72516) {
+                } else if (($pid == 72516) && empty($onlyIncludeNames)) {
                 } else if ($row['is_archived'] == '1') {
                 } else {
                     $translation = [];
