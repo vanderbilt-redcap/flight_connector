@@ -14,4 +14,5 @@ $mentors = [
 
 $destPid = 176037;
 $identifyingFields = $module->getFieldsForMainProject();
-$module->refreshFlightConnector($destPid, $identifyingFields, FALSE, $mentors);
+$result = $module->refreshFlightConnector($destPid, $identifyingFields, FALSE, $mentors);
+echo json_encode($result);
