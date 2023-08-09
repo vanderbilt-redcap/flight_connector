@@ -131,6 +131,7 @@ $(document).ready(() => {
                     if ($translation["first_name"] && $translation['last_name']) {
                         $name = $translation['first_name']." ".$translation['last_name'];
                         $name = trim($name);
+                        echo $name."<br/>";
                         if (empty($onlyIncludeNames) || in_array($name, $onlyIncludeNames)) {
                             list($fn, $mn, $ln) = NameMatcher::splitName($name, 3);
                             $name = NameMatcher::formatName($fn, $mn, $ln);
