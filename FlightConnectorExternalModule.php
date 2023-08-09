@@ -91,7 +91,7 @@ $(document).ready(() => {
         $this->refreshFlightConnector($destPid, $identifyingFields, FALSE);
     }
 
-    private function refreshFlightConnector($destPid, $identifyingFields, $skipEFSMentors = TRUE) {
+    public function refreshFlightConnector($destPid, $identifyingFields, $skipEFSMentors = TRUE, $onlyIncludeNames = []) {
         $checkboxFields = ["c" => "contents", "m" => "methods"];
 
         $json = \REDCap::getDataDictionary($destPid, "json");
@@ -131,40 +131,42 @@ $(document).ready(() => {
                     if ($translation["first_name"] && $translation['last_name']) {
                         $name = $translation['first_name']." ".$translation['last_name'];
                         $name = trim($name);
-                        list($fn, $mn, $ln) = NameMatcher::splitName($name, 3);
-                        $name = NameMatcher::formatName($fn, $mn, $ln);
-                        if (isset($destDataByName[$name])) {
-                            continue;
-                        }
-                        $email = $translation['email'];
-                        $uploadRow = [
-                            "record_id" => $recordId,
-                            "name" => $name,
-                            "email" => trim($email),
-                            "flight_connector_survey_complete" => "2",
-                        ];
-                        $recordId++;
-                        foreach ($row as $fullField => $value) {
-                            if (($value === "1") && preg_match("/___/", $fullField)) {
-                                list($field, $index) = explode("___", $fullField);
-                                if (isset($checkboxFields[$field])) {
-                                    $destField = $checkboxFields[$field];
-                                    $label = $pidChoices[$field][$index];
-                                    $newIndex = FALSE;
-                                    foreach ($choices[$destField] as $destIndex => $destLabel) {
-                                        if ($label == $destLabel) {
-                                            $newIndex = $destIndex;
-                                            break;
+                        if (empty($onlyIncludeNames) || in_array($name, $onlyIncludeNames)) {
+                            list($fn, $mn, $ln) = NameMatcher::splitName($name, 3);
+                            $name = NameMatcher::formatName($fn, $mn, $ln);
+                            if (isset($destDataByName[$name])) {
+                                continue;
+                            }
+                            $email = $translation['email'];
+                            $uploadRow = [
+                                "record_id" => $recordId,
+                                "name" => $name,
+                                "email" => trim($email),
+                                "flight_connector_survey_complete" => "2",
+                            ];
+                            $recordId++;
+                            foreach ($row as $fullField => $value) {
+                                if (($value === "1") && preg_match("/___/", $fullField)) {
+                                    list($field, $index) = explode("___", $fullField);
+                                    if (isset($checkboxFields[$field])) {
+                                        $destField = $checkboxFields[$field];
+                                        $label = $pidChoices[$field][$index];
+                                        $newIndex = FALSE;
+                                        foreach ($choices[$destField] as $destIndex => $destLabel) {
+                                            if ($label == $destLabel) {
+                                                $newIndex = $destIndex;
+                                                break;
+                                            }
                                         }
-                                    }
-                                    if ($newIndex !== FALSE) {
-                                        $uploadRow[$destField."___".$newIndex] = "1";
+                                        if ($newIndex !== FALSE) {
+                                            $uploadRow[$destField."___".$newIndex] = "1";
+                                        }
                                     }
                                 }
                             }
-                        }
-                        if (!in_array($name, $excludeList)) {
-                            $uploadByName[$name] = $uploadRow;
+                            if (!in_array($name, $excludeList)) {
+                                $uploadByName[$name] = $uploadRow;
+                            }
                         }
                     }
                 }
