@@ -131,7 +131,6 @@ $(document).ready(() => {
                     if ($translation["first_name"] && $translation['last_name']) {
                         $name = trim($translation['first_name'])." ".trim($translation['last_name']);
                         if (empty($onlyIncludeNames) || in_array($name, $onlyIncludeNames)) {
-                            echo "Including ".$name."<br/>";
                             list($fn, $mn, $ln) = NameMatcher::splitName($name, 3);
                             $name = NameMatcher::formatName($fn, $mn, $ln);
                             $email = $translation['email'];
@@ -161,20 +160,15 @@ $(document).ready(() => {
                                 }
                             }
                             if (isset($destDataByName[$name])) {
-                                echo "$name already present.<br/>";
                                 if (in_array($name, $onlyIncludeNames)) {
-                                    echo "$name has row ".json_encode($row)."<br/>";
                                     $destRecordId = $destDataByName[$name]["record_id"];
                                     $this->copyCheckboxes($destPid, $destRecordId, $uploadRow);
                                 }
                                 continue;
                             }
                             if (!in_array($name, $excludeList)) {
-                                echo "Adding $name<br/>";
                                 $uploadByName[$name] = $uploadRow;
                                 $recordId++;
-                            } else {
-                                echo "$name in exclude list: $excludeList<br/>";
                             }
                         }
                     }
@@ -204,9 +198,6 @@ $(document).ready(() => {
         if ($hasCheckboxes) {
             $json = json_encode([$uploadRow]);
             $feedback = \REDCap::saveData($destPid, "json", $json, "overwrite");
-            echo json_encode($feedback)."<br/>";
-        } else {
-            echo "Record $destRecordId has no checkbox data<br/>";
         }
     }
 
