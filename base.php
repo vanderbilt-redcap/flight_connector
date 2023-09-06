@@ -157,17 +157,24 @@ function makeJS($module) {
     return $html;
 }
 
-function makeBothLinks($module, $publicSurveyLink = "") {
+function makeBothLinks($module) {
     $mapUrl = $module->getMapURL();
     $pid = getPid();
-    if (!$publicSurveyLink && $pid) {
+    $requireLogin = $module->getProjectSetting(FlightConnectorExternalModule::REQUIRE_LOGIN_SETTING, $pid);
+    if ($requireLogin) {
+        $publicSurveyLink = str_replace("&pid=", "&project_id=", $module->getUrl("viewSurvey.php"));
+        $descriptor = "";
+    } else if ($pid) {
         $publicSurveyLink = $module->getPublicSurveyUrl($pid) ?? "";
+        $descriptor = "public";
+    } else {
+        return "";
     }
     if ($publicSurveyLink && $mapUrl) {
         $mapQRCode = getQRCodeUrl($module, $mapUrl);
         $surveyQRCode = getQRCodeUrl($module, $publicSurveyLink);
         $html = "<table class='centered max-width'><tr>";
-        $html .= "<td class='centered'><p class='centered'>Share this public link with others to populate your data.<br/><input id='surveyUrl' value='$publicSurveyLink' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#surveyUrl\"));'>Copy</a></span></p><p class='centered'>Share this public link to see the Flight Tracker Map real-time as the data grows. <br/><input id='mapUrl' value='$mapUrl' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#mapUrl\"));'>Copy</a> <a href='javascript:;' onclick='$(\"#mapQR\").show(); $(\"#surveyQR\").show();' >Show QR Codes</a></span></p></td>";
+        $html .= "<td class='centered'><p class='centered'>Share this $descriptor link with others to populate your data.<br/><input id='surveyUrl' value='$publicSurveyLink' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#surveyUrl\"));'>Copy</a></span></p><p class='centered'>Share this public link to see the Flight Tracker Map real-time as the data grows. <br/><input id='mapUrl' value='$mapUrl' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#mapUrl\"));'>Copy</a> <a href='javascript:;' onclick='$(\"#mapQR\").show(); $(\"#surveyQR\").show();' >Show QR Codes</a></span></p></td>";
         $html .= "<td id='surveyQR' style='display: none;'><div class='smallest'>Survey Link:</div><img src='$surveyQRCode' alt='Survey QR Code' /></td>";
         $html .= "<td id='mapQR' style='display: none;'><div class='smaller'>Map Link:</div><img src='$mapQRCode' alt='Map QR Code' /></td>";
         $html .= "</tr></table>";
