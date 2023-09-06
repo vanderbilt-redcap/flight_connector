@@ -161,7 +161,13 @@ function makeBothLinks($module) {
     $mapUrl = $module->getMapURL();
     $pid = getPid();
     $requireLogin = $module->getProjectSetting(FlightConnectorExternalModule::REQUIRE_LOGIN_SETTING, $pid);
-    if ($requireLogin) {
+    if (
+        $requireLogin
+        || (
+            FlightConnectorExternalModule::isVanderbilt()
+            && ($pid == FlightConnectorExternalModule::VANDERBILT_MAIN_PROJECT)
+        )
+    ) {
         $publicSurveyLink = str_replace("&pid=", "&project_id=", $module->getUrl("viewSurvey.php"));
         $descriptor = "";
     } else if ($pid) {
