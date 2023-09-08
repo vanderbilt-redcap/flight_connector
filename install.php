@@ -145,6 +145,10 @@ if (!empty($_POST)) {
     $module->importDataDictionary($pid, $filename);
     unlink($filename);
 
+    $checkboxForRequireLogin = $_POST['requireLogin'] ?? "";
+    $requireLogin = ($checkboxForRequireLogin == "on");
+    $module->setProjectSetting(FlightConnectorExternalModule::REQUIRE_LOGIN_SETTING, $requireLogin, $pid);
+
     if (empty($rowIndexes)) {
         $sql = "UPDATE redcap_projects SET surveys_enabled='1' WHERE project_id = ?";
         $module->query($sql, [$pid]);
@@ -191,7 +195,7 @@ if ($publicSurveyLink) {
     $projectHomeUrl = APP_PATH_WEBROOT."index.php?pid=$pid";
     echo makeHeader($module, "Flight Connector");
     echo "<h2>Setup Complete!</h2>";
-    echo makeBothLinks($module, $publicSurveyLink);
+    echo makeBothLinks($module);
     echo "<p class='centered max-width'>Both of these links are available in REDCap's left-hand toolbar. The Public Survey Link is available under Survey Distribution Tools, and the Flight Connector Map is under Bookmarks.</p>";
     echo "<p class='bolded centered max-width'><a href='$projectHomeUrl'>REDCap Project's Home Page</a></p>";
 } else {
@@ -214,6 +218,7 @@ if ($publicSurveyLink) {
         $requiredFields[] = $field;
     }
     $requiredFieldsJSON = json_encode($requiredFields);
+    echo "<p class='centered'><input type='checkbox' id='requireLogin' name='requireLogin' /> <label for='requireLogin'>Check here to require a REDCap login before entering the survey.</label></p>";
     echo "<p class='centered'><button onclick='if (FlightConnector.isInvalid($requiredFieldsJSON)) { alert(\"You must fill in a value for all labels and options.\"); return false; } else { return true; } '>Set Up Project</button></p>";
     echo "</form>";
 }

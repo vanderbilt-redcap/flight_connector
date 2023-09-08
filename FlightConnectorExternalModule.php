@@ -15,6 +15,7 @@ class FlightConnectorExternalModule extends AbstractExternalModule
     const UNIQUE_HASH_SETTING = "unique_hash";
     const VANDERBILT_MAIN_PROJECT = 172928;
     const EFS_RETREAT_2023_PROJECT = 172325;
+    const REQUIRE_LOGIN_SETTING = "requireLoginForSurvey";
 
     public function getFields($pid) {
         $option1 = ["contents" => "Concepts or Content Areas", "methods" => "Methods or Tools"];
@@ -64,7 +65,7 @@ $(document).ready(() => {
         }
     }
 
-    private static function isVanderbilt() {
+    public static function isVanderbilt() {
         return in_array(SERVER_NAME, ["redcap.vanderbilt.edu", "redcaptest.vanderbilt.edu"]);
     }
 
@@ -83,12 +84,12 @@ $(document).ready(() => {
 
     public function refreshMainFlightConnector($destPid) {
         $identifyingFields = $this->getFieldsForMainProject();
-        $this->refreshFlightConnector($destPid, $identifyingFields);
+        return $this->refreshFlightConnector($destPid, $identifyingFields);
     }
 
     public function refreshEFSFlightConnector($destPid) {
         $identifyingFields = $this->getFieldsForEFSProject();
-        $this->refreshFlightConnector($destPid, $identifyingFields, FALSE);
+        return $this->refreshFlightConnector($destPid, $identifyingFields, FALSE);
     }
 
     public function refreshFlightConnector($destPid, $identifyingFields, $skipEFSMentors = TRUE, $onlyIncludeNames = []) {
