@@ -9,7 +9,7 @@ $dataByName = [];
 foreach ($pids as $currPid) {
     $currMetadata = NULL;
     if ($currPid && isset($_POST['name']) && $_POST['name']) {
-        $currPid = htmlspecialchars((int) $currPid);
+        $currPid = htmlspecialchars((int) $currPid, ENT_QUOTES);
         $json = \REDCap::getData($currPid, "json");
         $redcapData = json_decode($json, TRUE);
         $name = $_POST['name'];
@@ -94,7 +94,7 @@ function getProjectName($module, $pid) {
     $sql = "SELECT app_title FROM redcap_projects WHERE project_id = ? LIMIT 1";
     $result = $module->query($sql, [$pid]);
     if ($row = $result->fetch_assoc()) {
-        return $row['app_title'];
+        return htmlspecialchars($row['app_title'], ENT_QUOTES);
     }
     return "";
 }
