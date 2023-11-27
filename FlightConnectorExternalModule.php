@@ -16,6 +16,7 @@ class FlightConnectorExternalModule extends AbstractExternalModule
     const VANDERBILT_MAIN_PROJECT = 172928;
     const EFS_RETREAT_2023_PROJECT = 172325;
     const REQUIRE_LOGIN_SETTING = "requireLoginForSurvey";
+    const UNKNOWN_CHOICE = "Unknown";
 
     public function getFields($pid) {
         $option1 = ["contents" => "Concepts or Content Areas", "methods" => "Methods or Tools"];
@@ -52,6 +53,7 @@ class FlightConnectorExternalModule extends AbstractExternalModule
             header("Location: " . $this->getUrl("install.php"));
         }
     }
+
     function redcap_every_page_top($project_id) {
         if (self::isREDCap()) {
             $mapUrl = $this->getMapURL($this);
@@ -274,7 +276,7 @@ $(document).ready(() => {
         return FALSE;
     }
 
-    function hook_survey_page($project_id, $record,$instrument,$event_id, $group_id, $survey_hash,$response_id, $repeat_instance) {
+    function redcap_survey_page($project_id, $record,$instrument,$event_id, $group_id, $survey_hash,$response_id, $repeat_instance) {
         if (self::isEFSRetreat($project_id)) {
             return;
         }
@@ -291,6 +293,11 @@ $(document).ready(() => {
         $jqueryUI = $this->getUrl("jquery-ui.min.js");
 
         $fieldsJSON = json_encode(array_keys($this->getFields($project_id)));
+        $metadataJSON = \REDCap::getDataDictionary($project_id, "json");
+        $metadata = json_decode($metadataJSON, TRUE);
+        $choicesJSON = json_encode(getChoices($metadata));
+        $pids = $this->getProjectsWithModuleEnabled();
+        $pidsJSON = json_encode($pids);
 
         $csrfToken = $this->getCSRFToken();
         echo "
@@ -319,6 +326,8 @@ $(document).ready(() => {
                 const postData = {};
                 postData[field] = item;
                 postData['redcap_csrf_token'] = '$csrfToken';
+                postData['pids'] = $pidsJSON;
+                console.log(JSON.stringify(postData));
                 $.post(url, postData, (json) => {
                     console.log(json);
                     const m = JSON.parse(json);
@@ -335,7 +344,8 @@ $(document).ready(() => {
             let html = '<p>Do you want to use any of these prior entries as a starting point?</p>';
             for (let i=0; i < matches.length; i++) {
                 const match = matches[i];
-                html += makeChoiceText(i, 'Name: '+match['name']+'<br/>Email: '+match['email']);
+                const projectName = (match['pid'] === $project_id) ? 'Prior Entry in This Project' : match['projectName'];
+                html += makeChoiceText(i, 'Project: '+projectName+'<br/>Name: '+match['name']+'<br/>Email: '+match['email']);
             }
             html += makeChoiceText(-1, 'I do not want to pre-fill any additional fields.');
 
@@ -380,10 +390,11 @@ $(document).ready(() => {
         function chooseName(i) {
             if ((i >= 0) && (i < matches.length)) {
                 const match = matches[i];
-                const fields = $fieldsJSON;
+                const checkboxFields = $fieldsJSON;
+                const surveyChoices = $choicesJSON;
                 
-                for (let i=0; i < fields.length; i++) {
-                    const field = fields[i];
+                for (let i=0; i < checkboxFields.length; i++) {
+                    const field = checkboxFields[i];
                     const regex = new RegExp('__chk__'+field);
                     $('input[type=hidden]').each((idx, ob) => {
                         const name = $(ob).attr('name');
@@ -393,12 +404,24 @@ $(document).ready(() => {
                     });
                 }
                 
-                for (let i=0; i < fields.length; i++) {
-                    const field = fields[i];
-                    const checks = match[field] ?? [];
-                    for (let j=0; j < checks.length; j++) {
-                        const id = '__chk__'+field+'_RC_'+checks[j];
-                        $('#id-'+id).click();
+                for (let i=0; i < checkboxFields.length; i++) {
+                    const field = checkboxFields[i];
+                    const checks = match[field] ?? {};
+                    for (const index in checks) {
+                        if (match['pid'] === $project_id) {
+                            const id = '__chk__'+field+'_RC_'+index;
+                            $('#id-'+id).click();
+                        } else {
+                            // external project: check by choice label, not by index
+                            const label = checks[index];
+                            for (const surveyIndex in surveyChoices[field] ?? {}) {
+                                const surveyLabel = surveyChoices[field][surveyIndex];
+                                if (surveyLabel === label) {
+                                    const id = '__chk__'+field+'_RC_'+surveyIndex;
+                                    $('#id-'+id).click();
+                                }
+                            }
+                        }
                     }
                 }
 
