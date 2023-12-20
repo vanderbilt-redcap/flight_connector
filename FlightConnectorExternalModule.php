@@ -17,6 +17,8 @@ class FlightConnectorExternalModule extends AbstractExternalModule
     const EFS_RETREAT_2023_PROJECT = 172325;
     const REQUIRE_LOGIN_SETTING = "requireLoginForSurvey";
     const UNKNOWN_CHOICE = "Unknown";
+    const CONTENT_AND_METHODS_LOCALHOST = 95;
+    const CONTENT_AND_METHODS_VANDERBILT = 72516;
 
     public function getFields($pid) {
         $option1 = ["contents" => "Concepts or Content Areas", "methods" => "Methods or Tools"];
@@ -49,13 +51,40 @@ class FlightConnectorExternalModule extends AbstractExternalModule
 
     function redcap_every_page_before_render($project_id)
     {
-        if (!$this->isSetup($project_id) && !self::isExternalModulePage() && self::isREDCap() && ($_GET['page'] != "setupUniqueHash")) {
+        if (self::isLocalhost() && ($project_id == self::CONTENT_AND_METHODS_LOCALHOST)) {
+            return;
+        }
+
+        $vanderbiltSkipPids = [self::CONTENT_AND_METHODS_VANDERBILT];
+        if (
+            !$this->isSetup($project_id)
+            && !self::isExternalModulePage()
+            && self::isREDCap()
+            && ($_GET['page'] != "setupUniqueHash")
+            && (
+                !in_array($project_id, $vanderbiltSkipPids)
+                || !self::isVanderbilt()
+            )
+        ) {
             header("Location: " . $this->getUrl("install.php"));
         }
     }
 
+    public static function isContentsAndMethods($project_id) {
+        return (
+            (
+                self::isLocalhost()
+                && ($project_id == FlightConnectorExternalModule::CONTENT_AND_METHODS_LOCALHOST)
+            )
+            || (
+                self::isVanderbilt()
+                && ($project_id == FlightConnectorExternalModule::CONTENT_AND_METHODS_VANDERBILT)
+            )
+        );
+    }
+
     function redcap_every_page_top($project_id) {
-        if (self::isREDCap()) {
+        if (self::isREDCap() && !self::isContentsAndMethods($project_id)) {
             $mapUrl = $this->getMapURL($this);
             echo "<script>
 $(document).ready(() => {
@@ -64,11 +93,24 @@ $(document).ready(() => {
     }, 30);
 });
 </script>";
+        } else if (self::isREDCap() && self::isContentsAndMethods($project_id)) {
+            echo "<script>
+$(document).ready(() => {
+    setTimeout(() => {
+        $('a[data-link-key=flight_connector-link_project_1]').parent().hide();    
+    }, 30);
+});
+</script>";
         }
     }
 
     public static function isVanderbilt() {
         return in_array(SERVER_NAME, ["redcap.vanderbilt.edu", "redcaptest.vanderbilt.edu"]);
+    }
+
+    public static function isLocalhost() {
+        global $homepage_contact_email;
+        return (SERVER_NAME == "localhost") && ($homepage_contact_email == "scott.j.pearson@vumc.org");
     }
 
     public function cron() {
@@ -124,7 +166,7 @@ $(document).ready(() => {
             foreach ($redcapData as $row) {
                 if ($skipEFSMentors && ($pid == self::EFS_RETREAT_2023_PROJECT) && in_array($row['newman_or_not'], [2, 3])) {
                     # skip mentors (2) and other (3)
-                } else if (($pid == 72516) && empty($onlyIncludeNames)) {
+                } else if (($pid == self::CONTENT_AND_METHODS_VANDERBILT) && empty($onlyIncludeNames)) {
                 } else if ($row['is_archived'] == '1') {
                 } else {
                     $translation = [];
@@ -214,7 +256,7 @@ $(document).ready(() => {
         return [
             15941 => ["record_id" => "participant_id", "first_name" => "name_first", "last_name" => "name_last", "email" => "email"],
             72575 => ["record_id" => "record_id", "first_name" => "first_name", "last_name" => "last_name", "email" => "email"],
-            72516 => ["record_id" => "record_id", "first_name" => "first_name", "last_name" => "last_name", "email" => "email"],
+            self::CONTENT_AND_METHODS_VANDERBILT => ["record_id" => "record_id", "first_name" => "first_name", "last_name" => "last_name", "email" => "email"],
             self::EFS_RETREAT_2023_PROJECT => ["record_id" => "record_id", "first_name" => "firstname", "last_name" => "lastname", "email" => "email"],
         ];
     }
@@ -286,6 +328,9 @@ $(document).ready(() => {
             $line = "$('#'+row).find('div[data-kind=field-value]').append(\"<div id='\"+row+\"-left' class='leftCol'></div><div id='\"+row+\"-right' class='rightCol'></div>\");";
         }
         $header = makeHeader($this, "Flight Connector", 650);
+        if (self::isLocalhost() && ($project_id == self::CONTENT_AND_METHODS_LOCALHOST)) {
+            $header = "";
+        }
         $url = $this->getUrl("lookupMatches.php");
         if (!preg_match("/NOAUTH/", $url)) {
             $url .= "&NOAUTH";
@@ -296,8 +341,6 @@ $(document).ready(() => {
         $metadataJSON = \REDCap::getDataDictionary($project_id, "json");
         $metadata = json_decode($metadataJSON, TRUE);
         $choicesJSON = json_encode(getChoices($metadata));
-        $pids = $this->getProjectsWithModuleEnabled();
-        $pidsJSON = json_encode($pids);
 
         $csrfToken = $this->getCSRFToken();
         echo "
@@ -311,22 +354,33 @@ $(document).ready(() => {
         let prevName = '';
         let prevEmail = '';
 
-        function searchForMatches(field) {
-            const item = $('[name='+field+']').val().trim();
+        function searchForMatches(field, field2) {
+            const item1 = $('[name='+field+']').val().trim();
+            const item2 = (typeof field2 !== 'undefined') ? $('[name='+field2+']').val().trim() : '';
+            const item = item1 + ' '+item2;
+            let currName = '';
+            if ($('[name=name]').length > 0) {
+                currName = $('[name=name]').val();
+            } else if (($('[name=first_name]').length > 0) && ($('[name=last_name]').length > 0)) {
+                currName = $('[name=first_name]').val()+' '+$('[name=last_name]').val();
+            }
             if (
                 item.trim()
                 && (
-                    (prevName !== $('[name=name]').val())
+                    (prevName !== currName)
                     || (prevEmail !== $('[name=email]').val())
                 )
             ) {
-                prevName = $('[name=name]').val();
+                prevName = currName;
                 prevEmail = $('[name=email]').val();
                 const url = '$url';
                 const postData = {};
-                postData[field] = item;
+                if (field === 'first_name') {
+                    postData['name'] = item.trim();
+                } else {
+                    postData[field] = item.trim();
+                }
                 postData['redcap_csrf_token'] = '$csrfToken';
-                postData['pids'] = $pidsJSON;
                 console.log(JSON.stringify(postData));
                 $.post(url, postData, (json) => {
                     console.log(json);
@@ -437,6 +491,8 @@ $(document).ready(() => {
             twoColumnCheckboxes();
             $('#surveytitle').replaceWith(\"<div id='surveytitle'>$header</div>\");
             $('[name=name]').on('blur', () => { searchForMatches('name'); });
+            $('[name=first_name]').on('blur', () => { searchForMatches('first_name', 'last_name'); });
+            $('[name=last_name]').on('blur', () => { searchForMatches('first_name', 'last_name'); });
             $('[name=email]').on('blur', () => { searchForMatches('email'); });
             
             dialog = $('#dialog').dialog({

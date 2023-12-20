@@ -4,7 +4,7 @@ namespace Vanderbilt\FlightConnectorExternalModule;
 
 require_once(__DIR__."/NameMatcher.php");
 
-$pids = $_POST['pids'];
+$pids = $module->getProjectsWithModuleEnabled();
 $dataByName = [];
 foreach ($pids as $currPid) {
     $currMetadata = NULL;
@@ -79,14 +79,18 @@ function addRow(&$dataByName, $currPid, $row, $metadata, $module) {
     $name = $row['name'] ?: $row['firstname']." ".$row['lastname'];
     $projectName = getProjectName($module, $currPid);
     $projectName = preg_replace("/\s*Flight Connector\s*/", "", $projectName);
+    $projectName = preg_replace("/^-\s*/", "", $projectName);
+    $isContentsAndMethods = FlightConnectorExternalModule::isContentsAndMethods($currPid);
+    $contentsField = $isContentsAndMethods ? "c" : "contents";
+    $methodsField = $isContentsAndMethods ? "m" : "methods";
     $dataByName[$name."|".$row['email']] = [
         "record" => $row['record_id'],
         "pid" => $currPid,
         "projectName" => $projectName,
         "name" => $name,
         "email" => $row['email'],
-        "contents" => getChecks($row, "contents", $choices),
-        "methods" => getChecks($row, "methods", $choices),
+        $contentsField => getChecks($row, "contents", $choices),
+        $methodsField => getChecks($row, "methods", $choices),
     ];
 }
 
