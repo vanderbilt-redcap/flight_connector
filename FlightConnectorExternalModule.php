@@ -465,6 +465,7 @@ $(document).ready(() => {
                 for (let i=0; i < checkboxFields.length; i++) {
                     let field = checkboxFields[i];
                     if (typeof surveyChoices[field] === 'undefined') {
+                        // older projects at Vanderbilt just use the first letter: c and m
                         field = field.substring(0, 1);
                     }
                     const checks = match[field] ?? {};
