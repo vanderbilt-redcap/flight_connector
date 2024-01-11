@@ -341,6 +341,10 @@ $(document).ready(() => {
         $metadataJSON = \REDCap::getDataDictionary($project_id, "json");
         $metadata = json_decode($metadataJSON, TRUE);
         $choicesJSON = json_encode(getChoices($metadata));
+        $surveyTitleJS = "$('#surveytitle').replaceWith(\"<div id='surveytitle'>$header</div>\");";
+        if (($project_id == self::CONTENT_AND_METHODS_VANDERBILT) && (self::isVanderbilt())) {
+            $surveyTitleJS = "";
+        }
 
         $csrfToken = $this->getCSRFToken();
         echo "
@@ -459,7 +463,11 @@ $(document).ready(() => {
                 }
                 
                 for (let i=0; i < checkboxFields.length; i++) {
-                    const field = checkboxFields[i];
+                    let field = checkboxFields[i];
+                    if (typeof surveyChoices[field] === 'undefined') {
+                        // older projects at Vanderbilt just use the first letter: c and m
+                        field = field.substring(0, 1);
+                    }
                     const checks = match[field] ?? {};
                     for (const index in checks) {
                         if (match['pid'] === $project_id) {
@@ -489,7 +497,7 @@ $(document).ready(() => {
         
         $(document).ready(function() {
             twoColumnCheckboxes();
-            $('#surveytitle').replaceWith(\"<div id='surveytitle'>$header</div>\");
+            $surveyTitleJS
             $('[name=name]').on('blur', () => { searchForMatches('name'); });
             $('[name=first_name]').on('blur', () => { searchForMatches('first_name', 'last_name'); });
             $('[name=last_name]').on('blur', () => { searchForMatches('first_name', 'last_name'); });
