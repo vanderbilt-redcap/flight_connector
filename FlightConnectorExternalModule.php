@@ -464,22 +464,28 @@ $(document).ready(() => {
                 
                 for (let i=0; i < checkboxFields.length; i++) {
                     let field = checkboxFields[i];
-                    if (typeof surveyChoices[field] === 'undefined') {
-                        // older projects at Vanderbilt just use the first letter: c and m
-                        field = field.substring(0, 1);
-                    }
+                    let fieldDest = field;
+                    if ((field === 'm') || (field === 'c')) {
+                         // older projects at Vanderbilt just use the first lett
+                        if (field === 'm') {
+                            field = 'methods';
+                        } else if (field === 'c') {
+                            field = 'contents';
+                        }
+                        fieldDest = field.substring(0, 1);
+                     }
                     const checks = match[field] ?? {};
                     for (const index in checks) {
                         if (match['pid'] === $project_id) {
-                            const id = '__chk__'+field+'_RC_'+index;
+                            const id = '__chk__'+fieldDest+'_RC_'+index;
                             $('#id-'+id).click();
                         } else {
                             // external project: check by choice label, not by index
                             const label = checks[index];
-                            for (const surveyIndex in surveyChoices[field] ?? {}) {
-                                const surveyLabel = surveyChoices[field][surveyIndex];
+                            for (const surveyIndex in surveyChoices[fieldDest] ?? {}) {
+                                const surveyLabel = surveyChoices[fieldDest][surveyIndex];
                                 if (surveyLabel === label) {
-                                    const id = '__chk__'+field+'_RC_'+surveyIndex;
+                                    const id = '__chk__'+fieldDest+'_RC_'+surveyIndex;
                                     $('#id-'+id).click();
                                 }
                             }
