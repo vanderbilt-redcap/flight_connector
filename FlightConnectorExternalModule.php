@@ -14,6 +14,7 @@ class FlightConnectorExternalModule extends AbstractExternalModule
     const INSTRUMENT = "flight_connector_survey";
     const UNIQUE_HASH_SETTING = "unique_hash";
     const VANDERBILT_MAIN_PROJECT = 172928;
+    const VANDERBILT_LOCALHOST_PROJECT = 87;
     const EFS_RETREAT_2023_PROJECT = 172325;
     const REQUIRE_LOGIN_SETTING = "requireLoginForSurvey";
     const UNKNOWN_CHOICE = "Unknown";
