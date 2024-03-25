@@ -3,6 +3,11 @@
 use \Vanderbilt\FlightConnectorExternalModule\NameMatcher;
 use \Vanderbilt\FlightConnectorExternalModule\FlightConnectorExternalModule;
 
+# This short script compares the Vanderbilt Flight Connector data against
+# a local copy of BRET's Open Lab List and identifies those not currently present
+# in Flight Connector. It matches by email user-id or name. Those identified
+# might need to be contacted in order to participate.
+
 require_once(__DIR__."/NameMatcher.php");
 require_once(__DIR__."/FlightConnectorExternalModule.php");
 
