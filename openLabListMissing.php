@@ -11,10 +11,13 @@ use \Vanderbilt\FlightConnectorExternalModule\FlightConnectorExternalModule;
 require_once(__DIR__."/NameMatcher.php");
 require_once(__DIR__."/FlightConnectorExternalModule.php");
 
+# destPid is the destination project for the final Open Lab List Flight Connector
 if (FlightConnectorExternalModule::isLocalhost()) {
     $pid = FlightConnectorExternalModule::VANDERBILT_LOCALHOST_PROJECT;
+    $destPid = 135;
 } else if (FlightConnectorExternalModule::isVanderbilt()) {
     $pid = FlightConnectorExternalModule::VANDERBILT_MAIN_PROJECT;
+    $destPid = 188759;
 } else {
     throw new \Exception("Invalid environment!");
 }
@@ -24,6 +27,8 @@ $redcapData = \REDCap::getData($pid, "json-array");
 $fp = fopen(__DIR__."/open_lab_list_03_2024.csv", "r");
 $headers = fgetcsv($fp);
 $notFound = [];
+$upload = [];
+$currRecordId = 1;
 while ($line = fgetcsv($fp)) {
     $piName = $line[0];
     if ($piName) {
@@ -44,6 +49,11 @@ while ($line = fgetcsv($fp)) {
             if (in_array($connectorEmailUser, $emailUsers) || NameMatcher::matchName($connectorFirst, $connectorLast, $piFirst, $piLast)) {
                 echo "Matched $piName<br/>";
                 $found = TRUE;
+                $row['record_id'] = $currRecordId;
+                unset($row['in_ldap']);
+                unset($row['department']);
+                $upload[] = $row;
+                $currRecordId++;
                 break;
             }
         }
@@ -54,6 +64,13 @@ while ($line = fgetcsv($fp)) {
     }
 }
 fclose($fp);
+
+if (isset($_GET['upload']) && !empty($upload)) {
+    $feedback = \REDCap::saveData($destPid, "json", json_encode($upload));
+    echo "<p>".json_encode($feedback)."</p>";
+} else {
+    echo "<p>Not uploading</p>";
+}
 
 echo "<h2>".count($notFound)." not found in Vanderbilt Flight Connector</h2>";
 foreach ($notFound as $name => $email) {
