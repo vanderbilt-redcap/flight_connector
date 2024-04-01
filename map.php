@@ -85,7 +85,6 @@ $inputJSON = json_encode($inputData);
 echo makeBothLinks($module);
 
 $d3Link = $module->getUrl("d3.v3.min.js");
-
 $saveDiv = makeSaveDiv($module, "svg");
 
 $options = [];

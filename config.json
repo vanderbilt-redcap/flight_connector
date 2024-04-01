@@ -22,6 +22,11 @@
 				"url": "map.php?NOAUTH"
 			},
 			{
+				"name": "Flight Connector Node Graph",
+				"icon": "fa-regular fa-circle",
+				"url": "nodeGraph.php?NOAUTH"
+			},
+			{
 				"name": "Flight Connector ReadMe",
 				"icon": "fa-solid fa-book",
 				"url": "README.md"
@@ -37,6 +42,7 @@
 	},
 	"no-auth-pages": [
 		"map",
+		"nodeGraph",
 		"lookupMatches",
 		"generateQR"
 	],

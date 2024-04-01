@@ -86,11 +86,13 @@ class FlightConnectorExternalModule extends AbstractExternalModule
 
     function redcap_every_page_top($project_id) {
         if (self::isREDCap() && !self::isContentsAndMethods($project_id)) {
-            $mapUrl = $this->getMapURL($this);
+            $mapUrl = $this->getMapURL();
+            $nodeGraphUrl = $this->getNodeGraphURL();
             echo "<script>
 $(document).ready(() => {
     setTimeout(() => {
         $('a[data-link-key=flight_connector-link_project_1]').attr('href', '$mapUrl');    
+        $('a[data-link-key=flight_connector-link_project_2]').attr('href', '$nodeGraphUrl');    
     }, 30);
 });
 </script>";
@@ -99,6 +101,7 @@ $(document).ready(() => {
 $(document).ready(() => {
     setTimeout(() => {
         $('a[data-link-key=flight_connector-link_project_1]').parent().hide();    
+        $('a[data-link-key=flight_connector-link_project_2]').parent().hide();    
     }, 30);
 });
 </script>";
@@ -276,19 +279,25 @@ $(document).ready(() => {
         return FALSE;
     }
 
-
-
-    public function getMapURL() {
-        $mapUrl = $this->getUrl("map.php");
+    private function getNOAUTHPageURL($page) {
+        $url= $this->getUrl($page);
         $pid = getPid();
         $uniqueHash = $this->getProjectSetting(self::UNIQUE_HASH_SETTING, $pid);
         if ($uniqueHash) {
-            $mapUrl .= "&h=$uniqueHash";
+            $url .= "&h=$uniqueHash";
         }
-        if (!preg_match("/NOAUTH/", $mapUrl)) {
-            $mapUrl .= "&NOAUTH";
+        if (!preg_match("/NOAUTH/", $url)) {
+            $url .= "&NOAUTH";
         }
-        return $mapUrl;
+        return $url;
+    }
+
+    public function getMapURL() {
+        return $this->getNOAUTHPageURL("map.php");
+    }
+
+    public function getNodeGraphURL() {
+        return $this->getNOAUTHPageURL("nodeGraph.php");
     }
 
     private static function isREDCap() {
