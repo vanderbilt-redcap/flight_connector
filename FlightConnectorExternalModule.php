@@ -14,12 +14,19 @@ class FlightConnectorExternalModule extends AbstractExternalModule
     const INSTRUMENT = "flight_connector_survey";
     const UNIQUE_HASH_SETTING = "unique_hash";
     const VANDERBILT_MAIN_PROJECT = 172928;
-    const VANDERBILT_LOCALHOST_PROJECT = 87;
     const EFS_RETREAT_2023_PROJECT = 172325;
     const REQUIRE_LOGIN_SETTING = "requireLoginForSurvey";
     const UNKNOWN_CHOICE = "Unknown";
-    const CONTENT_AND_METHODS_LOCALHOST = 95;
     const CONTENT_AND_METHODS_VANDERBILT = 72516;
+
+    public static function getLocalhostProject($name) {
+        if (($name == "Vanderbilt") && ($_SERVER['SSL_SERVER_S_DN_Email'] == "scott.j.pearson@vumc.org")) {
+            return 87;
+        } else if (($name == "Contents and Methods") && ($_SERVER['SSL_SERVER_S_DN_Email'] == "scott.j.pearson@vumc.org")) {
+            return 95;
+        }
+        return "";
+    }
 
     public function getFields($pid) {
         $option1 = ["contents" => "Concepts or Content Areas", "methods" => "Methods or Tools"];
@@ -52,7 +59,7 @@ class FlightConnectorExternalModule extends AbstractExternalModule
 
     function redcap_every_page_before_render($project_id)
     {
-        if (self::isLocalhost() && ($project_id == self::CONTENT_AND_METHODS_LOCALHOST)) {
+        if (self::isLocalhost() && ($project_id == self::getLocalhostProject("Contents and Methods"))) {
             return;
         }
 
@@ -75,7 +82,7 @@ class FlightConnectorExternalModule extends AbstractExternalModule
         return (
             (
                 self::isLocalhost()
-                && ($project_id == FlightConnectorExternalModule::CONTENT_AND_METHODS_LOCALHOST)
+                && ($project_id == self::getLocalhostProject("Contents and Methods"))
             )
             || (
                 self::isVanderbilt()
@@ -329,7 +336,7 @@ $(document).ready(() => {
             $line = "$('#'+row).find('div[data-kind=field-value]').append(\"<div id='\"+row+\"-left' class='leftCol'></div><div id='\"+row+\"-right' class='rightCol'></div>\");";
         }
         $header = makeHeader($this, "Flight Connector", 650);
-        if (self::isLocalhost() && ($project_id == self::CONTENT_AND_METHODS_LOCALHOST)) {
+        if (self::isLocalhost() && ($project_id == self::getLocalhostProject("Contents and Methods"))) {
             $header = "";
         }
         $url = $this->getUrl("lookupMatches.php");

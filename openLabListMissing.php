@@ -13,7 +13,7 @@ require_once(__DIR__."/FlightConnectorExternalModule.php");
 
 # destPid is the destination project for the final Open Lab List Flight Connector
 if (FlightConnectorExternalModule::isLocalhost()) {
-    $pid = FlightConnectorExternalModule::VANDERBILT_LOCALHOST_PROJECT;
+    $pid = FlightConnectorExternalModule::getLocalhostProject("Contents and Methods");
     $destPid = 135;
 } else if (FlightConnectorExternalModule::isVanderbilt()) {
     $pid = FlightConnectorExternalModule::VANDERBILT_MAIN_PROJECT;
