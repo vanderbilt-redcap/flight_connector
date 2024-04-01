@@ -7,8 +7,11 @@ use \ExternalModules\ExternalModules;
 require_once(__DIR__."/FlightConnectorExternalModule.php");
 require_once(__DIR__."/base.php");
 
-$pid = getPid();
+# This page uses Flight Connector data to form a social network edge graph
+# Inspired by https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9825768/
+# Code adapted from https://prod.tbilab.org/connect/
 
+$pid = getPid();
 if (!$module->isSetup($pid)) {
     header("Location: ".$module->getUrl("install.php"));
 }
@@ -19,6 +22,7 @@ if (($uniqueHash === "") || ($uniqueHash !== $_GET['h'])) {
 
 $json = \REDCap::getDataDictionary($pid, "json");
 $metadata = json_decode($json, TRUE);
+$choices = getChoices($metadata);
 $redcapData = getData($pid);
 $projectTitle = shortenTitle(\REDCap::getProjectTitle());
 
@@ -65,7 +69,5 @@ echo "
 				$saveDiv
 				<script type='text/javascript' src='$d3Link'></script>
 			</div>			
-		</div>
-				
 		</div>
 	</div>";
