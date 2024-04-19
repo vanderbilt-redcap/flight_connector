@@ -60,12 +60,12 @@ echo "	<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
 	<link rel='icon' href='$ftLogo' />";
 echo "</head>";
 echo "<body>";
-echo makeHeader($module, "Flight Connector");
+echo makeHeader($module, "Flight Connector", 800, TRUE);
 
 $redcapData = getData($pid);
 if (empty($redcapData)) {
     echo "<p class='centered max-width thickBorder padded'>No data have been entered.</p>";
-    echo makeBothLinks($module);
+    echo makeBothLinks($module, "map");
     exit;
 }
 $choices = [];
@@ -82,7 +82,7 @@ foreach (array_keys($module->getFields($pid)) as $field) {
 }
 $inputJSON = json_encode($inputData);
 
-echo makeBothLinks($module);
+echo makeBothLinks($module, "map");
 
 $d3Link = $module->getUrl("d3.v3.min.js");
 $saveDiv = makeSaveDiv($module, "svg");

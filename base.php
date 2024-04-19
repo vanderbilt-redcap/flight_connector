@@ -11,7 +11,7 @@ function getEventIdForClassical($module, $pid) {
     throw new \Exception("The event_id is not defined. (This should never happen.)");
 }
 
-function makeHeader($module, $title, $width = 800) {
+function makeHeader($module, $title, $width = 800, $showLinks = FALSE) {
     $efsLogo = $module->getUrl("efs_small_logoonly.png");
     $ftLogo = $module->getUrl("flight_tracker_icon.png");
     // TODO check with team which link to go to - remember that outsiders might use the Vanderbilt server
@@ -19,11 +19,17 @@ function makeHeader($module, $title, $width = 800) {
 
     $html = "<style>.ftRainbow { padding-bottom: 4px; padding-top: 4px; background: linear-gradient(0deg, white 0%, transparent 50%, white 100%), linear-gradient(90deg, white 0%, #d4d4eb 20%, #f69ca0 40%, #b0d87a 60%, #f6ba70 80%, white 100%); }</style>";
 
+    $links = "";
+    if ($showLinks) {
+        $conceptMapLink = $module->getMapURL();
+        $clusterLink = $module->getNodeGraphURL();
+        $links = "<p style='margin-top: 0; margin-bottom: 0; font-size: 12px;'>[<a href='$conceptMapLink' style='color: black;'>concept map</a>] [<a href='$clusterLink' style='color: black;'>cluster graph</a>]</p>";
+    }
     $linkStyle = "color: inherit; font-size: inherit;";
     $headerInfo = "<p style='text-align: right; font-size: 15px; line-height: 1.0em;'>A Professional Networking Tool<br/>from <a style='$linkStyle' href='$efsLink' target='_blank'>Edge for Scholars</a> <img src='$efsLogo' style='width: 27px; height: 20px;' alt='Edge for Scholars' /><br/>and <a style='$linkStyle' href='https://redcap.link/flight_tracker' target='_blank'>Flight Tracker</a> <img src='$ftLogo' style='width: 20px; height: 20px;' alt='Flight Tracker for Scholars' /><br/><span style='font-size: 11px; line-height: 1.3em;'>Copyright &#9400 ".date("Y")."<br/><a style='$linkStyle' href='https://vumc.org' target='_blank'>Vanderbilt University Medical Center</a></span></p>";;
     $html .= "<table class='ftRainbow' style='margin-right: auto; margin-left: auto; width: $width"."px;'><tbody>";
     $html .= "<tr>";
-    $html .= "<td style='width: 62%; vertical-align: middle;'><h1 style='text-align: left;'>$title</h1></td>";
+    $html .= "<td style='width: 62%; vertical-align: middle;'><h1 style='text-align: left; margin-top: 0; margin-bottom: 0;'>$title</h1>$links</td>";
     $html .= "<td style='width: 38%; vertical-align: middle;'>$headerInfo</td>";
     $html .= "</tr>";
     $html .= "</tbody></table>";
@@ -157,8 +163,17 @@ function makeJS($module) {
     return $html;
 }
 
-function makeBothLinks($module) {
-    $mapUrl = $module->getMapURL();
+function makeBothLinks($module, $page) {
+    if ($page == "map") {
+        $urls = ["Concept Map" => $module->getMapURL()];
+    } else if ($page == "nodeGraph") {
+        $urls = ["Cluster Graph" => $module->getNodeGraphURL()];
+    } else if ($page == "all") {
+        $urls = [
+            "Concept Map" => $module->getMapURL(),
+            "Cluster Graph" => $module->getNodeGraphURL(),
+        ];
+    }
     $pid = getPid();
     $requireLogin = $module->getProjectSetting(FlightConnectorExternalModule::REQUIRE_LOGIN_SETTING, $pid);
     if (
@@ -176,14 +191,20 @@ function makeBothLinks($module) {
     } else {
         return "";
     }
-    if ($publicSurveyLink && $mapUrl) {
-        $mapQRCode = getQRCodeUrl($module, $mapUrl);
+    if ($publicSurveyLink && !empty($urls)) {
         $surveyQRCode = getQRCodeUrl($module, $publicSurveyLink);
         $html = "<p class='centered bolded' style='font-size: 1.5em; margin: 0;'><a href='$publicSurveyLink'>Add Your Data Now or Share With Others</a></p>";
         $html .= "<table class='centered max-width'><tr>";
-        $html .= "<td class='centered'><p class='centered'>Use or share this $descriptor link with others to add data.<br/><input id='surveyUrl' value='$publicSurveyLink' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#surveyUrl\"));'>Copy</a></span></p><p class='centered'>Share this public link to see the Flight Tracker Map real-time as the data grows.<br/><input id='mapUrl' value='$mapUrl' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#mapUrl\"));'>Copy</a> <a href='javascript:;' onclick='$(\"#mapQR\").show(); $(\"#surveyQR\").show();' >Show QR Codes</a></span></p></td>";
+        $html .= "<td class='centered'><p class='centered'>Use or share this $descriptor link with others to add data.<br/><input id='surveyUrl' value='$publicSurveyLink' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#surveyUrl\"));'>Copy</a></span></p>";
+        foreach ($urls as $pageTitle => $url) {
+            $code = makeHTMLCode($pageTitle);
+            $html .= "<p class='centered'>Share this public link to see the Flight Tracker $pageTitle real-time as the data grows.<br/><input id='".$code."Url' value='$url' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#".$code."Url\"));'>Copy</a> <a href='javascript:;' onclick='$(\".pageQR\").show(); $(\"#surveyQR\").show();' >Show QR Codes</a></span></p></td>";
+        }
         $html .= "<td id='surveyQR' style='display: none;'><div class='smallest'>Survey Link:</div><img src='$surveyQRCode' alt='Survey QR Code' /></td>";
-        $html .= "<td id='mapQR' style='display: none;'><div class='smaller'>Map Link:</div><img src='$mapQRCode' alt='Map QR Code' /></td>";
+        foreach ($urls as $pageTitle => $url) {
+            $pageQRCode = getQRCodeUrl($module, $url);
+            $html .= "<td class='pageQR' style='display: none;'><div class='smaller'>$pageTitle Link:</div><img src='$pageQRCode' alt='$pageTitle QR Code' /></td>";
+        }
         $html .= "</tr></table>";
         return $html;
     } else {
@@ -721,4 +742,11 @@ function shortenTitle($title) {
     }
     $title = trim($title);
     return $title ?: $original;
+}
+
+function makeHTMLCode($str) {
+    $htmlFriendly = preg_replace("/[\s\-]+/", "_", $str);
+    $htmlFriendly = preg_replace("/<[^>]+>/", "", $htmlFriendly);
+    $htmlFriendly = preg_replace("/[\:\+\"\/\[\]'#<>\~\`\!\@\#\$\%\^\&\*\(\)\=\;\?\.\,]/", "", $htmlFriendly);
+    return htmlentities($htmlFriendly);
 }
