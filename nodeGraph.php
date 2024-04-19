@@ -140,10 +140,14 @@ $subgraphsAtStrength = makeSubgraphs($d3DataOriginal);
 $maxStrength = empty($subgraphsAtStrength) ? 1 : max(array_keys($subgraphsAtStrength));
 if (isset($_GET['strength'])) {
     $strength = $_GET['strength'] ?? 1;
-    $dataJSON = json_encode($subgraphsAtStrength[$strength] ?? []);
+    $myData = $subgraphsAtStrength[$strength] ?? [];
 } else {
     $strength = 1;
-    $dataJSON = json_encode($d3DataOriginal);
+    $myData = $d3DataOriginal;
+}
+$dataJSON = json_encode($myData);
+if (empty($myData) || empty($myData["nodes"] ?? [])) {
+    $saveDiv = "";
 }
 if ($isMulti) {
     $scale = ceil(sqrt($numParts));
@@ -273,7 +277,7 @@ echo "
                 const targetTopics = makeDiffArray(d.target.topics, d.topics);
                 const targetList = makeUnorderedList(targetTopics);
                 const targetHeader = "<h4>"+d.target.id+": "+targetTopics.length+" Unique Topic"+((targetTopics.length !== 1) ? "s" : "")+"</h4>";
-                infoOb.html("<h4>Connected Names</h4><p>"+d.source.id+"<br/>["+d.source.email+"]<br/>"+d.target.id+"<br/>["+d.target.email+"]</p>"+commonHeader+commonList+sourceHeader+sourceList+targetHeader+targetList)
+                infoOb.html("<h3>Connected Names</h3><h4 style='margin-bottom: 0;'>"+d.source.id+"</h4><p style='margin-top: 0;'>["+d.source.email+"]</p><h4 style='margin-bottom: 0;'>"+d.target.id+"</h4><p style='margin-top: 0;'>["+d.target.email+"]</p>"+commonHeader+commonList+sourceHeader+sourceList+targetHeader+targetList)
             });
 
         const circles = container.append("g")
@@ -305,8 +309,8 @@ echo "
             .on("mouseover", (i, d) => {
                 const pubMedLink = 'https://pubmed.ncbi.nlm.nih.gov/?term='+encodeURIComponent(d.id);
                 const department = d.department ? "<br/>"+d.department : "";
-                const topicList = "<ul><li style='text-align: left;'>"+d.topics.join("</li><li style='text-align: left;'>")+"</li></ul>";
-                infoOb.html("<h4 style='margin-bottom: 0;'>"+d.id+"</h4><p style='margin-top: 0;'>["+d.email+"]<br/>[<a href='"+pubMedLink+"' target='_new'>Search PubMed</a>]"+department+"</p><h4>"+d.topics.length+" Topic"+((d.topics.length !== 1) ? "s" : "")+"</h4>"+topicList);
+                const topicList = makeUnorderedList(d.topics);
+                infoOb.html("<h3 style='margin-bottom: 0;'>"+d.id+"</h3><p style='margin-top: 0;'>["+d.email+"]<br/>[<a href='"+pubMedLink+"' target='_new'>Search PubMed</a>]"+department+"</p><h4>"+d.topics.length+" Topic"+((d.topics.length !== 1) ? "s" : "")+"</h4>"+topicList);
             });
         label.call(d3.drag()
             .on("start", dragstarted)
