@@ -273,10 +273,10 @@ echo "
                 const commonHeader = "<h4>"+d.topics.length+" Common Topic"+((d.topics.length !== 1) ? "s" : "")+"</h4>";
                 const sourceTopics = makeDiffArray(d.source.topics, d.topics);
                 const sourceList = makeUnorderedList(sourceTopics);
-                const sourceHeader = "<h4>"+d.source.id+": "+sourceTopics.length+" Unique Topic"+((sourceTopics.length !== 1) ? "s" : "")+"</h4>";
+                const sourceHeader = "<h4>"+d.source.id+":<br/>"+sourceTopics.length+" Unique Topic"+((sourceTopics.length !== 1) ? "s" : "")+"</h4>";
                 const targetTopics = makeDiffArray(d.target.topics, d.topics);
                 const targetList = makeUnorderedList(targetTopics);
-                const targetHeader = "<h4>"+d.target.id+": "+targetTopics.length+" Unique Topic"+((targetTopics.length !== 1) ? "s" : "")+"</h4>";
+                const targetHeader = "<h4>"+d.target.id+":<br/>"+targetTopics.length+" Unique Topic"+((targetTopics.length !== 1) ? "s" : "")+"</h4>";
                 infoOb.html("<h3>Connected Names</h3><h4 style='margin-bottom: 0;'>"+d.source.id+"</h4><p style='margin-top: 0;'>["+d.source.email+"]</p><h4 style='margin-bottom: 0;'>"+d.target.id+"</h4><p style='margin-top: 0;'>["+d.target.email+"]</p>"+commonHeader+commonList+sourceHeader+sourceList+targetHeader+targetList)
             });
 
@@ -380,7 +380,7 @@ echo "
             if (list.length === 0) {
                 return "<p>No items.</p>";
             }
-            return "<ul><li style='text-align: left;'>"+list.join("</li><li style='text-align: left;'>")+"</li></ul>";
+            return "<ul style='padding-left: 14px;'><li style='text-align: left;'>"+list.join("</li><li style='text-align: left;'>")+"</li></ul>";
         }
 
         return svg.node();
