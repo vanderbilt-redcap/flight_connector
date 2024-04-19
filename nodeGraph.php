@@ -266,13 +266,13 @@ echo "
             .attr("stroke-width", d => Math.sqrt(d.value))
             .on("mouseover", (i, d) => {
                 const commonList = makeUnorderedList(d.topics);
-                const commonHeader = "<h4>"+d.topics.length+" Common Topic"+((d.topics.length > 1) ? "s" : "")+"</h4>";
+                const commonHeader = "<h4>"+d.topics.length+" Common Topic"+((d.topics.length !== 1) ? "s" : "")+"</h4>";
                 const sourceTopics = makeDiffArray(d.source.topics, d.topics);
                 const sourceList = makeUnorderedList(sourceTopics);
-                const sourceHeader = "<h4>"+d.source.id+": "+sourceTopics.length+" Unique Topic"+((sourceTopics.length > 1) ? "s" : "")+"</h4>";
+                const sourceHeader = "<h4>"+d.source.id+": "+sourceTopics.length+" Unique Topic"+((sourceTopics.length !== 1) ? "s" : "")+"</h4>";
                 const targetTopics = makeDiffArray(d.target.topics, d.topics);
                 const targetList = makeUnorderedList(targetTopics);
-                const targetHeader = "<h4>"+d.target.id+": "+targetTopics.length+" Unique Topic"+((targetTopics.length > 1) ? "s" : "")+"</h4>";
+                const targetHeader = "<h4>"+d.target.id+": "+targetTopics.length+" Unique Topic"+((targetTopics.length !== 1) ? "s" : "")+"</h4>";
                 infoOb.html("<h4>Connected Names</h4><p>"+d.source.id+"<br/>["+d.source.email+"]<br/>"+d.target.id+"<br/>["+d.target.email+"]</p>"+commonHeader+commonList+sourceHeader+sourceList+targetHeader+targetList)
             });
 
@@ -306,7 +306,7 @@ echo "
                 const pubMedLink = 'https://pubmed.ncbi.nlm.nih.gov/?term='+encodeURIComponent(d.id);
                 const department = d.department ? "<br/>"+d.department : "";
                 const topicList = "<ul><li style='text-align: left;'>"+d.topics.join("</li><li style='text-align: left;'>")+"</li></ul>";
-                infoOb.html("<h4 style='margin-bottom: 0;'>"+d.id+"</h4><p style='margin-top: 0;'>["+d.email+"]<br/>[<a href='"+pubMedLink+"' target='_new'>Search PubMed</a>]"+department+"</p><h4>"+d.topics.length+" Topic"+((d.topics.length > 1) ? "s" : "")+"</h4>"+topicList);
+                infoOb.html("<h4 style='margin-bottom: 0;'>"+d.id+"</h4><p style='margin-top: 0;'>["+d.email+"]<br/>[<a href='"+pubMedLink+"' target='_new'>Search PubMed</a>]"+department+"</p><h4>"+d.topics.length+" Topic"+((d.topics.length !== 1) ? "s" : "")+"</h4>"+topicList);
             });
         label.call(d3.drag()
             .on("start", dragstarted)
@@ -321,7 +321,7 @@ echo "
             .attr("stroke", "#000")
             .attr("font-size", "11px")
             .attr("font-weight", 500)
-            .text(strength+" common topic"+((strength > 1) ? "s" : ""))
+            .text(strength+" common topic"+((strength !== 1) ? "s" : ""))
 
         // Set the position attributes of links and nodes each time the simulation ticks.
         function ticked() {
