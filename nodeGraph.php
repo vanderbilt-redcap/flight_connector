@@ -71,6 +71,7 @@ $d3DataOriginal = [
     "links" => [],
 ];
 $isMulti = isset($_GET['multi']) && ($_GET['multi'] == "1");
+$combineWithGreater = isset($_GET['greater']) && ($_GET['greater'] == "1");
 if ($isMulti) {
     $personRadiusSize = 10;
     $fontSize = 10;
@@ -88,6 +89,7 @@ if ($isMulti) {
     $fontSize = 0;
     $zoomFactor = 10;
 }
+$padding = 2 * $personRadiusSize + 8;
 $groups = [
     "contents" => "content",
     "methods" => "method",
@@ -145,6 +147,22 @@ if (isset($_GET['strength'])) {
     $strength = 1;
     $myData = $d3DataOriginal;
 }
+if ($combineWithGreater) {
+    for ($i = $strength + 1; $i <= $maxStrength; $i++) {
+        $strengthSubgraph = $subgraphsAtStrength[$i] ?? [];
+        $myDataIds = [];
+        foreach ($myData["nodes"] as $node) {
+            $myDataIds[] = $node["id"];
+        }
+        foreach ($strengthSubgraph["nodes"] as $node) {
+            $id = $node["id"];
+            if (!in_array($id, $myDataIds)) {
+                $myData["nodes"][] = $node;
+            }
+        }
+        $myData["links"] = array_merge($myData["links"], $strengthSubgraph["links"] ?? []);
+    }
+}
 $dataJSON = json_encode($myData);
 if (empty($myData) || empty($myData["nodes"] ?? [])) {
     $saveDiv = "";
@@ -184,27 +202,41 @@ if ($isMulti) {
         $mainCall .= " $('#graph$i').append(chart($subWidth, $subHeight, {$subgraphJSONs[$i]}, {$weights[$i]}, $zoomFactor));";
     }
 } else {
-    $mainCall = "$('#graph').append(chart($width, $height, $dataJSON, $strength, $zoomFactor));";
+    $mainCall = "$('#graph').append(chart($width + $padding, $height + $padding, $dataJSON, $strength, $zoomFactor));";
 }
 
 $hiddenHTML = "";
 foreach ($_GET as $field => $value) {
-    if (!in_array($field, ["strength", "instance", "pnid", "multi"])) {
+    if (!in_array($field, ["strength", "instance", "pnid", "multi", "greater"])) {
         $field = htmlentities($field);
         $value = htmlentities($value);
         $hiddenHTML .= "<input type='hidden' name='$field' value='$value' />";
     }
 }
-$hiddenHTML .= "<input type='hidden' name='multi' value='0' />";
+$hiddenHTML .= "<input type='hidden' name='multi' value='0' /><input type='hidden' name='greater' value='".($combineWithGreater ? "1" : "0")."' />";
 $strength = htmlentities($strength);
 
+if (!$combineWithGreater) {
+    $greaterButton = "<button onclick='$(\"[name=greater]\").val(\"1\"); return true;'>Or Greater Strengths</button>";
+    if ($strength == 1) {
+        $numTopics = "$strength Topic";
+    } else {
+        $numTopics = "$strength Topics";
+    }
+} else {
+    $greaterButton = "<button onclick='$(\"[name=greater]\").val(\"0\"); return true;'>Just This Strength</button>";
+    $numTopics = "$strength+ Topics";
+}
+$title = "Connections with $numTopics in Common";
+
 echo "
-    <h2>$projectTitle</h2>
     <form method='GET' action='?'>
     $hiddenHTML
-    <p class='centered'><label for='strength'>Number of Common Topics: </label><input type='number' min='1' max='$maxStrength' name='strength' value='$strength' id='strength' style='width: 35px;' onchange='$(this).closest(\"form\").submit();'/> <button onclick='changeInt(\"#strength\", 1); return true;'>+</button> <button onclick='changeInt(\"#strength\", -1); return true;'>-</button> <button onclick='$(\"[name=multi]\").val(\"1\"); return true;'>Show Strongest $numParts</button></p>
+    <p class='centered'><label for='strength'>Number of Common Topics: </label><input type='number' min='1' max='$maxStrength' name='strength' value='$strength' id='strength' style='width: 35px;' onchange='$(this).closest(\"form\").submit();'/> <button onclick='changeInt(\"#strength\", 1); return true;'>+</button> <button onclick='changeInt(\"#strength\", -1); return true;'>-</button> $greaterButton <button onclick='$(\"[name=multi]\").val(\"1\"); return true;'>Show Strongest $numParts</button></p>
     </form>
+    <h2>$projectTitle</h2>
     <div id='container'>
+        <h3>$title</h3>
 		<div class='wrap'>
 			<div id='main'>
 			    <div style='width: 900px; float: left;'>
