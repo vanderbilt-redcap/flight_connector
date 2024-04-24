@@ -25,11 +25,21 @@ $metadata = json_decode($json, TRUE);
 $choices = getChoices($metadata);
 $redcapData = getData($pid);
 $projectTitle = shortenTitle(\REDCap::getProjectTitle());
+$defaultHighlightedName= str_replace("&amp;", "&", preg_replace("/&#0?39;/", "'", htmlentities($_GET['highlightedName'] ?? "")));
+$defaultHighlightedTopic = str_replace("&amp;", "&", preg_replace("/&#0?39;/", "'", htmlentities($_GET['highlightedTopic'] ?? "")));
+$isMulti = isset($_GET['multi']) && ($_GET['multi'] == "1");
+$combineWithGreater = isset($_GET['greater']) && ($_GET['greater'] == "1");
+if ($isMulti) {
+    $defaultHighlightedTopic = "";
+    $defaultHighlightedName = "";
+}
 
 $width = 900;
 $height = 680;
 $numParts = 4;
 $nodeColor = "#5c5c7a";
+$nameHighlightColor = "#c49459";
+$topicHighlightColor = "#698149";
 
 echo "<!doctype html><html lang='en-US'>";
 echo "<head>";
@@ -70,8 +80,6 @@ $d3DataOriginal = [
     "nodes" => [],
     "links" => [],
 ];
-$isMulti = isset($_GET['multi']) && ($_GET['multi'] == "1");
-$combineWithGreater = isset($_GET['greater']) && ($_GET['greater'] == "1");
 if ($isMulti) {
     $personRadiusSize = 10;
     $fontSize = 10;
@@ -100,8 +108,10 @@ foreach (array_keys($groups) as $variable) {
         $categories[$label] = [];
     }
 }
+$allNames = [];
 foreach ($redcapData as $row) {
     $name = $row['name'];
+    $allNames[] = $name;
     list($first, $last) = NameMatcher::splitName($name);
     $fInitial = $first[0];
     $lInitial = $last[0];
@@ -201,42 +211,74 @@ if ($isMulti) {
     for ($i = 1; $i <= $numParts; $i++) {
         $mainCall .= " $('#graph$i').append(chart($subWidth, $subHeight, {$subgraphJSONs[$i]}, {$weights[$i]}, $zoomFactor));";
     }
+    $nameFinderHTML = "";
 } else {
     $mainCall = "$('#graph').append(chart($width + $padding, $height + $padding, $dataJSON, $strength, $zoomFactor));";
+    $nameOptions = [];
+    foreach ($allNames as $name) {
+        if ($defaultHighlightedName == $name) {
+            $optionHTML = "<option value=\"$name\" selected>$name</option>";
+        } else {
+            $optionHTML = "<option value=\"$name\">$name</option>";
+        }
+        $nameOptions[] = $optionHTML;
+    }
+
+    $topicOptions = [];
+    foreach (array_keys($groups) as $variable) {
+        foreach ($choices[$variable] ?? [] as $index => $label) {
+            $id = $variable."___".$index;
+            if ($defaultHighlightedTopic == $label) {
+                $optionHTML = "<option value=\"$id\" selected>$label</option>";
+            } else {
+                $optionHTML = "<option value=\"$id\">$label</option>";
+            }
+            $topicOptions[] = $optionHTML;
+        }
+    }
+    $nameFinderHTML = "<p class='centered'><label for='highlight' style='color: $nameHighlightColor; font-weight: bold;'>Name to Highlight: </label><select class='combobox' id='highlight' onchange='FlightConnectorNodeGraph.highlightName($(\"#highlight :selected\").val(), false);'><option value=''></option>".implode("", array_values($nameOptions))."</select><label style='margin-left: 40px; color: $topicHighlightColor; font-weight: bold;'for='highlightTopic'>Topic to Highlight: </stylelabel><select class='combobox' id='highlightTopic' onchange='FlightConnectorNodeGraph.highlightTopic($(\"#highlightTopic :selected\").text(), false);'><option value=''></option>".implode("", array_values($topicOptions))."</select></p>";
 }
+
 
 $hiddenHTML = "";
 foreach ($_GET as $field => $value) {
-    if (!in_array($field, ["strength", "instance", "pnid", "multi", "greater"])) {
+    if (!in_array($field, ["strength", "instance", "pnid", "multi", "greater", "highlight", "highlightedName", "highlightedTopic"])) {
         $field = htmlentities($field);
         $value = htmlentities($value);
         $hiddenHTML .= "<input type='hidden' name='$field' value='$value' />";
     }
 }
-$hiddenHTML .= "<input type='hidden' name='multi' value='0' /><input type='hidden' name='greater' value='".($combineWithGreater ? "1" : "0")."' />";
+$hiddenHTML .= "
+<input type='hidden' name='multi' value='0' />
+<input type='hidden' name='greater' value='".($combineWithGreater ? "1" : "0")."' />
+<input type='hidden' name='highlightedName' id='highlightedName' value=\"$defaultHighlightedName\" />
+<input type='hidden' name='highlightedTopic' id='highlightedTopic' value=\"$defaultHighlightedTopic\" />";
 $strength = htmlentities($strength);
 
 if (!$combineWithGreater) {
-    $greaterButton = "<button onclick='$(\"[name=greater]\").val(\"1\"); return true;'>Or Greater Strengths</button>";
-    if ($strength == 1) {
-        $numTopics = "$strength Topic";
-    } else {
-        $numTopics = "$strength Topics";
-    }
+    $greaterButton = "<button onclick='$(\"[name=greater]\").val(\"1\"); return true;' style='background-color: #b0d87a;'>With Greater Strengths</button>";
+    $plus = "";
 } else {
-    $greaterButton = "<button onclick='$(\"[name=greater]\").val(\"0\"); return true;'>Just This Strength</button>";
-    $numTopics = "$strength+ Topics";
+    $greaterButton = "<button onclick='$(\"[name=greater]\").val(\"0\"); return true;' style='background-color: #b0d87a;'>Just This Strength</button>";
+    $plus = "+";
+}
+if (($strength == 1) && !$plus) {
+    $numTopics = "$strength Topic";
+} else {
+    $numTopics = "$strength$plus Topics";
 }
 $title = "Connections with $numTopics in Common";
 
 echo "
     <form method='GET' action='?'>
-    $hiddenHTML
-    <p class='centered'><label for='strength'>Number of Common Topics: </label><input type='number' min='1' max='$maxStrength' name='strength' value='$strength' id='strength' style='width: 35px;' onchange='$(this).closest(\"form\").submit();'/> <button onclick='changeInt(\"#strength\", 1); return true;'>+</button> <button onclick='changeInt(\"#strength\", -1); return true;'>-</button> $greaterButton <button onclick='$(\"[name=multi]\").val(\"1\"); return true;'>Show Strongest $numParts</button></p>
+        $hiddenHTML
+        <p class='centered'><label for='strength'>Number of Common Topics: </label><input type='number' min='1' max='$maxStrength' name='strength' value='$strength' id='strength' style='width: 35px;' onchange='$(this).closest(\"form\").submit();'/> <button onclick='FlightConnectorNodeGraph.changeInt(\"#strength\", 1); return true;'>+</button> <button onclick='FlightConnectorNodeGraph.changeInt(\"#strength\", -1); return true;'>-</button> $greaterButton <button onclick='$(\"[name=multi]\").val(\"1\"); $(\"#highlightName\").val(\"\"); $(\"#highlightTopic\").val(\"\"); return true;'>Show Strongest $numParts</button></p>
+        $nameFinderHTML
     </form>
     <h2>$projectTitle</h2>
     <div id='container'>
         <h3>$title</h3>
+        <p class='centered'>Move your mouse over a circle/person or a line/edge/connection to investigate it.<br/>Click it to investigate the entire cluster.</p>
 		<div class='wrap'>
 			<div id='main'>
 			    <div style='width: 900px; float: left;'>
@@ -250,23 +292,170 @@ echo "
 
 ?>
 <script>
-    function changeInt(sel, changeNum) {
-        const newNum = parseInt($(sel).val()) + changeNum;
-        if ((newNum <= $(sel).attr("max")) && (newNum >= $(sel).attr("min"))) {
-            $(sel).val(newNum);
+
+    class FlightConnectorNodeGraph {
+        holdClick = false;
+
+        static changeInt = function(sel, changeNum) {
+            const newNum = parseInt($(sel).val()) + changeNum;
+            if ((newNum <= $(sel).attr("max")) && (newNum >= $(sel).attr("min"))) {
+                $(sel).val(newNum);
+            }
+        }
+
+        static refreshData = function(name, topic, isInitial) {
+            const data = <?= $dataJSON ?>;
+            const topicHighlightColor = '<?= $topicHighlightColor ?>';
+            const nameHighlightColor = '<?= $nameHighlightColor ?>';
+            let changed = false;
+            const lastHighlightedTopic = $('#highlightedTopic').val();
+            const lastHighlightedName = $('#highlightedName').val();
+            if ((name === lastHighlightedName) && (topic === lastHighlightedTopic) && !isInitial) {
+                return;
+            }
+            $('#highlightedTopic').val(topic);
+            $('#highlightedName').val(name);
+            for (let i = 0; i < data.nodes.length; i++) {
+                if (data.nodes[i].id === name) {
+                    data.nodes[i].color = nameHighlightColor;
+                    FlightConnectorNodeGraph.inspectAndDisplayNode(data.nodes[i]);
+                    changed = true;
+                }
+                if ((data.nodes[i].topics.indexOf(topic) >= 0) && (data.nodes[i].color !== nameHighlightColor)) {
+                    data.nodes[i].color = topicHighlightColor;
+                    changed = true;
+                }
+            }
+            if (changed) {
+                FlightConnectorNodeGraph.refreshGraph(data);
+            }
+        }
+
+        static highlightTopic = function(topic, isInitial) {
+            const name = $('#highlightedName').val();
+            FlightConnectorNodeGraph.refreshData(name, topic, isInitial);
+        }
+
+        static refreshGraph(data) {
+            $('#graph').html(updateChart(<?= $width + $padding ?>, <?= $height + $padding ?>, data, <?= $strength ?>, <?= $zoomFactor ?>));
+        }
+
+        static highlightName = function(name, isInitial) {
+            const topic = $('#highlightedTopic').val();
+            FlightConnectorNodeGraph.refreshData(name, topic, isInitial);
+        }
+
+        static makeUnorderedList = function(list) {
+            if (list.length === 0) {
+                return "<p>No items.</p>";
+            }
+            return "<ul style='padding-left: 14px;'><li style='text-align: left;'>"+list.join("</li><li style='text-align: left;'>")+"</li></ul>";
+        }
+
+        static inspectAndDisplayNode = function(node) {
+            const pubMedLink = 'https://pubmed.ncbi.nlm.nih.gov/?term='+encodeURIComponent(node.id);
+            const department = node.department ? "<br/>"+node.department : "";
+            const topicList = FlightConnectorNodeGraph.makeUnorderedList(node.topics);
+            $('#main-graph-info').html("<h3 style='margin-bottom: 0;'>"+node.id+"</h3><p style='margin-top: 0;'>["+node.email+"]<br/>[<a href='"+pubMedLink+"' target='_new'>Search PubMed</a>]"+department+"</p><h4>"+node.topics.length+" Topic"+((node.topics.length !== 1) ? "s" : "")+" Selected</h4>"+topicList);
+        }
+
+        // nodes is all nodes; edges is all edges
+        static displayClusterInfo = function(node, nodes, edges) {
+            let cluster = [];
+            const nodeIndexes = {};
+            for (let nodeIndex = 0; nodeIndex < nodes.length; nodeIndex++) {
+                const currNodeId = nodes[nodeIndex]['id'];
+                nodeIndexes[currNodeId] = nodeIndex;
+                nodes[nodeIndex]["direct_edges"] = [];
+                nodes[nodeIndex]["edge_indexes"] = [];
+                for (let edgeIndex = 0; edgeIndex < edges.length; edgeIndex++) {
+                    if (currNodeId === edges[edgeIndex]["source"]) {
+                        nodes[nodeIndex]["direct_edges"].push(edges[edgeIndex]["target"]);
+                        nodes[nodeIndex]["edge_indexes"].push(edgeIndex);
+                    } else if (currNodeId === edges[edgeIndex]["target"]) {
+                        nodes[nodeIndex]["direct_edges"].push(edges[edgeIndex]["source"]);
+                        nodes[nodeIndex]["edge_indexes"].push(edgeIndex);
+                    }
+                }
+                if (currNodeId === node.id) {
+                    cluster.push(nodes[nodeIndex]);
+                }
+            }
+            let origClusterLength;
+            const maxIterations = 1000;
+            let iteration = 0;
+            do {
+                iteration++;
+                origClusterLength = cluster.length;
+                const clusterIds = [];
+                const nextCluster = [];
+                for (let clusterIndex = 0; clusterIndex < cluster.length; clusterIndex++) {
+                    clusterIds.push(cluster[clusterIndex].id);
+                }
+                for (let clusterIndex = 0; clusterIndex < cluster.length; clusterIndex++) {
+                    nextCluster.push(cluster[clusterIndex]);
+                    const edgeIds = cluster[clusterIndex]["direct_edges"];
+                    for(let neighborIndex = 0; neighborIndex < edgeIds.length; neighborIndex++) {
+                        const neighborId = edgeIds[neighborIndex];
+                        if (clusterIds.indexOf(neighborId) < 0) {
+                            if (typeof nodeIndexes[neighborId] !== "undefined") {
+                                const neighborNode = nodes[nodeIndexes[neighborId]];
+                                nextCluster.push(neighborNode);
+                                clusterIds.push(neighborNode.id);
+                            }
+                        }
+                    }
+                }
+                cluster = nextCluster;
+            } while ((origClusterLength < cluster.length) && (iteration < maxIterations));
+
+            // Adapted from http://hubrik.com/2015/11/16/sort-by-last-name-with-javascript/
+            const compareByLastName = (a,b) => {
+                const aName = a.split(" ");
+                const bName = b.split(" ");
+                const aLastName = aName[aName.length - 1];
+                const bLastName = bName[bName.length - 1];
+                if (aLastName < bLastName) return -1;
+                if (aLastName > bLastName) return 1;
+                return 0;
+            }
+
+            const members = [];
+            const densities = [];
+            const centralities = [];
+            for (let clusterIndex = 0; clusterIndex < cluster.length; clusterIndex++) {
+                const clusterNode = cluster[clusterIndex];
+                members.push(clusterNode.id);
+                for (let edgeIndexesIndex = 0; edgeIndexesIndex < clusterNode.edge_indexes.length; edgeIndexesIndex++) {
+                    const edgeIndex = clusterNode.edge_indexes[edgeIndexesIndex];
+                    centralities.push(edges[edgeIndex].value);
+                    densities.push(edges[edgeIndex].value / (nodes.length - 1));
+                }
+            }
+            members.sort(compareByLastName);
+            const average = array => array.reduce((a, b) => a + b) / array.length;
+
+            const infoLines = [];
+            infoLines.push("Number of Members: "+members.length);
+            infoLines.push("Average Density: "+average(densities).toFixed(3));
+            const centralityAverage = average(centralities);
+            if (Number.isInteger(centralityAverage)) {
+                infoLines.push("Average Degree Centrality: "+centralityAverage);
+            } else {
+                infoLines.push("Average Degree Centrality: "+centralityAverage.toFixed(3));
+            }
+
+            $('#main-graph-info').html("<h3>Cluster</h3><p><button onclick='FlightConnectorNodeGraph.holdClick = false; $(\"#main-graph-info\").html(\"\"); return false;' class='smaller'>Stop Examining Cluster</button></p><p>"+infoLines.join("<br/>")+"</p><h4 style='margin-bottom: 0;'>Members</h4><p style='margin-top: 0;'>"+members.join("<br/>")+"</p>");
         }
     }
 </script>
 
 <script type='module'>
-    let chart = function(width, height, data, strength, zoomFactor) {
+    const chart = function(width, height, data, strength, zoomFactor) {
         const infoOb = $('#main-graph-info');
         if (data['nodes'].length === 0) {
             return "<h3>No clusters with "+strength+" common topic(s).</h3>";
         }
-        // Specify the color scale.
-        // Specify the color scale.
-        const color = d3.scaleOrdinal(d3.schemeCategory10);
 
         // The force simulation mutates links and nodes, so create a copy
         // so that re-evaluating this cell produces the same result.
@@ -301,15 +490,17 @@ echo "
             .attr("stroke-opacity", 0.6)
             .attr("stroke-width", d => Math.sqrt(d.value))
             .on("mouseover", (i, d) => {
-                const commonList = makeUnorderedList(d.topics);
-                const commonHeader = "<h4>"+d.topics.length+" Common Topic"+((d.topics.length !== 1) ? "s" : "")+"</h4>";
-                const sourceTopics = makeDiffArray(d.source.topics, d.topics);
-                const sourceList = makeUnorderedList(sourceTopics);
-                const sourceHeader = "<h4>"+d.source.id+":<br/>"+sourceTopics.length+" Unique Topic"+((sourceTopics.length !== 1) ? "s" : "")+"</h4>";
-                const targetTopics = makeDiffArray(d.target.topics, d.topics);
-                const targetList = makeUnorderedList(targetTopics);
-                const targetHeader = "<h4>"+d.target.id+":<br/>"+targetTopics.length+" Unique Topic"+((targetTopics.length !== 1) ? "s" : "")+"</h4>";
-                infoOb.html("<h3>Connected Names</h3><h4 style='margin-bottom: 0;'>"+d.source.id+"</h4><p style='margin-top: 0;'>["+d.source.email+"]</p><h4 style='margin-bottom: 0;'>"+d.target.id+"</h4><p style='margin-top: 0;'>["+d.target.email+"]</p>"+commonHeader+commonList+sourceHeader+sourceList+targetHeader+targetList)
+                if (!FlightConnectorNodeGraph.holdClick) {
+                    const commonList = FlightConnectorNodeGraph.makeUnorderedList(d.topics);
+                    const commonHeader = "<h4>"+d.topics.length+" Common Topic"+((d.topics.length !== 1) ? "s" : "")+"</h4>";
+                    const sourceTopics = makeDiffArray(d.source.topics, d.topics);
+                    const sourceList = FlightConnectorNodeGraph.makeUnorderedList(sourceTopics);
+                    const sourceHeader = "<h4>"+d.source.id+":<br/>"+sourceTopics.length+" Unique Topic"+((sourceTopics.length !== 1) ? "s" : "")+"</h4>";
+                    const targetTopics = makeDiffArray(d.target.topics, d.topics);
+                    const targetList = FlightConnectorNodeGraph.makeUnorderedList(targetTopics);
+                    const targetHeader = "<h4>"+d.target.id+":<br/>"+targetTopics.length+" Unique Topic"+((targetTopics.length !== 1) ? "s" : "")+"</h4>";
+                    infoOb.html("<h3>Connected Names</h3><h4 style='margin-bottom: 0;'>"+d.source.id+"</h4><p style='margin-top: 0;'>["+d.source.email+"]</p><h4 style='margin-bottom: 0;'>"+d.target.id+"</h4><p style='margin-top: 0;'>["+d.target.email+"]</p>"+commonHeader+commonList+sourceHeader+sourceList+targetHeader+targetList)
+                }
             });
 
         const circles = container.append("g")
@@ -339,10 +530,13 @@ echo "
             .attr("font-weight", 500)
             .text(d => d.initials)
             .on("mouseover", (i, d) => {
-                const pubMedLink = 'https://pubmed.ncbi.nlm.nih.gov/?term='+encodeURIComponent(d.id);
-                const department = d.department ? "<br/>"+d.department : "";
-                const topicList = makeUnorderedList(d.topics);
-                infoOb.html("<h3 style='margin-bottom: 0;'>"+d.id+"</h3><p style='margin-top: 0;'>["+d.email+"]<br/>[<a href='"+pubMedLink+"' target='_new'>Search PubMed</a>]"+department+"</p><h4>"+d.topics.length+" Topic"+((d.topics.length !== 1) ? "s" : "")+"</h4>"+topicList);
+                if (!FlightConnectorNodeGraph.holdClick) {
+                    FlightConnectorNodeGraph.inspectAndDisplayNode(d);
+                }
+            })
+            .on("click", (i, d) => {
+                FlightConnectorNodeGraph.holdClick = true;
+                FlightConnectorNodeGraph.displayClusterInfo(d, data.nodes, data.links);
             });
         label.call(d3.drag()
             .on("start", dragstarted)
@@ -357,7 +551,7 @@ echo "
             .attr("stroke", "#000")
             .attr("font-size", "11px")
             .attr("font-weight", 500)
-            .text(strength+" common topic"+((strength !== 1) ? "s" : ""))
+            .text(strength+"<?= $plus ?> common topic"+((strength !== 1) ? "s" : ""))
 
         // Set the position attributes of links and nodes each time the simulation ticks.
         function ticked() {
@@ -408,17 +602,19 @@ echo "
             return diff;
         }
 
-        function makeUnorderedList(list) {
-            if (list.length === 0) {
-                return "<p>No items.</p>";
-            }
-            return "<ul style='padding-left: 14px;'><li style='text-align: left;'>"+list.join("</li><li style='text-align: left;'>")+"</li></ul>";
-        }
-
         return svg.node();
     };
     $(document).ready(() => {
         <?= $mainCall ?>
+        window.updateChart = chart;
+        const highlightedName = '<?= $defaultHighlightedName ?>';
+        if (highlightedName) {
+            FlightConnectorNodeGraph.highlightName(highlightedName, true);
+        }
+        const highlightedTopic = '<?= $defaultHighlightedTopic ?>';
+        if (highlightedTopic) {
+            FlightConnectorNodeGraph.highlightTopic(highlightedTopic, true);
+        }
     });
 </script>
 
