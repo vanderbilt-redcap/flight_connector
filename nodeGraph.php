@@ -28,13 +28,14 @@ $projectTitle = shortenTitle(\REDCap::getProjectTitle());
 $defaultHighlightedName= str_replace("&amp;", "&", preg_replace("/&#0?39;/", "'", htmlentities($_GET['highlightedName'] ?? "")));
 $defaultHighlightedTopic = str_replace("&amp;", "&", preg_replace("/&#0?39;/", "'", htmlentities($_GET['highlightedTopic'] ?? "")));
 $isMulti = isset($_GET['multi']) && ($_GET['multi'] == "1");
-$combineWithGreater = isset($_GET['greater']) && ($_GET['greater'] == "1");
+$combineWithGreater = isset($_GET['greater']) && ($_GET['greater'] == "1") && !$isMulti;
 if ($isMulti) {
     $defaultHighlightedTopic = "";
     $defaultHighlightedName = "";
 }
 
 $width = 900;
+$sliderWidth = 500;
 $height = 680;
 $numParts = 4;
 $nodeColor = "#5c5c7a";
@@ -108,6 +109,21 @@ foreach (array_keys($groups) as $variable) {
         $categories[$label] = [];
     }
 }
+if ($combineWithGreater) {
+    $greaterButton = "<button onclick='$(\"[name=greater]\").val(\"0\"); return true;' style='background-color: #b0d87a;'>Just This Strength</button>";
+    $plus = "+";
+} else if ($isMulti) {
+    $greaterButton = "";
+    $plus = "";
+} else {
+    $greaterButton = "<button onclick='$(\"[name=greater]\").val(\"1\"); return true;' style='background-color: #b0d87a;'>With Greater Strengths</button>";
+    $plus = "";
+}
+if ($isMulti) {
+    $strongestButton = "<button onclick='$(\"[name=multi]\").val(\"\"); $(\"#highlightedName\").val(\"\"); $(\"#highlightedTopic\").val(\"\"); return true;'>Show Just By Strength</button>";
+} else {
+    $strongestButton = "<button onclick='$(\"[name=multi]\").val(\"1\"); $(\"#highlightedName\").val(\"\"); $(\"#highlightedTopic\").val(\"\"); return true;'>Show Strongest $numParts</button>";
+}
 $allNames = [];
 foreach ($redcapData as $row) {
     $name = $row['name'];
@@ -150,29 +166,43 @@ foreach ($categories as $category => $names) {
 }
 $subgraphsAtStrength = makeSubgraphs($d3DataOriginal);
 $maxStrength = empty($subgraphsAtStrength) ? 1 : max(array_keys($subgraphsAtStrength));
-if (isset($_GET['strength'])) {
-    $strength = $_GET['strength'] ?? 1;
-    $myData = $subgraphsAtStrength[$strength] ?? [];
-} else {
-    $strength = 1;
-    $myData = $d3DataOriginal;
-}
-if ($combineWithGreater) {
-    for ($i = $strength + 1; $i <= $maxStrength; $i++) {
-        $strengthSubgraph = $subgraphsAtStrength[$i] ?? [];
-        $myDataIds = [];
-        foreach ($myData["nodes"] as $node) {
-            $myDataIds[] = $node["id"];
+
+$sliderData = [];
+for ($strength = 1; $strength <= $maxStrength; $strength++) {
+    if (isset($subgraphsAtStrength[$strength])) {
+        $data = $subgraphsAtStrength[$strength];
+        if ($combineWithGreater) {
+            combineWithGreaterSubgraphs($data, $subgraphsAtStrength, $strength, $maxStrength);
         }
-        foreach ($strengthSubgraph["nodes"] as $node) {
-            $id = $node["id"];
-            if (!in_array($id, $myDataIds)) {
-                $myData["nodes"][] = $node;
+        $memberCount = count($data["nodes"] ?? []);
+        $densities = [];
+        $numNodes = count($d3DataOriginal["nodes"] ?? []);
+        if ($numNodes >= 2) {
+            foreach ($data["nodes"] ?? [] as $node) {
+                $nodeConnections = 0;
+                foreach ($data["links"] ?? [] as $edge) {
+                    if (($edge["source"] == $node["id"]) || ($edge["target"] == $node["id"])) {
+                        $nodeConnections++;
+                    }
+                }
+                $densities[] = $nodeConnections / ($numNodes - 1);
             }
         }
-        $myData["links"] = array_merge($myData["links"], $strengthSubgraph["links"] ?? []);
+        $averageDensity = !empty($densities) ? array_sum($densities) / count($densities) : 0;
+    } else {
+        $memberCount = 0;
+        $averageDensity = 0;
     }
+    $sliderData[] = ["x" => $strength, "members" => $memberCount, "density" => $averageDensity];
 }
+$sliderJSON = json_encode($sliderData);
+
+$strength = 1;
+$myData = $d3DataOriginal;
+if ($combineWithGreater) {
+    combineWithGreaterSubgraphs($myData, $subgraphsAtStrength, $strength, $maxStrength);
+}
+addEdgeColors($myData["links"]);
 $dataJSON = json_encode($myData);
 if (empty($myData) || empty($myData["nodes"] ?? [])) {
     $saveDiv = "";
@@ -188,11 +218,12 @@ if ($isMulti) {
     $mainCall = "$('#graph').html(\"$html\");";
     $saveDiv = "";    // turn off for multi - they can reproduce at large scale if desired
     $subgraphJSONs = [];
+    $subgraphData = [];
     $weights = [];
     $defaultWeight = 1;
     for ($i = 1; $i <= $numParts; $i++) {
         $foundCount = 0;
-        $subgraphJSONs[$i] = $subgraphsAtStrength[$defaultWeight] ?? "{}";
+        $subgraphData[$i] = $subgraphsAtStrength[$defaultWeight] ?? [];
         $weights[$i] = $defaultWeight;
         $strengthsReversed = array_keys($subgraphsAtStrength);
         rsort($strengthsReversed);
@@ -202,18 +233,50 @@ if ($isMulti) {
                 $foundCount++;
             }
             if ($foundCount == $i) {
-                $subgraphJSONs[$i] = json_encode($data);
+                $subgraphData[$i] = $data;
                 $weights[$i] = $weight;
                 break;
             }
         }
     }
     for ($i = 1; $i <= $numParts; $i++) {
+        if (empty($subgraphData[$i] ?? [])) {
+            $subgraphJSONs[$i] = "{}";
+        } else {
+            addEdgeColors($subgraphData[$i]["links"]);
+            $subgraphJSONs[$i] = json_encode($subgraphData[$i]);
+        }
         $mainCall .= " $('#graph$i').append(chart($subWidth, $subHeight, {$subgraphJSONs[$i]}, {$weights[$i]}, $zoomFactor));";
     }
     $nameFinderHTML = "";
+    $sliderCall = "";
+    $callStem = "";
 } else {
+    $callStem = "";
+    if (!empty($subgraphsAtStrength)) {
+        $dataJSONs = [];
+        for ($i = 1; $i <= $maxStrength; $i++) {
+            $myData = $subgraphsAtStrength[$i] ?? ["nodes" => [], "links" => []];
+            if ($combineWithGreater) {
+                combineWithGreaterSubgraphs($myData, $subgraphsAtStrength, $i, $maxStrength);
+            }
+            addEdgeColors($myData["links"]);
+            $dataJSONs[$i] = json_encode($myData);
+        }
+        $callStem .= "
+            $('#numTopics').html(strength+'$plus Topic'+(strength === 1 ? '' : 's'));
+            if (strength === 1) {
+                return {$dataJSONs[1]};";
+        for ($i = 2; $i <= $maxStrength; $i++) {
+            $callStem .= "
+            } else if (strength == $i) {
+                return {$dataJSONs[$i]};";
+        }
+        $callStem .= "
+        }";
+    }
     $mainCall = "$('#graph').append(chart($width + $padding, $height + $padding, $dataJSON, $strength, $zoomFactor));";
+    $sliderCall = "$('#configuration').html(slider($sliderWidth, 100, $sliderJSON));";
     $nameOptions = [];
     foreach ($allNames as $name) {
         if ($defaultHighlightedName == $name) {
@@ -236,7 +299,12 @@ if ($isMulti) {
             $topicOptions[] = $optionHTML;
         }
     }
-    $nameFinderHTML = "<p class='centered'><label for='highlight' style='color: $nameHighlightColor; font-weight: bold;'>Name to Highlight: </label><select class='combobox' id='highlight' onchange='FlightConnectorNodeGraph.highlightName($(\"#highlight :selected\").val(), false);'><option value=''></option>".implode("", array_values($nameOptions))."</select><label style='margin-left: 40px; color: $topicHighlightColor; font-weight: bold;'for='highlightTopic'>Topic to Highlight: </stylelabel><select class='combobox' id='highlightTopic' onchange='FlightConnectorNodeGraph.highlightTopic($(\"#highlightTopic :selected\").text(), false);'><option value=''></option>".implode("", array_values($topicOptions))."</select></p>";
+    $nameFinderHTML = "<p class='centered'>
+<label for='highlightName' style='color: $nameHighlightColor; font-weight: bold;'>Name to Highlight: </label>
+<select class='combobox' id='highlightName' onchange='FlightConnectorNodeGraph.highlightName(FlightConnectorNodeGraph.lastStrength, $(\"#highlightName :selected\").val(), false);'><option value=''></option>".implode("", array_values($nameOptions))."</select>
+<label style='margin-left: 40px; color: $topicHighlightColor; font-weight: bold;'for='highlightTopic'>Topic to Highlight: </label>
+<select class='combobox' id='highlightTopic' onchange='FlightConnectorNodeGraph.highlightTopic(FlightConnectorNodeGraph.lastStrength, $(\"#highlightTopic :selected\").text(), false);'><option value=''></option>".implode("", array_values($topicOptions))."</select>
+</p>";
 }
 
 
@@ -253,33 +321,26 @@ $hiddenHTML .= "
 <input type='hidden' name='greater' value='".($combineWithGreater ? "1" : "0")."' />
 <input type='hidden' name='highlightedName' id='highlightedName' value=\"$defaultHighlightedName\" />
 <input type='hidden' name='highlightedTopic' id='highlightedTopic' value=\"$defaultHighlightedTopic\" />";
-$strength = htmlentities($strength);
 
-if (!$combineWithGreater) {
-    $greaterButton = "<button onclick='$(\"[name=greater]\").val(\"1\"); return true;' style='background-color: #b0d87a;'>With Greater Strengths</button>";
-    $plus = "";
-} else {
-    $greaterButton = "<button onclick='$(\"[name=greater]\").val(\"0\"); return true;' style='background-color: #b0d87a;'>Just This Strength</button>";
-    $plus = "+";
-}
 if (($strength == 1) && !$plus) {
     $numTopics = "$strength Topic";
 } else {
     $numTopics = "$strength$plus Topics";
 }
-$title = "Connections with $numTopics in Common";
+$title = "Connections with <span id='numTopics'>$numTopics</span> in Common";
 
 echo "
     <form method='GET' action='?'>
         $hiddenHTML
-        <p class='centered'><label for='strength'>Number of Common Topics: </label><input type='number' min='1' max='$maxStrength' name='strength' value='$strength' id='strength' style='width: 35px;' onchange='$(this).closest(\"form\").submit();'/> <button onclick='FlightConnectorNodeGraph.changeInt(\"#strength\", 1); return true;'>+</button> <button onclick='FlightConnectorNodeGraph.changeInt(\"#strength\", -1); return true;'>-</button> $greaterButton <button onclick='$(\"[name=multi]\").val(\"1\"); $(\"#highlightName\").val(\"\"); $(\"#highlightTopic\").val(\"\"); return true;'>Show Strongest $numParts</button></p>
+        <p class='centered'>$greaterButton $strongestButton</p>
         $nameFinderHTML
     </form>
     <h2>$projectTitle</h2>
     <div id='container'>
         <h3>$title</h3>
-        <p class='centered'>Move your mouse over a circle/person or a line/edge/connection to investigate it.<br/>Click it to investigate the entire cluster.</p>
+        <p class='centered'>Move your mouse over a circle/person or a line/connection to investigate it.<br/>Click it to investigate the entire cluster.</p>
 		<div class='wrap'>
+            <div id='configuration' style='max-width: $sliderWidth"."px; margin: 0 auto;'></div>
 			<div id='main'>
 			    <div style='width: 900px; float: left;'>
 			        <div id='graph' style='border: 1px solid #888; width: 100%;'></div>
@@ -294,7 +355,8 @@ echo "
 <script>
 
     class FlightConnectorNodeGraph {
-        holdClick = false;
+        static holdClick = false;
+        static lastStrength = <?= $strength ?>;
 
         static changeInt = function(sel, changeNum) {
             const newNum = parseInt($(sel).val()) + changeNum;
@@ -303,14 +365,17 @@ echo "
             }
         }
 
-        static refreshData = function(name, topic, isInitial) {
-            const data = <?= $dataJSON ?>;
+        static refreshData = function(data, strength, name, topic, isInitial) {
+            if (!data.nodes || !data.links) {
+                FlightConnectorNodeGraph.refreshGraph({nodes: [], links: []}, strength);
+            }
             const topicHighlightColor = '<?= $topicHighlightColor ?>';
             const nameHighlightColor = '<?= $nameHighlightColor ?>';
-            let changed = false;
+            let changed = (strength !== FlightConnectorNodeGraph.lastStrength);
+            FlightConnectorNodeGraph.lastStrength = strength;
             const lastHighlightedTopic = $('#highlightedTopic').val();
             const lastHighlightedName = $('#highlightedName').val();
-            if ((name === lastHighlightedName) && (topic === lastHighlightedTopic) && !isInitial) {
+            if (!changed && (name === lastHighlightedName) && (topic === lastHighlightedTopic) && !isInitial) {
                 return;
             }
             $('#highlightedTopic').val(topic);
@@ -327,22 +392,24 @@ echo "
                 }
             }
             if (changed) {
-                FlightConnectorNodeGraph.refreshGraph(data);
+                FlightConnectorNodeGraph.refreshGraph(data, strength);
             }
         }
 
-        static highlightTopic = function(topic, isInitial) {
+        static highlightTopic = function(strength, topic, isInitial) {
             const name = $('#highlightedName').val();
-            FlightConnectorNodeGraph.refreshData(name, topic, isInitial);
+            const data = FlightConnectorNodeGraph.getDataByStrength(strength);
+            FlightConnectorNodeGraph.refreshData(data, strength, name, topic, isInitial);
         }
 
-        static refreshGraph(data) {
-            $('#graph').html(updateChart(<?= $width + $padding ?>, <?= $height + $padding ?>, data, <?= $strength ?>, <?= $zoomFactor ?>));
+        static refreshGraph(data, strength) {
+            $('#graph').html(updateChart(<?= $width + $padding ?>, <?= $height + $padding ?>, data, strength, <?= $zoomFactor ?>));
         }
 
-        static highlightName = function(name, isInitial) {
+        static highlightName = function(strength, name, isInitial) {
             const topic = $('#highlightedTopic').val();
-            FlightConnectorNodeGraph.refreshData(name, topic, isInitial);
+            const data = FlightConnectorNodeGraph.getDataByStrength(strength);
+            FlightConnectorNodeGraph.refreshData(data, strength, name, topic, isInitial);
         }
 
         static makeUnorderedList = function(list) {
@@ -437,24 +504,153 @@ echo "
 
             const infoLines = [];
             infoLines.push("Number of Members: "+members.length);
-            infoLines.push("Average Density: "+average(densities).toFixed(3));
+            infoLines.push("<span style='text-decoration: underline dotted #888888;' title=\"The average of each node's number of connections divided by the number of possible connections.\">Average Density</span>: "+average(densities).toFixed(3));
             const centralityAverage = average(centralities);
+            const centralityDefinition = "The average of each node's number of connections.";
             if (Number.isInteger(centralityAverage)) {
-                infoLines.push("Average Degree Centrality: "+centralityAverage);
+                infoLines.push("<span title=\""+centralityDefinition+"\" style='text-decoration: underline dotted #888888;'>Average Degree Centrality</span>: "+centralityAverage);
             } else {
-                infoLines.push("Average Degree Centrality: "+centralityAverage.toFixed(3));
+                infoLines.push("<span title=\""+centralityDefinition+"\" style='text-decoration: underline dotted #888888;'>Average Degree Centrality</span>: "+centralityAverage.toFixed(3));
             }
 
             $('#main-graph-info').html("<h3>Cluster</h3><p><button onclick='FlightConnectorNodeGraph.holdClick = false; $(\"#main-graph-info\").html(\"\"); return false;' class='smaller'>Stop Examining Cluster</button></p><p>"+infoLines.join("<br/>")+"</p><h4 style='margin-bottom: 0;'>Members</h4><p style='margin-top: 0;'>"+members.join("<br/>")+"</p>");
+        }
+
+        static getDataByStrength = (strength) => {
+            <?= $callStem ?>
+            return {};
         }
     }
 </script>
 
 <script type='module'>
+    const slider = (width, height, data) => {
+
+        const shiftRight = 15;
+        const defaultLineWidth = 3;
+        const svg = d3.create("svg")
+            .attr("width", width)
+            .attr("height", height + 2);
+        const container = svg.append("g");
+        const box = (!'<?= $plus ?>') ? null : container.append("rect")
+            .attr("x", shiftRight)
+            .attr("y", 0)
+            .attr("width", width - shiftRight)
+            .attr("height", height)
+            .attr("stroke-width", 0)
+            .attr("fill", "#fdebec");
+        const tooltip = container.append("g")
+            .attr("transform", "translate("+width+", 0)");
+        const line = container.append("line")
+            .style("stroke", "#f69ca0")
+            .style("stroke-width", defaultLineWidth)
+            .attr("x1", shiftRight)
+            .attr("y1", 0)
+            .attr("x2", shiftRight)
+            .attr("y2", height);
+
+        const bisect = d3.bisector(d => d.x - 1).center;
+        const setText = (tooltip, strength, members, density) => {
+            tooltip.selectAll("text")
+                .data([,])
+                .join("text")
+                .call(text => text
+                    .attr("text-anchor", "end")
+                    .selectAll("tspan")
+                    .data([strength+"<?= $plus ?> Common Topic"+(((strength > 1) || ("<?= $plus ?>")) ? "s" : ""), members+" Member"+(members === 1 ? "" : "s"), "Average Density: "+density.toFixed(3)])
+                    .join("tspan")
+                    .attr("x", 0)
+                    .attr("y", (a, i) => (i * 1.1 + 1)+"em")
+                    .attr("font-size", 13)
+                    .text(d => d));
+        };
+
+        const maxNumMembers = d3.max([1.0, d3.max(data, (d) => d.members)]);
+        const maxStrength = d3.max(data, (d) => d.x);
+        setText(tooltip, data[0]["x"], data[0]["members"], data[0]["density"]);
+
+        const pointermoved = (event) => {
+            const currX = d3.pointer(event)[0];
+            if (currX < shiftRight) {
+                line
+                    .attr("x1", shiftRight)
+                    .attr("x2", shiftRight);
+                if (box) {
+                    box
+                        .attr('width', width - shiftRight)
+                        .attr("x", shiftRight);
+                }
+                tooltip.style("display", "none");
+            } else {
+                const strengthWidth = (width - shiftRight) / (maxStrength - 1);
+                let i = bisect(data, x.invert(currX)) - 1;
+                if (currX > 0.5 * strengthWidth + i * strengthWidth + shiftRight) {
+                    // adjust to next when greater than 1/2 through the area
+                    i++;
+                }
+                const strength = data[i]["x"];
+                const density = data[i]["density"];
+                const members = data[i]["members"];
+                if (box) {
+                    box
+                        .attr('width', width - currX)
+                        .attr("x", currX);
+                }
+                line
+                    .attr("x1", currX)
+                    .attr("x2", currX);
+                tooltip.style("display", null);
+                setText(tooltip, strength, members, density);
+                if (FlightConnectorNodeGraph.lastStrength !== strength) {
+                    refreshGraphByStrength(strength);
+                }
+            }
+        };
+        svg.on("pointerenter pointermove", pointermoved);
+
+
+        const x = d3.scaleTime()
+            .domain(d3.extent(data, function(d) { return d.x; }))
+            .range([ shiftRight, width ]);
+
+        const y = d3.scaleLinear()
+            .domain([0, 1])
+            .range([ height, 0 ]);
+
+        const chartTransform = "translate("+shiftRight+", 0)";
+        const axis = d3.axisLeft(y);
+        axis.ticks(4);
+        axis.tickFormat("");
+        container.append("g")
+            .attr("transform", chartTransform)
+            .call(axis);
+
+        container.append("path")
+            .datum(data)
+            .attr("fill", "none")
+            .attr("stroke", "#bebed3")
+            .attr("stroke-width", 1)
+            .attr("d", d3.line()
+                .x(function(d) { return x(d.x) })
+                .y(function(d) { return y(d.density) })
+            );
+        container.append("path")
+            .datum(data)
+            .attr("fill", "none")
+            .attr("stroke", "#6a6a75")
+            .attr("stroke-width", 1)
+            .attr("d", d3.line()
+                .x(function(d) { return x(d.x) })
+                .y(function(d) { return y(d.members / maxNumMembers) })
+            );
+
+        return svg.node();
+    }
+
     const chart = function(width, height, data, strength, zoomFactor) {
         const infoOb = $('#main-graph-info');
         if (data['nodes'].length === 0) {
-            return "<h3>No clusters with "+strength+" common topic(s).</h3>";
+            return "<div style='width: "+width+"px; height: "+height+"px;'><h3>No clusters with "+strength+" common topic"+((strength > 1) ? "s" : "")+"</h3></div>";
         }
 
         // The force simulation mutates links and nodes, so create a copy
@@ -486,9 +682,9 @@ echo "
             .append("g");
 
         const edgeLine = link.append("line")
-            .attr("stroke", "#999")
+            .attr("stroke", d => d.color)
             .attr("stroke-opacity", 0.6)
-            .attr("stroke-width", d => Math.sqrt(d.value))
+            .attr("stroke-width", d => d.value / 2)
             .on("mouseover", (i, d) => {
                 if (!FlightConnectorNodeGraph.holdClick) {
                     const commonList = FlightConnectorNodeGraph.makeUnorderedList(d.topics);
@@ -551,7 +747,7 @@ echo "
             .attr("stroke", "#000")
             .attr("font-size", "11px")
             .attr("font-weight", 500)
-            .text(strength+"<?= $plus ?> common topic"+((strength !== 1) ? "s" : ""))
+            .text(strength+"<?= $plus ?> common topic"+(((strength !== 1) || ('<?= $plus ?>')) ? "s" : ""))
 
         // Set the position attributes of links and nodes each time the simulation ticks.
         function ticked() {
@@ -604,16 +800,25 @@ echo "
 
         return svg.node();
     };
+
+    function refreshGraphByStrength(strength) {
+        const data = FlightConnectorNodeGraph.getDataByStrength(strength);
+        const name = $("#highlightedName").val();
+        const topic = $("#highlightedTopic").val();
+        FlightConnectorNodeGraph.refreshData(data, strength, name, topic, false);
+    }
+
     $(document).ready(() => {
         <?= $mainCall ?>
+        <?= $sliderCall ?>
         window.updateChart = chart;
         const highlightedName = '<?= $defaultHighlightedName ?>';
         if (highlightedName) {
-            FlightConnectorNodeGraph.highlightName(highlightedName, true);
+            FlightConnectorNodeGraph.highlightName(<?= $strength ?>, highlightedName, true);
         }
         const highlightedTopic = '<?= $defaultHighlightedTopic ?>';
         if (highlightedTopic) {
-            FlightConnectorNodeGraph.highlightTopic(highlightedTopic, true);
+            FlightConnectorNodeGraph.highlightTopic(<?= $strength ?>, highlightedTopic, true);
         }
     });
 </script>
@@ -667,7 +872,7 @@ function getNodesFromEdges($edges, $field) {
     $nodes = [];
     foreach ($edges as $edge) {
         if (isset($edge[$field])) {
-            $nodes[] =$edge[$field];
+            $nodes[] = $edge[$field];
         }
     }
     return $nodes;
@@ -711,4 +916,76 @@ function formatCategory($topic) {
         $i++;
     }
     return $topic;
+}
+
+function addEdgeColors(&$edges) {
+    for ($i = 0; $i < count($edges); $i++) {
+        $weight = $edges[$i]["value"];
+        $edges[$i]["color"] = "#999";
+    }
+}
+
+function getEdgeLegend($edges) {
+    $colorWheel = [
+        "#d4d4eb",   // blue
+        "#bebed3",   // blue
+        "#9494a4",   // blue
+        "#6a6a75",   // blue
+        "#f69ca0",   // red
+        "#dd8c90",   // red
+        "#ac6d70",   // red
+        "#7b4e50",   // red
+        "#b0d87a",   // red
+        "#9ec26d",   // green
+        "#7b9755",   // green
+        "#586c3c",   // green
+        "#f6ba70",   // red
+        "#dda764",   // orange
+        "#ac824e",   // orange
+        "#7b5d37",   // orange
+    ];
+    $weights = [];
+    foreach ($edges as $edge) {
+        $value = $edge["value"];
+        if (!in_array($value, $weights)) {
+            $weights[] = $value;
+        }
+    }
+    $legend = [];
+    if (count($weights) == 1) {
+        $legend[$weights[0]] = "#999";
+    } else {
+        foreach ($weights as $i => $weight) {
+            $legend[$weight] = $colorWheel[$i % count($colorWheel)];
+        }
+    }
+    return $legend;
+}
+
+function getLegendHTML($legend) {
+    if (count($legend) <= 1) {
+        return "";
+    }
+    $htmlNodes = [];
+    foreach ($legend as $weight => $color) {
+        $htmlNodes[] = "<span style='white-space: nowrap; padding: 10px;'><span style='background-color: $color; border: 1px solid black;'>&nbsp;&nbsp;&nbsp;</span> $weight connections</span>";
+    }
+    return "<div style='border: 1px solid #888; padding: 6px; width: 1000px; text-align: center; word-wrap: anywhere; line-height: 2em;'><h4 style='margin-top: 0; margin-bottom: 0;'>Legend</h4>".implode("", $htmlNodes)."</div>";
+}
+
+function combineWithGreaterSubgraphs(&$myData, $subgraphsAtStrength, $strength, $maxStrength) {
+    for ($i = $strength + 1; $i <= $maxStrength; $i++) {
+        $strengthSubgraph = $subgraphsAtStrength[$i] ?? [];
+        $myDataIds = [];
+        foreach ($myData["nodes"] as $node) {
+            $myDataIds[] = $node["id"];
+        }
+        foreach ($strengthSubgraph["nodes"] as $node) {
+            $id = $node["id"];
+            if (!in_array($id, $myDataIds)) {
+                $myData["nodes"][] = $node;
+            }
+        }
+        $myData["links"] = array_merge($myData["links"], $strengthSubgraph["links"] ?? []);
+    }
 }
