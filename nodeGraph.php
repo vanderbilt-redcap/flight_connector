@@ -96,8 +96,13 @@ if ($isMulti) {
 } else {
     $personRadiusSize = 5;
     $fontSize = 0;
-    $zoomFactor = 10;
+    $zoomFactor = 5;
 }
+# TODO - move scaling into JS so that they can scale off the number of nodes in the graph
+# TODO - add traditional slider for zoomFactor next to slider-SVG
+# TODO - in summary stats, add in number of clusters, calculated by PHP
+# TODO - add pictures ($.post) & biosketches to survey
+# TODO - AI: parse biosketches for topics & construct graph based on those topics
 $padding = 2 * $personRadiusSize + 8;
 $groups = [
     "contents" => "content",
