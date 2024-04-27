@@ -102,7 +102,8 @@ if ($isMulti) {
 # TODO - add traditional slider for zoomFactor next to slider-SVG
 # TODO - in summary stats, add in number of clusters, calculated by PHP
 # TODO - add pictures ($.post) & biosketches to survey
-# TODO - AI: parse biosketches for topics & construct graph based on those topics
+# TODO - AI: download & parse biosketches for topics & construct graph based on those topics
+# TODO - add X+ and X Common Topics data into same JavaScript along with Strongest 4
 $padding = 2 * $personRadiusSize + 8;
 $groups = [
     "contents" => "content",
