@@ -41,7 +41,8 @@ $height = 680;
 $numParts = 4;
 $nodeColor = "#5c5c7a";
 $nameHighlightColor = "#c49459";
-$topicHighlightColor = "#698149";
+$topicHighlightColor = "#d9d9e2";
+$topicHighlightFontColor = "#666666";
 
 echo "<!doctype html><html lang='en-US'>";
 echo "<head>";
@@ -99,12 +100,13 @@ if ($isMulti) {
     $fontSize = 0;
     $zoomFactor = 5;
 }
-# TODO - move scaling into JS so that they can scale off the number of nodes in the graph
-# TODO - add traditional slider for zoomFactor next to slider-SVG
-# TODO - v2.0? AI: download & parse CV for topics (top 500?) & construct graph based on those topics
-# TODO - add X+ and X Common Topics data into same JavaScript along with Strongest 4
-# TODO - check blue-green colorblind
-# TODO - EFS Retreat - activity based on software before lunch/break - dispel power dynamics - do something productive together
+# TODO - Dream List
+# move scaling into JS so that they can scale off the number of nodes in the graph
+# add traditional slider for zoomFactor next to slider-SVG
+# v2.0? AI: download & parse CV for topics (top 500?) & construct graph based on those topics
+# add X+ and X Common Topics data into same JavaScript along with Strongest 4
+# EFS Retreat - activity based on software before lunch/break - dispel power dynamics - do something productive together
+# Mobile view for EFS Retreat
 $padding = 2 * $personRadiusSize + 8;
 $groups = [
     "contents" => "content",
@@ -158,6 +160,7 @@ foreach ($redcapData as $row) {
         "initials" => $initials,
         "topics" => $topics,
         "color" => $nodeColor,
+        "fontColor" => "white",
     ];
     foreach (["department", "picture"] as $field) {
         if (isset($row[$field]) && $row[$field]) {
@@ -309,9 +312,9 @@ if ($isMulti) {
         }
     }
     $nameFinderHTML = "<p class='centered'>
-<label for='highlightName' style='color: $nameHighlightColor; font-weight: bold;'>Name to Highlight: </label>
+<label for='highlightName' style='padding-left: 3px; color: white; background-color: $nameHighlightColor; font-weight: bold;'>Name to Highlight: </label>
 <select class='combobox' id='highlightName' onchange='FlightConnectorNodeGraph.highlightName(FlightConnectorNodeGraph.lastStrength, $(\"#highlightName :selected\").val(), false);'><option value=''></option>".implode("", array_values($nameOptions))."</select>
-<label style='margin-left: 40px; color: $topicHighlightColor; font-weight: bold;'for='highlightTopic'>Topic to Highlight: </label>
+<label style='margin-left: 40px; padding-left: 3px; background-color: $topicHighlightColor; color: $topicHighlightFontColor; font-weight: bold;'for='highlightTopic'>Topic to Highlight: </label>
 <select class='combobox' id='highlightTopic' onchange='FlightConnectorNodeGraph.highlightTopic(FlightConnectorNodeGraph.lastStrength, $(\"#highlightTopic :selected\").text(), false);'><option value=''></option>".implode("", array_values($topicOptions))."</select>
 <button style='margin-left: 45px;' onclick='FlightConnectorNodeGraph.refreshData(FlightConnectorNodeGraph.getDataByStrength(FlightConnectorNodeGraph.lastStrength), FlightConnectorNodeGraph.lastStrength, \"\", \"\", false); return false;'>Reset</button>
 </p>";
@@ -468,6 +471,7 @@ echo "
                 FlightConnectorNodeGraph.refreshGraph({nodes: [], links: []}, strength);
             }
             const topicHighlightColor = '<?= $topicHighlightColor ?>';
+            const topicHighlightFontColor = '<?= $topicHighlightFontColor ?>'
             const nameHighlightColor = '<?= $nameHighlightColor ?>';
             let changed = (strength !== FlightConnectorNodeGraph.lastStrength);
             FlightConnectorNodeGraph.lastStrength = strength;
@@ -492,6 +496,7 @@ echo "
                 }
                 if ((data.nodes[i].topics.indexOf(topic) >= 0) && (data.nodes[i].color !== nameHighlightColor)) {
                     data.nodes[i].color = topicHighlightColor;
+                    data.nodes[i].fontColor = topicHighlightFontColor;
                     changed = true;
                 }
             }
@@ -870,9 +875,9 @@ echo "
         const label = circles.append("text")
             .attr("text-anchor", "middle")
             .attr("alignment-baseline", "middle")
-            .attr("fill", "#fff")
+            .attr("fill", d => d.fontColor)
             .attr("stroke-width", 1)
-            .attr("stroke", "#fff")
+            .attr("stroke", d => d.fontColor)
             .attr("font-size", "<?= $fontSize ?>px")
             .attr("font-weight", 500)
             .text(d => d.initials)
