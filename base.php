@@ -21,9 +21,11 @@ function makeHeader($module, $title, $width = 800, $showLinks = FALSE) {
 
     $links = "";
     if ($showLinks) {
+        $pid = $module->getProjectId();
+        $recordHomePage = APP_PATH_WEBROOT."ProjectSetup/index.php?pid=".$pid;
         $conceptMapLink = $module->getMapURL();
         $clusterLink = $module->getNodeGraphURL();
-        $links = "<p style='margin-top: 0; margin-bottom: 0; font-size: 12px;'>[<a href='$conceptMapLink' style='color: black;'>concept map</a>] [<a href='$clusterLink' style='color: black;'>cluster graph</a>]</p>";
+        $links = "<p style='margin-top: 0; margin-bottom: 0; font-size: 12px;'>[<a href='$recordHomePage' style='color: black;'>REDCap project</a>] [<a href='$conceptMapLink' style='color: black;'>concept map</a>] [<a href='$clusterLink' style='color: black;'>cluster graph</a>]</p>";
     }
     $linkStyle = "color: inherit; font-size: inherit;";
     $headerInfo = "<p style='text-align: right; font-size: 15px; line-height: 1.0em;'>A Professional Networking Tool<br/>from <a style='$linkStyle' href='$efsLink' target='_blank'>Edge for Scholars</a> <img src='$efsLogo' style='width: 27px; height: 20px;' alt='Edge for Scholars' /><br/>and <a style='$linkStyle' href='https://redcap.link/flight_tracker' target='_blank'>Flight Tracker</a> <img src='$ftLogo' style='width: 20px; height: 20px;' alt='Flight Tracker for Scholars' /><br/><span style='font-size: 11px; line-height: 1.3em;'>Copyright &#9400 ".date("Y")."<br/><a style='$linkStyle' href='https://vumc.org' target='_blank'>Vanderbilt University Medical Center</a></span></p>";;
@@ -749,4 +751,37 @@ function makeHTMLCode($str) {
     $htmlFriendly = preg_replace("/<[^>]+>/", "", $htmlFriendly);
     $htmlFriendly = preg_replace("/[\:\+\"\/\[\]'#<>\~\`\!\@\#\$\%\^\&\*\(\)\=\;\?\.\,]/", "", $htmlFriendly);
     return htmlentities($htmlFriendly);
+}
+
+function displayEdoc($module, $id) {
+    if (is_numeric($id)) {
+        $sql = "SELECT stored_name, mime_type FROM redcap_edocs_metadata WHERE doc_id = ?";
+        $q = $module->query($sql, [$id]);
+        if ($row = $q->fetch_assoc()) {
+            $filename = EDOC_PATH . $row['stored_name'];
+            $suffix = "";
+            if (preg_match("/\.(.+)$/", $filename, $matches)) {
+                $suffix = $matches[1];
+            }
+            $mimeType = $row['mime_type'];
+            if ($mimeType == "application/octet-stream") {
+                if (preg_match("/\.svg$/", $row['stored_name'])) {
+                    $mimeType = "image/svg+xml";
+                } else {
+                    $mimeType = mime_content_type($row['stored_name']) ?: $mimeType;
+                }
+            }
+            $content = file_get_contents($filename);
+            $expires = 30 * 3600 * 24;
+            header("Content-Type: $mimeType");
+            header('Content-disposition: attachment; filename="pic.'.$suffix.'"'); //Use for force to download
+            header("Content-Length: " . strlen($content));
+            header("Cache-Control: public", true);
+            header("Pragma: public", true);
+            header('Expires: ' . gmdate('D, d M Y H:i:s', time() + $expires) . ' GMT', true);
+            echo $content;
+            return;
+        }
+    }
+    throw new \Exception("Invalid Edoc ID!");
 }

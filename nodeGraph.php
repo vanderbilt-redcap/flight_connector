@@ -11,6 +11,7 @@ require_once(__DIR__."/base.php");
 # Inspired by https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9825768/
 # Code adapted from https://prod.tbilab.org/connect/
 
+$pictureUrl = $module->getUrl("getPicture.php")."&NOAUTH";
 $pid = getPid();
 if (!$module->isSetup($pid)) {
     header("Location: ".$module->getUrl("install.php"));
@@ -100,12 +101,10 @@ if ($isMulti) {
 }
 # TODO - move scaling into JS so that they can scale off the number of nodes in the graph
 # TODO - add traditional slider for zoomFactor next to slider-SVG
-# TODO - in summary stats, add in number of clusters, calculated by PHP
-# TODO - add pictures ($.post) & biosketches to survey
-# TODO - AI: download & parse biosketches for topics (top 500?) & construct graph based on those topics
+# TODO - v2.0? AI: download & parse CV for topics (top 500?) & construct graph based on those topics
 # TODO - add X+ and X Common Topics data into same JavaScript along with Strongest 4
-# TODO - on survey, score on checkbox strength & note to check of liberally
-# TODO - think about deployment at EFS retreat & elsewhere; social games & power dynamics
+# TODO - check blue-green colorblind
+# TODO - EFS Retreat - activity based on software before lunch/break - dispel power dynamics - do something productive together
 $padding = 2 * $personRadiusSize + 8;
 $groups = [
     "contents" => "content",
@@ -160,8 +159,10 @@ foreach ($redcapData as $row) {
         "topics" => $topics,
         "color" => $nodeColor,
     ];
-    if (isset($row['department']) && $row['department']) {
-        $node["department"] = $row["department"];
+    foreach (["department", "picture"] as $field) {
+        if (isset($row[$field]) && $row[$field]) {
+            $node[$field] = $row[$field];
+        }
     }
     $d3DataOriginal["nodes"][] = $node;
 }
@@ -312,6 +313,7 @@ if ($isMulti) {
 <select class='combobox' id='highlightName' onchange='FlightConnectorNodeGraph.highlightName(FlightConnectorNodeGraph.lastStrength, $(\"#highlightName :selected\").val(), false);'><option value=''></option>".implode("", array_values($nameOptions))."</select>
 <label style='margin-left: 40px; color: $topicHighlightColor; font-weight: bold;'for='highlightTopic'>Topic to Highlight: </label>
 <select class='combobox' id='highlightTopic' onchange='FlightConnectorNodeGraph.highlightTopic(FlightConnectorNodeGraph.lastStrength, $(\"#highlightTopic :selected\").text(), false);'><option value=''></option>".implode("", array_values($topicOptions))."</select>
+<button style='margin-left: 45px;' onclick='FlightConnectorNodeGraph.refreshData(FlightConnectorNodeGraph.getDataByStrength(FlightConnectorNodeGraph.lastStrength), FlightConnectorNodeGraph.lastStrength, \"\", \"\", false); return false;'>Reset</button>
 </p>";
 }
 
@@ -360,6 +362,9 @@ echo "
 	</div>";
 
 ?>
+<style>
+    .clusterMember { line-height: 0.8em; margin-top: 0.6em; margin-bottom: 0.6em; }
+</style>
 <script>
 
     class FlightConnectorNodeGraph {
@@ -371,6 +376,91 @@ echo "
             if ((newNum <= $(sel).attr("max")) && (newNum >= $(sel).attr("min"))) {
                 $(sel).val(newNum);
             }
+        }
+
+        static getNumberOfClusters = function(data) {
+            const nodes = data.nodes ?? [];
+            const edges = data.links ?? [];
+            if (nodes.length === 0) {
+                return 0;
+            }
+
+            const nodeIDIndexes = {};
+            for (let nodeIndex = 0; nodeIndex < nodes.length; nodeIndex++) {
+                nodeIDIndexes[nodes[nodeIndex].id] = nodeIndex;
+            }
+
+            const found = [];
+            let numClusters = 0;
+            for (let nodeIndex = 0; nodeIndex < nodes.length; nodeIndex++) {
+                if (found.indexOf(nodeIndex) < 0) {
+                    found.push(nodeIndex);
+                    numClusters++;
+
+                    const searchQueue = [nodeIndex];
+                    while (searchQueue.length > 0) {
+                        const searchNodeIndex = searchQueue.shift();
+                        const searchNode = nodes[searchNodeIndex];
+                        for (let edgeIndex = 0; edgeIndex < edges.length; edgeIndex++) {
+                            const edge = edges[edgeIndex];
+                            let otherIndex = -1;
+                            if (edge.source === searchNode.id) {
+                                otherIndex = nodeIDIndexes[edge.target];
+                            } else if (edge.target === searchNode.id) {
+                                otherIndex = nodeIDIndexes[edge.source];
+                            }
+                            if ((otherIndex >= 0) && (found.indexOf(otherIndex) < 0)) {
+                                found.push(otherIndex);
+                                searchQueue.push(otherIndex);
+                            }
+                        }
+                    }
+                }
+            }
+            return numClusters;
+        }
+
+        static summarizeClusters = function(data) {
+            const nodes = data.nodes ?? [];
+            const edges = data.links ?? [];
+            if (nodes.length === 0) {
+                return "";
+            }
+
+            let nodesLeft = nodes;
+            const clusters = [];
+            while (nodesLeft.length > 0) {
+                const headNode = nodesLeft[0];
+                const cluster = FlightConnectorNodeGraph.getCluster(headNode, nodesLeft, edges);
+                clusters.push(cluster);
+
+                const newNodesLeft = [];
+                for (let i=0; i < nodesLeft.length; i++) {
+                    const nodeId = nodesLeft[i].id;
+                    let found = false;
+                    for (let j=0; j < cluster.length; j++) {
+                        if (cluster[j].id === nodeId) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        newNodesLeft.push(nodesLeft[i]);
+                    }
+                }
+                nodesLeft = newNodesLeft;
+            }
+
+            const numClusters = clusters.length;
+            const clusteringStats = [];
+            for (let i=0; i < numClusters; i++) {
+                const num = i + 1;
+                const cluster = clusters[i];
+                const stats = FlightConnectorNodeGraph.getClusterNodeStats(cluster, edges, nodes);
+                const lines = FlightConnectorNodeGraph.getInfoDataLines(stats.members, stats.densities, stats.centralities);
+                clusteringStats.push('<h5 style=\"margin-bottom: 0;\">Cluster #'+num+'</h5>'+lines.join('<br/>'));
+            }
+            $('#main-graph-info').html('<h4>'+numClusters+' Cluster'+(numClusters === 1 ? '' : 's')+'</h4>'+clusteringStats.join(''));
         }
 
         static refreshData = function(data, strength, name, topic, isInitial) {
@@ -388,6 +478,12 @@ echo "
             }
             $('#highlightedTopic').val(topic);
             $('#highlightedName').val(name);
+            if ((topic === "") && (name === "")) {
+                $('#highlightedTopic').parent().find('.custom-combobox input').val(topic);
+                $('#highlightedName').parent().find('.custom-combobox input').val(name);
+                FlightConnectorNodeGraph.summarizeClusters(data);
+                changed = true;
+            }
             for (let i = 0; i < data.nodes.length; i++) {
                 if (data.nodes[i].id === name) {
                     data.nodes[i].color = nameHighlightColor;
@@ -427,15 +523,23 @@ echo "
             return "<ul style='padding-left: 14px;'><li style='text-align: left;'>"+list.join("</li><li style='text-align: left;'>")+"</li></ul>";
         }
 
-        static inspectAndDisplayNode = function(node) {
-            const pubMedLink = 'https://pubmed.ncbi.nlm.nih.gov/?term='+encodeURIComponent(node.id);
-            const department = node.department ? "<br/>"+node.department : "";
-            const topicList = FlightConnectorNodeGraph.makeUnorderedList(node.topics);
-            $('#main-graph-info').html("<h3 style='margin-bottom: 0;'>"+node.id+"</h3><p style='margin-top: 0;'>["+node.email+"]<br/>[<a href='"+pubMedLink+"' target='_new'>Search PubMed</a>]"+department+"</p><h4>"+node.topics.length+" Topic"+((node.topics.length !== 1) ? "s" : "")+" Selected</h4>"+topicList);
+        static makePubMedLink = function (name) {
+            return 'https://pubmed.ncbi.nlm.nih.gov/?term='+encodeURIComponent(name);
         }
 
-        // nodes is all nodes; edges is all edges
-        static displayClusterInfo = function(node, nodes, edges) {
+        static inspectAndDisplayNode = function(node) {
+            const pubMedLink = FlightConnectorNodeGraph.makePubMedLink(node.id);
+            const department = node.department ? "<br/>"+node.department : "";
+            const topicList = FlightConnectorNodeGraph.makeUnorderedList(node.topics);
+            const picture = FlightConnectorNodeGraph.getPictureFromNode(node);
+            $('#main-graph-info').html("<h3 style='margin-bottom: 0;'>"+node.id+"</h3><p style='margin-top: 0;' class='smaller'>"+picture+"["+node.email+"]<br/>[<a href='"+pubMedLink+"' target='_new'>Search PubMed</a>]"+department+"</p><h4>"+node.topics.length+" Topic"+((node.topics.length !== 1) ? "s" : "")+" Selected</h4>"+topicList);
+        }
+
+        static getPictureFromNode = function(node) {
+            return node.picture ? "<br/><img src='<?= $pictureUrl ?>&fileId="+node.picture+"' alt='Picture' style='width: 100px; height: auto; margin-bottom: -2px;' />" : "";
+        }
+
+        static getCluster = function(node, nodes, edges) {
             let cluster = [];
             const nodeIndexes = {};
             for (let nodeIndex = 0; nodeIndex < nodes.length; nodeIndex++) {
@@ -483,7 +587,10 @@ echo "
                 }
                 cluster = nextCluster;
             } while ((origClusterLength < cluster.length) && (iteration < maxIterations));
+            return cluster;
+        }
 
+        static getClusterNodeStats = function(cluster, edges, nodes) {
             // Adapted from http://hubrik.com/2015/11/16/sort-by-last-name-with-javascript/
             const compareByLastName = (a,b) => {
                 const aName = a.split(" ");
@@ -508,9 +615,43 @@ echo "
                 }
             }
             members.sort(compareByLastName);
-            const average = array => array.reduce((a, b) => a + b) / array.length;
+            return {
+                members: members,
+                densities: densities,
+                centralities: centralities
+            };
+        }
 
+        // nodes is all nodes; edges is all edges
+        static displayClusterInfo = function(node, nodes, edges) {
+            const cluster = FlightConnectorNodeGraph.getCluster(node, nodes, edges);
+            const stats = FlightConnectorNodeGraph.getClusterNodeStats(cluster, edges, nodes);
+            const members = stats.members;
+            const densities = stats.densities;
+            const centralities = stats.centralities;
+
+            const membersWithDescriptions = [];
+            for (let memberIndex = 0; memberIndex < members.length; memberIndex++) {
+                const member = members[memberIndex];
+                for (let clusterIndex = 0; clusterIndex < cluster.length; clusterIndex++) {
+                    const clusterNode =  cluster[clusterIndex];
+                    if ((member === clusterNode.id) && (clusterNode.email)) {
+                        const picture = FlightConnectorNodeGraph.getPictureFromNode(clusterNode);
+                        const pubMedLink = FlightConnectorNodeGraph.makePubMedLink(member);
+                        const newInfo = member+picture+"<span class='smaller'><br/>["+clusterNode.email+"]</a><br/>[<a href='"+pubMedLink+"' target='_new'>Search PubMed</a>]</span>";
+                        membersWithDescriptions.push(newInfo);
+                        break;
+                    }
+                }
+            }
+
+            const infoLines = FlightConnectorNodeGraph.getInfoDataLines(members, densities, centralities);
+            $('#main-graph-info').html("<h3>Cluster</h3><p><button onclick='FlightConnectorNodeGraph.holdClick = false; $(\"#main-graph-info\").html(\"\"); return false;' class='smaller'>Stop Examining Cluster</button></p><p>"+infoLines.join("<br/>")+"</p><h4 style='margin-bottom: 0;'>Members</h4><p class='clusterMember'>"+membersWithDescriptions.join("</p><p class='clusterMember'>")+"</p>");
+        }
+
+        static getInfoDataLines = function(members, densities, centralities) {
             const infoLines = [];
+            const average = array => array.reduce((a, b) => a + b) / array.length;
             infoLines.push("Number of Members: "+members.length);
             infoLines.push("<span style='text-decoration: underline dotted #888888;' title=\"The average of each node's number of connections divided by the number of possible connections.\">Average Density</span>: "+average(densities).toFixed(3));
             const centralityAverage = average(centralities);
@@ -520,8 +661,7 @@ echo "
             } else {
                 infoLines.push("<span title=\""+centralityDefinition+"\" style='text-decoration: underline dotted #888888;'>Average Degree Centrality</span>: "+centralityAverage.toFixed(3));
             }
-
-            $('#main-graph-info').html("<h3>Cluster</h3><p><button onclick='FlightConnectorNodeGraph.holdClick = false; $(\"#main-graph-info\").html(\"\"); return false;' class='smaller'>Stop Examining Cluster</button></p><p>"+infoLines.join("<br/>")+"</p><h4 style='margin-bottom: 0;'>Members</h4><p style='margin-top: 0;'>"+members.join("<br/>")+"</p>");
+            return infoLines;
         }
 
         static getDataByStrength = (strength) => {
@@ -588,7 +728,11 @@ echo "
                         .attr('width', width - shiftRight)
                         .attr("x", shiftRight);
                 }
-                tooltip.style("display", "none");
+                const i = 0;
+                const strength = data[i]["x"];
+                const density = data[i]["density"];
+                const members = data[i]["members"];
+                setText(tooltip, strength, members, density);
             } else {
                 const strengthWidth = (width - shiftRight) / (maxStrength - 1);
                 let i = bisect(data, x.invert(currX)) - 1;
@@ -607,7 +751,6 @@ echo "
                 line
                     .attr("x1", currX)
                     .attr("x2", currX);
-                tooltip.style("display", null);
                 setText(tooltip, strength, members, density);
                 if (FlightConnectorNodeGraph.lastStrength !== strength) {
                     refreshGraphByStrength(strength);
@@ -827,6 +970,9 @@ echo "
         const highlightedTopic = '<?= $defaultHighlightedTopic ?>';
         if (highlightedTopic) {
             FlightConnectorNodeGraph.highlightTopic(<?= $strength ?>, highlightedTopic, true);
+        }
+        if (!highlightedTopic && !highlightedName) {
+            FlightConnectorNodeGraph.summarizeClusters(<?= $dataJSON ?>);
         }
     });
 </script>

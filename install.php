@@ -82,6 +82,7 @@ if (!empty($_POST)) {
     $rowsToInsert = [
         "name" => ["name", $applicableInstrument, "", "text", "Name", "", "", "", "", "", "y", "", "y", "", "", "", "", ""],
         "email" => ["email", $applicableInstrument, "", "text", "Email", "", "", "email", "", "", "y", "", "y", "", "", "", "", ""],
+        "picture" => ["picture", $applicableInstrument, "", "file", "A Picture of Yourself (optional)", "", "", "", "", "", "y", "", "y", "", "", "", "", ""],
     ];
     foreach (array_keys($fields) as $field) {
         $rowsToInsert[$field] = [$field, $applicableInstrument, "", "checkbox", $labels[$field], $choiceStr[$field], "", "", "", "", "", "", "", "LV", "", "", "", ""];
@@ -153,7 +154,7 @@ if (!empty($_POST)) {
         $sql = "UPDATE redcap_projects SET surveys_enabled='1' WHERE project_id = ?";
         $module->query($sql, [$pid]);
 
-        $surveyIntroText = '<p><strong>Please complete the survey below with your areas of expertise.</strong></p><p>Thank you!</p>';
+        $surveyIntroText = '<p><strong>Please complete the survey below with your areas of expertise. Check liberally since the more items you check for your expertises, the more overlap you will have with other scholars!</strong></p><p>Thank you!</p>';
         $surveyCompletionText = '<p><strong>Thank you for taking the survey.</strong></p><p>Have a nice day!</p>';
         $sql = "INSERT INTO redcap_surveys (project_id, font_family, form_name, title, instructions, acknowledgement, question_by_section, question_auto_numbering, survey_enabled, save_and_return, logo, hide_title, view_results, min_responses_view_results, check_diversity_view_results, end_survey_redirect_url, survey_expiration) VALUES (?, '16', ?, ?, ?, ?, 0, 1, 1, 1, NULL, 0, 0, 10, 0, NULL, NULL)";
         $module->query($sql, [$pid, $applicableInstrument, $instrumentLabel, $surveyIntroText, $surveyCompletionText]);
