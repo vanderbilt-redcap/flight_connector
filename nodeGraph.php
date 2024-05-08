@@ -107,6 +107,11 @@ if ($isMulti) {
 # add X+ and X Common Topics data into same JavaScript along with Strongest 4
 # EFS Retreat - activity based on software before lunch/break - dispel power dynamics - do something productive together
 # Mobile view for EFS Retreat
+# Set up first link to go to plus view (e.g., 1+)
+# add link to self-written basic definitions to introduce to social network graph
+# send Xaomin an email to show work
+# make mouseovers better: both in graph and in line graph
+# try another algorithm besides Force Undirected if available - Todd wants spatial relationships to be more meaningful
 $padding = 2 * $personRadiusSize + 8;
 $groups = [
     "contents" => "content",

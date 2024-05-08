@@ -22,10 +22,15 @@ function makeHeader($module, $title, $width = 800, $showLinks = FALSE) {
     $links = "";
     if ($showLinks) {
         $pid = $module->getProjectId();
-        $recordHomePage = APP_PATH_WEBROOT."ProjectSetup/index.php?pid=".$pid;
         $conceptMapLink = $module->getMapURL();
         $clusterLink = $module->getNodeGraphURL();
-        $links = "<p style='margin-top: 0; margin-bottom: 0; font-size: 12px;'>[<a href='$recordHomePage' style='color: black;'>REDCap project</a>] [<a href='$conceptMapLink' style='color: black;'>concept map</a>] [<a href='$clusterLink' style='color: black;'>cluster graph</a>]</p>";
+        $links = "<p style='margin-top: 0; margin-bottom: 0; font-size: 12px;'>";
+        // $userid = getUsername($module);
+        // if ($userid && inUserRights($userid, $module, $pid)) {
+            // $recordHomePage = APP_PATH_WEBROOT."ProjectSetup/index.php?pid=".$pid;
+            // $links .= "[<a href='$recordHomePage' style='color: black;'>REDCap project</a>] ";
+        // }
+        $links .= "[<a href='$conceptMapLink' style='color: black;'>concept map</a>] [<a href='$clusterLink' style='color: black;'>cluster graph</a>]</p>";
     }
     $linkStyle = "color: inherit; font-size: inherit;";
     $headerInfo = "<p style='text-align: right; font-size: 15px; line-height: 1.0em;'>A Professional Networking Tool<br/>from <a style='$linkStyle' href='$efsLink' target='_blank'>Edge for Scholars</a> <img src='$efsLogo' style='width: 27px; height: 20px;' alt='Edge for Scholars' /><br/>and <a style='$linkStyle' href='https://redcap.link/flight_tracker' target='_blank'>Flight Tracker</a> <img src='$ftLogo' style='width: 20px; height: 20px;' alt='Flight Tracker for Scholars' /><br/><span style='font-size: 11px; line-height: 1.3em;'>Copyright &#9400 ".date("Y")."<br/><a style='$linkStyle' href='https://vumc.org' target='_blank'>Vanderbilt University Medical Center</a></span></p>";;
