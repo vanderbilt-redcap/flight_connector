@@ -334,16 +334,19 @@ $(document).ready(() => {
     }
 
     function redcap_survey_page($project_id, $record,$instrument,$event_id, $group_id, $survey_hash,$response_id, $repeat_instance) {
-        if (self::isEFSRetreat($project_id)) {
-            return;
-        }
         if (version_compare(REDCAP_VERSION, '12.0.0', '<')) {
             $line = "$(ob).parent().find('label.fl').after(\"<div id='\"+row+\"-left' class='leftCol'></div><div id='\"+row+\"-right' class='rightCol'></div>\");";
         } else {
             $line = "$('#'+row).find('div[data-kind=field-value]').append(\"<div id='\"+row+\"-left' class='leftCol'></div><div id='\"+row+\"-right' class='rightCol'></div>\");";
         }
         $header = makeHeader($this, "Flight Connector", 650);
-        if (self::isLocalhost() && ($project_id == self::CONTENT_AND_METHODS_LOCALHOST)) {
+        if (
+            (
+                self::isLocalhost()
+                && ($project_id == self::CONTENT_AND_METHODS_LOCALHOST)
+            )
+            || self::isEFSRetreat($project_id)
+        ) {
             $header = "";
         }
         $url = $this->getUrl("lookupMatches.php");
@@ -356,7 +359,7 @@ $(document).ready(() => {
         $metadataJSON = \REDCap::getDataDictionary($project_id, "json");
         $metadata = json_decode($metadataJSON, TRUE);
         $choicesJSON = json_encode(getChoices($metadata));
-        $surveyTitleJS = "$('#surveytitle').replaceWith(\"<div id='surveytitle'>$header</div>\");";
+        $surveyTitleJS = $header ? "$('#surveytitle').replaceWith(\"<div id='surveytitle'>$header</div>\");" : "";
         if (($project_id == self::CONTENT_AND_METHODS_VANDERBILT) && (self::isVanderbilt())) {
             $surveyTitleJS = "";
         }
