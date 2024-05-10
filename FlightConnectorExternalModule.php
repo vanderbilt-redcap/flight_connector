@@ -383,6 +383,8 @@ $(document).ready(() => {
             let currName = '';
             if ($('[name=name]').length > 0) {
                 currName = $('[name=name]').val();
+            } else if (($('[name=firstname]').length > 0) && ($('[name=lastname]').length > 0)) {
+                currName = $('[name=firstname]').val()+' '+$('[name=lastname]').val();
             } else if (($('[name=first_name]').length > 0) && ($('[name=last_name]').length > 0)) {
                 currName = $('[name=first_name]').val()+' '+$('[name=last_name]').val();
             }
@@ -397,7 +399,7 @@ $(document).ready(() => {
                 prevEmail = $('[name=email]').val();
                 const url = '$url';
                 const postData = {};
-                if (field === 'first_name') {
+                if ((field === 'first_name') || (field === 'firstname')) {
                     postData['name'] = item.trim();
                 } else {
                     postData[field] = item.trim();
@@ -523,6 +525,8 @@ $(document).ready(() => {
             twoColumnCheckboxes();
             $surveyTitleJS
             $('[name=name]').on('blur', () => { searchForMatches('name'); });
+            $('[name=firstname]').on('blur', () => { searchForMatches('firstname', 'lastname'); });
+            $('[name=lastname]').on('blur', () => { searchForMatches('firstname', 'lastname'); });
             $('[name=first_name]').on('blur', () => { searchForMatches('first_name', 'last_name'); });
             $('[name=last_name]').on('blur', () => { searchForMatches('first_name', 'last_name'); });
             $('[name=email]').on('blur', () => { searchForMatches('email'); });
