@@ -16,10 +16,13 @@ class FlightConnectorExternalModule extends AbstractExternalModule
     const VANDERBILT_MAIN_PROJECT = 172928;
     const VANDERBILT_LOCALHOST_PROJECT = 87;
     const EFS_RETREAT_2023_PROJECT = 172325;
+    const EFS_RETREAT_2024_PROJECT = 190965;
     const REQUIRE_LOGIN_SETTING = "requireLoginForSurvey";
     const UNKNOWN_CHOICE = "Unknown";
     const CONTENT_AND_METHODS_LOCALHOST = 95;
     const CONTENT_AND_METHODS_VANDERBILT = 72516;
+    const VFRS_SURVEY_OF_INTENT = 15941;
+    const EDGE_REVIEW_SURVEY_OF_INTENT = 72575;
 
     public function getFields($pid) {
         $option1 = ["contents" => "Concepts or Content Areas", "methods" => "Methods or Tools"];
@@ -37,7 +40,7 @@ class FlightConnectorExternalModule extends AbstractExternalModule
     }
 
     static function isEFSRetreat($pid) {
-        return ($pid == self::EFS_RETREAT_2023_PROJECT) && self::isVanderbilt();
+        return in_array($pid, [self::EFS_RETREAT_2023_PROJECT, self::EFS_RETREAT_2024_PROJECT]) && self::isVanderbilt();
     }
 
     function isSetup($project_id) {
@@ -86,11 +89,13 @@ class FlightConnectorExternalModule extends AbstractExternalModule
 
     function redcap_every_page_top($project_id) {
         if (self::isREDCap() && !self::isContentsAndMethods($project_id)) {
-            $mapUrl = $this->getMapURL($this);
+            $mapUrl = $this->getMapURL();
+            $nodeGraphUrl = $this->getNodeGraphURL();
             echo "<script>
 $(document).ready(() => {
     setTimeout(() => {
         $('a[data-link-key=flight_connector-link_project_1]').attr('href', '$mapUrl');    
+        $('a[data-link-key=flight_connector-link_project_2]').attr('href', '$nodeGraphUrl');    
     }, 30);
 });
 </script>";
@@ -99,6 +104,7 @@ $(document).ready(() => {
 $(document).ready(() => {
     setTimeout(() => {
         $('a[data-link-key=flight_connector-link_project_1]').parent().hide();    
+        $('a[data-link-key=flight_connector-link_project_2]').parent().hide();    
     }, 30);
 });
 </script>";
@@ -106,7 +112,7 @@ $(document).ready(() => {
     }
 
     public static function isVanderbilt() {
-        return in_array(SERVER_NAME, ["redcap.vanderbilt.edu", "redcaptest.vanderbilt.edu"]);
+        return in_array(SERVER_NAME, ["redcap.vanderbilt.edu", "redcaptest.vanderbilt.edu", "redcap.vumc.org", "redcaptest.vumc.org"]);
     }
 
     public static function isLocalhost() {
@@ -250,15 +256,17 @@ $(document).ready(() => {
     public function getFieldsForEFSProject() {
         return [
             self::EFS_RETREAT_2023_PROJECT => ["record_id" => "record_id", "first_name" => "firstname", "last_name" => "lastname", "email" => "email"],
+            self::EFS_RETREAT_2024_PROJECT => ["record_id" => "record_id", "first_name" => "firstname", "last_name" => "lastname", "email" => "email"],
         ];
     }
 
     public function getFieldsForMainProject() {
         return [
-            15941 => ["record_id" => "participant_id", "first_name" => "name_first", "last_name" => "name_last", "email" => "email"],
-            72575 => ["record_id" => "record_id", "first_name" => "first_name", "last_name" => "last_name", "email" => "email"],
+            self::VFRS_SURVEY_OF_INTENT => ["record_id" => "participant_id", "first_name" => "name_first", "last_name" => "name_last", "email" => "email"],
+            self::EDGE_REVIEW_SURVEY_OF_INTENT => ["record_id" => "record_id", "first_name" => "first_name", "last_name" => "last_name", "email" => "email"],
             self::CONTENT_AND_METHODS_VANDERBILT => ["record_id" => "record_id", "first_name" => "first_name", "last_name" => "last_name", "email" => "email"],
             self::EFS_RETREAT_2023_PROJECT => ["record_id" => "record_id", "first_name" => "firstname", "last_name" => "lastname", "email" => "email"],
+            self::EFS_RETREAT_2024_PROJECT => ["record_id" => "record_id", "first_name" => "firstname", "last_name" => "lastname", "email" => "email"],
         ];
     }
 
@@ -276,19 +284,25 @@ $(document).ready(() => {
         return FALSE;
     }
 
-
-
-    public function getMapURL() {
-        $mapUrl = $this->getUrl("map.php");
+    private function getNOAUTHPageURL($page) {
+        $url= $this->getUrl($page);
         $pid = getPid();
         $uniqueHash = $this->getProjectSetting(self::UNIQUE_HASH_SETTING, $pid);
         if ($uniqueHash) {
-            $mapUrl .= "&h=$uniqueHash";
+            $url .= "&h=$uniqueHash";
         }
-        if (!preg_match("/NOAUTH/", $mapUrl)) {
-            $mapUrl .= "&NOAUTH";
+        if (!preg_match("/NOAUTH/", $url)) {
+            $url .= "&NOAUTH";
         }
-        return $mapUrl;
+        return $url;
+    }
+
+    public function getMapURL() {
+        return $this->getNOAUTHPageURL("map.php");
+    }
+
+    public function getNodeGraphURL() {
+        return $this->getNOAUTHPageURL("nodeGraph.php");
     }
 
     private static function isREDCap() {
