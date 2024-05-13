@@ -579,7 +579,9 @@ echo "
                 const clusterIds = [];
                 const nextCluster = [];
                 for (let clusterIndex = 0; clusterIndex < cluster.length; clusterIndex++) {
-                    clusterIds.push(cluster[clusterIndex].id);
+                    if (cluster[clusterIndex].id) {
+                        clusterIds.push(cluster[clusterIndex].id);
+                    }
                 }
                 for (let clusterIndex = 0; clusterIndex < cluster.length; clusterIndex++) {
                     nextCluster.push(cluster[clusterIndex]);
@@ -617,11 +619,13 @@ echo "
             const centralities = [];
             for (let clusterIndex = 0; clusterIndex < cluster.length; clusterIndex++) {
                 const clusterNode = cluster[clusterIndex];
-                members.push(clusterNode.id);
-                for (let edgeIndexesIndex = 0; edgeIndexesIndex < clusterNode.edge_indexes.length; edgeIndexesIndex++) {
-                    const edgeIndex = clusterNode.edge_indexes[edgeIndexesIndex];
-                    centralities.push(edges[edgeIndex].value);
-                    densities.push(edges[edgeIndex].value / (nodes.length - 1));
+                if (clusterNode.id) {
+                    members.push(clusterNode.id);
+                    for (let edgeIndexesIndex = 0; edgeIndexesIndex < clusterNode.edge_indexes.length; edgeIndexesIndex++) {
+                        const edgeIndex = clusterNode.edge_indexes[edgeIndexesIndex];
+                        centralities.push(edges[edgeIndex].value);
+                        densities.push(edges[edgeIndex].value / (nodes.length - 1));
+                    }
                 }
             }
             members.sort(compareByLastName);
