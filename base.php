@@ -45,7 +45,7 @@ function makeHeader($module, $title, $width = 800, $showLinks = FALSE) {
 }
 
 function isVanderbilt() {
-    return preg_match("/vanderbilt.edu/", SERVER_NAME) || preg_match("/localhost/", SERVER_NAME);
+    return FlightConnectorExternalModule::isVanderbilt();
 }
 
 function getData($pid) {
@@ -55,11 +55,25 @@ function getData($pid) {
         $json = \REDCap::getData($pid, "json");
         $data = json_decode($json, TRUE);
     }
+    foreach ($data as $i => $row) {
+        if (!isset($row['name'])) {
+            $name = "";
+            if (isset($row['firstname'])) {
+                $name = $row['firstname']." ".$row['lastname'];
+            } else if (isset($row['first_name'])) {
+                $name = $row['first_name']." ".$row['last_name'];
+            }
+            $name = trim($name);
+            if ($name) {
+                $data[$i]["name"] = $name;
+            }
+        }
+    }
 
     $data = filterOutDuplicateNames($data);
     $data = filterOutViaLDAP($data);
     $data = alphabetizeByLastName($data);
-    if (SERVER_NAME == "redcap.vanderbilt.edu") {
+    if (in_array(SERVER_NAME, ["redcap.vanderbilt.edu", "redcap.vumc.org"])) {
         $data = screenOutEFSStaff($data);
     }
     $data = screenOutEmptyChecks($data);
