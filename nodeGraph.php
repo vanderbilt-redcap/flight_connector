@@ -119,8 +119,18 @@ $groups = [
 ];
 $categories = [];
 foreach (array_keys($groups) as $variable) {
-    foreach ($choices[$variable] as $index => $label) {
-        $categories[$label] = [];
+    if (!isset($choices[$variable])) {
+        $shortVariable = $variable[0];
+        if (isset($choices[$shortVariable])) {
+            $groups[$shortVariable] = $groups[$variable];
+            unset($groups[$variable]);
+            $variable = $shortVariable;
+        }
+    }
+    if (isset($choices[$variable])) {
+        foreach ($choices[$variable] as $index => $label) {
+            $categories[$label] = [];
+        }
     }
 }
 if ($combineWithGreater) {
@@ -666,14 +676,20 @@ echo "
         static getInfoDataLines = function(members, densities, centralities) {
             const infoLines = [];
             const average = array => array.reduce((a, b) => a + b) / array.length;
-            infoLines.push("Number of Members: "+members.length);
-            infoLines.push("<span style='text-decoration: underline dotted #888888;' title=\"The average of each node's number of connections divided by the number of possible connections.\">Average Density</span>: "+average(densities).toFixed(3));
-            const centralityAverage = average(centralities);
-            const centralityDefinition = "The average of each node's number of connections.";
-            if (Number.isInteger(centralityAverage)) {
-                infoLines.push("<span title=\""+centralityDefinition+"\" style='text-decoration: underline dotted #888888;'>Average Degree Centrality</span>: "+centralityAverage);
-            } else {
-                infoLines.push("<span title=\""+centralityDefinition+"\" style='text-decoration: underline dotted #888888;'>Average Degree Centrality</span>: "+centralityAverage.toFixed(3));
+            if (members.length > 0) {
+                infoLines.push("Number of Members: "+members.length);
+            }
+            if (densities.length > 0) {
+                infoLines.push("<span style='text-decoration: underline dotted #888888;' title=\"The average of each node's number of connections divided by the number of possible connections.\">Average Density</span>: "+average(densities).toFixed(3));
+            }
+            if (centralities.length > 0) {
+                const centralityAverage = average(centralities);
+                const centralityDefinition = "The average of each node's number of connections.";
+                if (Number.isInteger(centralityAverage)) {
+                    infoLines.push("<span title=\""+centralityDefinition+"\" style='text-decoration: underline dotted #888888;'>Average Degree Centrality</span>: "+centralityAverage);
+                } else {
+                    infoLines.push("<span title=\""+centralityDefinition+"\" style='text-decoration: underline dotted #888888;'>Average Degree Centrality</span>: "+centralityAverage.toFixed(3));
+                }
             }
             return infoLines;
         }
