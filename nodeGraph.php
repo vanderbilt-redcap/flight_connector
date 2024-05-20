@@ -29,7 +29,7 @@ $projectTitle = shortenTitle(\REDCap::getProjectTitle());
 $defaultHighlightedName= str_replace("&amp;", "&", preg_replace("/&#0?39;/", "'", htmlentities($_GET['highlightedName'] ?? "")));
 $defaultHighlightedTopic = str_replace("&amp;", "&", preg_replace("/&#0?39;/", "'", htmlentities($_GET['highlightedTopic'] ?? "")));
 $isMulti = isset($_GET['multi']) && ($_GET['multi'] == "1");
-$combineWithGreater = isset($_GET['greater']) && ($_GET['greater'] == "1") && !$isMulti;
+$combineWithGreater = !$isMulti;
 if ($isMulti) {
     $defaultHighlightedTopic = "";
     $defaultHighlightedName = "";
@@ -103,15 +103,8 @@ if ($isMulti) {
 # TODO - Dream List
 # move scaling into JS so that they can scale off the number of nodes in the graph
 # add traditional slider for zoomFactor next to slider-SVG
-# v2.0? AI: download & parse CV for topics (top 500?) & construct graph based on those topics
-# add X+ and X Common Topics data into same JavaScript along with Strongest 4
 # EFS Retreat - activity based on software before lunch/break - dispel power dynamics - do something productive together
 # Mobile view for EFS Retreat
-# Set up first link to go to plus view (e.g., 1+)
-# add link to self-written basic definitions to introduce to social network graph
-# send Xaomin an email to show work
-# make mouseovers better: both in graph and in line graph
-# try another algorithm besides Force Undirected if available - Todd wants spatial relationships to be more meaningful
 $padding = 2 * $personRadiusSize + 8;
 $groups = [
     "contents" => "content",
@@ -134,19 +127,11 @@ foreach (array_keys($groups) as $variable) {
     }
 }
 if ($combineWithGreater) {
-    $greaterButton = "<button onclick='$(\"[name=greater]\").val(\"0\"); return true;' style='background-color: #b0d87a;'>Just This Strength</button>";
     $plus = "+";
 } else if ($isMulti) {
-    $greaterButton = "";
     $plus = "";
 } else {
-    $greaterButton = "<button onclick='$(\"[name=greater]\").val(\"1\"); return true;' style='background-color: #b0d87a;'>With Greater Strengths</button>";
     $plus = "";
-}
-if ($isMulti) {
-    $strongestButton = "<button onclick='$(\"[name=multi]\").val(\"\"); $(\"#highlightedName\").val(\"\"); $(\"#highlightedTopic\").val(\"\"); return true;'>Show Just By Strength</button>";
-} else {
-    $strongestButton = "<button onclick='$(\"[name=multi]\").val(\"1\"); $(\"#highlightedName\").val(\"\"); $(\"#highlightedTopic\").val(\"\"); return true;'>Show Strongest $numParts</button>";
 }
 $allNames = [];
 foreach ($redcapData as $row) {
@@ -326,7 +311,7 @@ if ($isMulti) {
             $topicOptions[] = $optionHTML;
         }
     }
-    $nameFinderHTML = "<p class='centered'>
+    $nameFinderHTML = "<p class='centered' style='margin-bottom: 0;'>
 <label for='highlightName' style='padding-left: 3px; color: white; background-color: $nameHighlightColor; font-weight: bold;'>Name to Highlight: </label>
 <select class='combobox' id='highlightName' onchange='FlightConnectorNodeGraph.highlightName(FlightConnectorNodeGraph.lastStrength, $(\"#highlightName :selected\").val(), false);'><option value=''></option>".implode("", array_values($nameOptions))."</select>
 <label style='margin-left: 40px; padding-left: 3px; background-color: $topicHighlightColor; color: $topicHighlightFontColor; font-weight: bold;'for='highlightTopic'>Topic to Highlight: </label>
@@ -338,7 +323,7 @@ if ($isMulti) {
 
 $hiddenHTML = "";
 foreach ($_GET as $field => $value) {
-    if (!in_array($field, ["strength", "instance", "pnid", "multi", "greater", "highlight", "highlightedName", "highlightedTopic"])) {
+    if (!in_array($field, ["strength", "instance", "pnid", "multi", "highlight", "highlightedName", "highlightedTopic"])) {
         $field = htmlentities($field);
         $value = htmlentities($value);
         $hiddenHTML .= "<input type='hidden' name='$field' value='$value' />";
@@ -346,7 +331,6 @@ foreach ($_GET as $field => $value) {
 }
 $hiddenHTML .= "
 <input type='hidden' name='multi' value='0' />
-<input type='hidden' name='greater' value='".($combineWithGreater ? "1" : "0")."' />
 <input type='hidden' name='highlightedName' id='highlightedName' value=\"$defaultHighlightedName\" />
 <input type='hidden' name='highlightedTopic' id='highlightedTopic' value=\"$defaultHighlightedTopic\" />";
 
@@ -360,15 +344,37 @@ $title = "Connections with <span id='numTopics'>$numTopics</span> in Common";
 echo "
     <form method='GET' action='?'>
         $hiddenHTML
-        <p class='centered'>$greaterButton $strongestButton</p>
         $nameFinderHTML
     </form>
     <h2>$projectTitle</h2>
+    <div id='popupContainer' style='display: none;'>
+        <div id='graphDefinitions'>
+            <div style='text-align: right'><a href='javascript:;' style='text-decoration: none; color: black; font-size: 12px;' onclick='FlightConnectorNodeGraph.hideDefinitions();'>X</a></div>
+            <h3>About This Social Network Graph</h3>
+            <h4>How to Use</h4>
+                <p>The goal of the graph is to identify potential collaborators based on common and unique topics. People with more common topics are in the middle of the graph while those with less common topics are on the outside. People without enough topics in common are not displayed.</p>
+                <p>Clicking on a circle will describe that person with a picture (if submitted), a PubMed search for their name, and their email address. A list of the person's neighbors (those with topics in common) will appear along with their checked topics.</p>
+                <p>You can search for one name to be highlighted in orange. You might want to search for yourself.</p>
+                <p>You can also search for a given topic to be highlighted in light blue. The shaded nodes will identify those with expertise in that area.</p>
+                <p>You can filter the graph based on the minimum number of common topics through the line graph at the bottom. By default, one-or-more topics are shown, but more selectivity can be configured by moving the red line over the graph. This feature uses <a href='https://doi.org/10.1093/bioinformatics/btac780' target='_new'>the algorithm described in this paper</a>.</p>
+            <h4>Graphics</h4>
+                <p>Each circle/node represents a person who has filled out an associated survey. When a person fills out more than one survey, only the latest survey's data is used. If the circle is large enough, a person's initials are in the middle.</p>
+                <p>Each line/edge between two nodes indicates that they have picked a topic in common through the two checkbox topics in the survey. The more common topics, the thicker the line becomes due to an increased summed 'edge weight.'</p>
+                <p>Nodes are arranged via <a href='https://d3js.org/d3-force'>a force-directed graph from d3.js</a>. Nodes closer to the center have more summated edge-weight. Nodes are pulled and kept together by a process mimicking gravity. Nodes with a less summed edge-weight are arranged on the outside.</p>
+            <h4>Definitions</h4>
+                <p><strong>Clusters</strong> consist of nodes that are interconnected in some way to each other. Multiple clusters can exist if there are no edges between them.</p>
+                <p>A node's <strong>Degree Centrality</strong> is the number of edges it have.</p>
+                <p>A node's <strong>Density</strong> is the number of edges a node has divided by the total possible edges a node could have.</p>
+        </div>
+    </div>
     <div id='container'>
         <h3>$title</h3>
-        <p class='centered'>Move your mouse over a circle/person or a line/connection to investigate it.<br/>Click it to investigate the entire cluster.</p>
+        <p class='centered'>
+            Click on a circle/person to investigate them more.<br/>
+            Filter based on commonalities via the line graph at the bottom.<br/>
+            <a href='javascript:;' onclick='FlightConnectorNodeGraph.showDefinitions();'>Tell me more about this social network graph.</a>
+        </p>
 		<div class='wrap'>
-            <div id='configuration' style='max-width: $sliderWidth"."px; margin: 0 auto;'></div>
 			<div id='main'>
 			    <div style='width: 900px; float: left;'>
 			        <div id='graph' style='border: 1px solid #888; width: 100%;'></div>
@@ -376,18 +382,28 @@ echo "
                 </div>
 				<div id='main-graph-info' class='graph-info' style='padding: 8px; width: calc(100% - 960px); float: left; margin: 0 0 0 15px; height: 660px; overflow: scroll;'></div>
 			</div>			
+            <div id='configuration' style='max-width: $sliderWidth"."px;'></div>
 		</div>
 	</div>";
 
 ?>
 <style>
     .clusterMember { line-height: 0.8em; margin-top: 0.6em; margin-bottom: 0.6em; }
+    #popupContainer { z-index: 1000;  position: absolute; width: 100%;  height: 500px; }
+    #graphDefinitions { margin: 0 auto; background-color: #eff7e4; overflow: scroll; height: 100%; position: relative; min-width: 400px; max-width: 600px; padding: 24px; }
 </style>
 <script>
 
     class FlightConnectorNodeGraph {
-        static holdClick = false;
         static lastStrength = <?= $strength ?>;
+
+        static showDefinitions = function() {
+            $('#popupContainer').slideDown();
+        }
+
+        static hideDefinitions = function() {
+            $('#popupContainer').slideUp();
+        }
 
         static changeInt = function(sel, changeNum) {
             const newNum = parseInt($(sel).val()) + changeNum;
@@ -476,9 +492,10 @@ echo "
                 const cluster = clusters[i];
                 const stats = FlightConnectorNodeGraph.getClusterNodeStats(cluster, edges, nodes);
                 const lines = FlightConnectorNodeGraph.getInfoDataLines(stats.members, stats.densities, stats.centralities);
-                clusteringStats.push('<h5 style=\"margin-bottom: 0;\">Cluster #'+num+'</h5>'+lines.join('<br/>'));
+                const clusterInfo = FlightConnectorNodeGraph.getClusterInfo(cluster[0], nodes, edges);
+                clusteringStats.push('<h4 style=\"margin-bottom: 0;\">Cluster #'+num+'</h4>'+lines.join('<br/>')+clusterInfo);
             }
-            $('#main-graph-info').html('<h4>'+numClusters+' Cluster'+(numClusters === 1 ? '' : 's')+'</h4>'+clusteringStats.join(''));
+            $('#main-graph-info').html('<h3>'+numClusters+' Cluster'+(numClusters === 1 ? '' : 's')+'</h3>'+clusteringStats.join('<hr/>'));
         }
 
         static refreshData = function(data, strength, name, topic, isInitial) {
@@ -506,7 +523,7 @@ echo "
             for (let i = 0; i < data.nodes.length; i++) {
                 if (data.nodes[i].id === name) {
                     data.nodes[i].color = nameHighlightColor;
-                    FlightConnectorNodeGraph.inspectAndDisplayNode(data.nodes[i]);
+                    FlightConnectorNodeGraph.inspectAndDisplayNode(data.nodes[i], data.links);
                     changed = true;
                 }
                 if ((data.nodes[i].topics.indexOf(topic) >= 0) && (data.nodes[i].color !== nameHighlightColor)) {
@@ -526,7 +543,7 @@ echo "
             FlightConnectorNodeGraph.refreshData(data, strength, name, topic, isInitial);
         }
 
-        static refreshGraph(data, strength) {
+        static refreshGraph = function(data, strength) {
             $('#graph').html(updateChart(<?= $width + $padding ?>, <?= $height + $padding ?>, data, strength, <?= $zoomFactor ?>));
         }
 
@@ -547,12 +564,33 @@ echo "
             return 'https://pubmed.ncbi.nlm.nih.gov/?term='+encodeURIComponent(name);
         }
 
-        static inspectAndDisplayNode = function(node) {
+        static findNeighborNodes = function(id, edges) {
+            const neighborNodes = [];
+            const neighborNames = [];
+            for (let i=0; i < edges.length; i++) {
+                const edge = edges[i];
+                let neighborNode = false;
+                if (edge.source.id === id) {
+                    neighborNode = edge.target;
+                } else if (edge.target.id === id) {
+                    neighborNode = edge.source;
+                }
+                if ((neighborNode !== false) && neighborNames.indexOf(neighborNode.id) < 0) {
+                    neighborNodes.push(neighborNode);
+                    neighborNames.push(neighborNode.id);
+                }
+            }
+            return neighborNodes;
+        }
+
+        static inspectAndDisplayNode = function(node, edges) {
+            const neighbors = FlightConnectorNodeGraph.findNeighborNodes(node.id, edges);
             const pubMedLink = FlightConnectorNodeGraph.makePubMedLink(node.id);
             const department = node.department ? "<br/>"+node.department : "";
             const topicList = FlightConnectorNodeGraph.makeUnorderedList(node.topics);
             const picture = FlightConnectorNodeGraph.getPictureFromNode(node);
-            $('#main-graph-info').html("<h3 style='margin-bottom: 0;'>"+node.id+"</h3><p style='margin-top: 0;' class='smaller'>"+picture+"["+node.email+"]<br/>[<a href='"+pubMedLink+"' target='_new'>Search PubMed</a>]"+department+"</p><h4>"+node.topics.length+" Topic"+((node.topics.length !== 1) ? "s" : "")+" Selected</h4>"+topicList);
+            const neighborDescriptionHTML = FlightConnectorNodeGraph.makeMemberDescriptionHTML(neighbors);
+            $('#main-graph-info').html("<h3 style='margin-bottom: 0;'>"+node.id+"</h3><p style='margin-top: 0;' class='smaller'>"+picture+"["+node.email+"]<br/>[<a href='"+pubMedLink+"' target='_new'>Search PubMed</a>]"+department+"</p><h4>"+neighbors.length+" Neighbor"+(neighbors.length === 1 ? "" : "s")+"</h4>"+neighborDescriptionHTML+"<h4>"+node.topics.length+" Topic"+((node.topics.length !== 1) ? "s" : "")+" Selected</h4>"+topicList);
         }
 
         static getPictureFromNode = function(node) {
@@ -647,30 +685,35 @@ echo "
         }
 
         // nodes is all nodes; edges is all edges
-        static displayClusterInfo = function(node, nodes, edges) {
+        static getClusterInfo = function(node, nodes, edges) {
             const cluster = FlightConnectorNodeGraph.getCluster(node, nodes, edges);
             const stats = FlightConnectorNodeGraph.getClusterNodeStats(cluster, edges, nodes);
             const members = stats.members;
-            const densities = stats.densities;
-            const centralities = stats.centralities;
 
-            const membersWithDescriptions = [];
+            const memberNodes = [];
             for (let memberIndex = 0; memberIndex < members.length; memberIndex++) {
                 const member = members[memberIndex];
                 for (let clusterIndex = 0; clusterIndex < cluster.length; clusterIndex++) {
                     const clusterNode =  cluster[clusterIndex];
                     if ((member === clusterNode.id) && (clusterNode.email)) {
-                        const picture = FlightConnectorNodeGraph.getPictureFromNode(clusterNode);
-                        const pubMedLink = FlightConnectorNodeGraph.makePubMedLink(member);
-                        const newInfo = member+picture+"<span class='smaller'><br/>["+clusterNode.email+"]</a><br/>[<a href='"+pubMedLink+"' target='_new'>Search PubMed</a>]</span>";
-                        membersWithDescriptions.push(newInfo);
+                        memberNodes.push(clusterNode);
                         break;
                     }
                 }
             }
+            return "<h5 style='margin-bottom: 0;'>Members</h5>"+FlightConnectorNodeGraph.makeMemberDescriptionHTML(memberNodes);
+        }
 
-            const infoLines = FlightConnectorNodeGraph.getInfoDataLines(members, densities, centralities);
-            $('#main-graph-info').html("<h3>Cluster</h3><p><button onclick='FlightConnectorNodeGraph.holdClick = false; $(\"#main-graph-info\").html(\"\"); return false;' class='smaller'>Stop Examining Cluster</button></p><p>"+infoLines.join("<br/>")+"</p><h4 style='margin-bottom: 0;'>Members</h4><p class='clusterMember'>"+membersWithDescriptions.join("</p><p class='clusterMember'>")+"</p>");
+        static makeMemberDescriptionHTML = function(nodes) {
+            const descriptions = [];
+            for (let i=0; i < nodes.length; i++) {
+                const node = nodes[i];
+                const picture = FlightConnectorNodeGraph.getPictureFromNode(node);
+                const pubMedLink = FlightConnectorNodeGraph.makePubMedLink(node.id);
+                const newInfo = node.id+picture+"<span class='smaller'><br/>["+node.email+"]</a><br/>[<a href='"+pubMedLink+"' target='_new'>Search PubMed</a>]</span>";
+                descriptions.push(newInfo);
+            }
+            return "<p class='clusterMember'>"+descriptions.join("</p><p class='clusterMember'>")+"</p>";
         }
 
         static getInfoDataLines = function(members, densities, centralities) {
@@ -829,7 +872,6 @@ echo "
     }
 
     const chart = function(width, height, data, strength, zoomFactor) {
-        const infoOb = $('#main-graph-info');
         if (data['nodes'].length === 0) {
             return "<div style='width: "+width+"px; height: "+height+"px;'><h3>No clusters with "+strength+" common topic"+((strength > 1) ? "s" : "")+"</h3></div>";
         }
@@ -841,10 +883,10 @@ echo "
 
         // Create a simulation with several forces.
         const simulation = d3.forceSimulation(nodes)
-            .force("link", d3.forceLink(links).id(d => d.id))
-            .force("charge", d3.forceManyBody())
+            .force("link", d3.forceLink(links).id(d => d.id).distance(t => t.value).strength(link => 1 / link.value).iterations(5))
+            .force("charge", d3.forceManyBody().strength(-1 * data.nodes.length))
             .force("center", d3.forceCenter(width / 2, height / 2))
-            .force("collide", d3.forceCollide(d => zoomFactor))
+            .force("collide", d3.forceCollide().radius(<?= $personRadiusSize * 2 ?>).strength(1).iterations(2))
             .on("tick", ticked);
 
         // Create the SVG container.
@@ -865,20 +907,7 @@ echo "
         const edgeLine = link.append("line")
             .attr("stroke", d => d.color)
             .attr("stroke-opacity", 0.6)
-            .attr("stroke-width", d => d.value / 2)
-            .on("mouseover", (i, d) => {
-                if (!FlightConnectorNodeGraph.holdClick) {
-                    const commonList = FlightConnectorNodeGraph.makeUnorderedList(d.topics);
-                    const commonHeader = "<h4>"+d.topics.length+" Common Topic"+((d.topics.length !== 1) ? "s" : "")+"</h4>";
-                    const sourceTopics = makeDiffArray(d.source.topics, d.topics);
-                    const sourceList = FlightConnectorNodeGraph.makeUnorderedList(sourceTopics);
-                    const sourceHeader = "<h4>"+d.source.id+":<br/>"+sourceTopics.length+" Unique Topic"+((sourceTopics.length !== 1) ? "s" : "")+"</h4>";
-                    const targetTopics = makeDiffArray(d.target.topics, d.topics);
-                    const targetList = FlightConnectorNodeGraph.makeUnorderedList(targetTopics);
-                    const targetHeader = "<h4>"+d.target.id+":<br/>"+targetTopics.length+" Unique Topic"+((targetTopics.length !== 1) ? "s" : "")+"</h4>";
-                    infoOb.html("<h3>Connected Names</h3><h4 style='margin-bottom: 0;'>"+d.source.id+"</h4><p style='margin-top: 0;'>["+d.source.email+"]</p><h4 style='margin-bottom: 0;'>"+d.target.id+"</h4><p style='margin-top: 0;'>["+d.target.email+"]</p>"+commonHeader+commonList+sourceHeader+sourceList+targetHeader+targetList)
-                }
-            });
+            .attr("stroke-width", d => d.value / 2);
 
         const circles = container.append("g")
             .attr("stroke", "#000")
@@ -892,10 +921,6 @@ echo "
         const node = circles.append("circle")
             .attr("r", d => (d.radius))
             .attr("fill", d => d.color);
-        node.call(d3.drag()
-            .on("start", dragstarted)
-            .on("drag", dragged)
-            .on("end", dragended));
 
         const label = circles.append("text")
             .attr("text-anchor", "middle")
@@ -906,19 +931,9 @@ echo "
             .attr("font-size", "<?= $fontSize ?>px")
             .attr("font-weight", 500)
             .text(d => d.initials)
-            .on("mouseover", (i, d) => {
-                if (!FlightConnectorNodeGraph.holdClick) {
-                    FlightConnectorNodeGraph.inspectAndDisplayNode(d);
-                }
-            })
             .on("click", (i, d) => {
-                FlightConnectorNodeGraph.holdClick = true;
-                FlightConnectorNodeGraph.displayClusterInfo(d, data.nodes, data.links);
+                FlightConnectorNodeGraph.inspectAndDisplayNode(d, links);
             });
-        label.call(d3.drag()
-            .on("start", dragstarted)
-            .on("drag", dragged)
-            .on("end", dragended));
 
         container.append("text")
             .attr("x", width - 100)
@@ -945,38 +960,6 @@ echo "
             label
                 .attr("x", d => d.x)
                 .attr("y", d => d.y + 1);
-        }
-
-        // Reheat the simulation when drag starts, and fix the subject position.
-        function dragstarted(event) {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            event.subject.fx = event.subject.x;
-            event.subject.fy = event.subject.y;
-        }
-
-        // Update the subject (dragged node) position during drag.
-        function dragged(event) {
-            event.subject.fx = event.x;
-            event.subject.fy = event.y;
-        }
-
-        // Restore the target alpha so the simulation cools after dragging ends.
-        // Unfix the subject position now that it’s no longer being dragged.
-        function dragended(event) {
-            if (!event.active) simulation.alphaTarget(0);
-            event.subject.fx = null;
-            event.subject.fy = null;
-        }
-
-        function makeDiffArray(baseArray, subset) {
-            const diff = [];
-            for (let i = 0; i < baseArray.length; i++) {
-                const elem = baseArray[i];
-                if (subset.indexOf(elem) < 0) {
-                    diff.push(elem);
-                }
-            }
-            return diff;
         }
 
         return svg.node();
