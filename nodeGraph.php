@@ -103,6 +103,8 @@ if ($isMulti) {
 # TODO - Dream List
 # move scaling into JS so that they can scale off the number of nodes in the graph
 # add traditional slider for zoomFactor next to slider-SVG
+# show topics in common for neighbors in tooltip
+# scale
 # EFS Retreat - activity based on software before lunch/break - dispel power dynamics - do something productive together
 # Mobile view for EFS Retreat
 $padding = 2 * $personRadiusSize + 8;
@@ -177,7 +179,11 @@ foreach ($categories as $category => $names) {
     }
 }
 $subgraphsAtStrength = makeSubgraphs($d3DataOriginal);
-$maxStrength = empty($subgraphsAtStrength) ? 1 : max(array_keys($subgraphsAtStrength));
+if (empty($subgraphsAtStrength)) {
+    $maxStrength = 1;
+} else {
+    $maxStrength = max(array_keys($subgraphsAtStrength));
+}
 
 $sliderData = [];
 for ($strength = 1; $strength <= $maxStrength; $strength++) {
@@ -360,7 +366,7 @@ echo "
             <h4>Graphics</h4>
                 <p>Each circle/node represents a person who has filled out an associated survey. When a person fills out more than one survey, only the latest survey's data is used. If the circle is large enough, a person's initials are in the middle.</p>
                 <p>Each line/edge between two nodes indicates that they have picked a topic in common through the two checkbox topics in the survey. The more common topics, the thicker the line becomes due to an increased summed 'edge weight.'</p>
-                <p>Nodes are arranged via <a href='https://d3js.org/d3-force'>a force-directed graph from d3.js</a>. Nodes closer to the center have more summated edge-weight. Nodes are pulled and kept together by a process mimicking gravity. Nodes with a less summed edge-weight are arranged on the outside.</p>
+                <p>Nodes are arranged via <a href='https://d3js.org/d3-force' target='_new'>a force-directed graph from d3.js</a>. Nodes closer to the center have more summated edge-weight. Nodes are pulled and kept together by a process mimicking gravity. Nodes with a less summed edge-weight are arranged on the outside.</p>
             <h4>Definitions</h4>
                 <p><strong>Clusters</strong> consist of nodes that are interconnected in some way to each other. Multiple clusters can exist if there are no edges between them.</p>
                 <p>A node's <strong>Degree Centrality</strong> is the number of edges it have.</p>
@@ -391,6 +397,7 @@ echo "
     .clusterMember { line-height: 0.8em; margin-top: 0.6em; margin-bottom: 0.6em; }
     #popupContainer { z-index: 1000;  position: absolute; width: 100%;  height: 500px; }
     #graphDefinitions { margin: 0 auto; background-color: #eff7e4; overflow: scroll; height: 100%; position: relative; min-width: 400px; max-width: 600px; padding: 24px; }
+    .tooltip { text-decoration: underline dotted #888888; }
 </style>
 <script>
 
@@ -710,7 +717,8 @@ echo "
                 const node = nodes[i];
                 const picture = FlightConnectorNodeGraph.getPictureFromNode(node);
                 const pubMedLink = FlightConnectorNodeGraph.makePubMedLink(node.id);
-                const newInfo = node.id+picture+"<span class='smaller'><br/>["+node.email+"]</a><br/>[<a href='"+pubMedLink+"' target='_new'>Search PubMed</a>]</span>";
+                const topicTooltip = node.topics.length+" Topic"+(node.topics.length === 1 ? "" : "s")+": "+node.topics.join('; ');
+                const newInfo = "<span class='tooltip' title='"+topicTooltip+"'>"+node.id+"</span>"+picture+"<span class='smaller'><br/>["+node.email+"]</a><br/>[<a href='"+pubMedLink+"' target='_new'>Search PubMed</a>]</span>";
                 descriptions.push(newInfo);
             }
             return "<p class='clusterMember'>"+descriptions.join("</p><p class='clusterMember'>")+"</p>";
@@ -723,7 +731,7 @@ echo "
                 infoLines.push("Number of Members: "+members.length);
             }
             if (densities.length > 0) {
-                infoLines.push("<span style='text-decoration: underline dotted #888888;' title=\"The average of each node's number of connections divided by the number of possible connections.\">Average Density</span>: "+average(densities).toFixed(3));
+                infoLines.push("<span class='tooltip' title=\"The average of each node's number of connections divided by the number of possible connections.\">Average Density</span>: "+average(densities).toFixed(3));
             }
             if (centralities.length > 0) {
                 const centralityAverage = average(centralities);
@@ -884,9 +892,9 @@ echo "
         // Create a simulation with several forces.
         const simulation = d3.forceSimulation(nodes)
             .force("link", d3.forceLink(links).id(d => d.id).distance(t => t.value).strength(link => 1 / link.value).iterations(5))
-            .force("charge", d3.forceManyBody().strength(-1 * data.nodes.length))
+            .force("charge", d3.forceManyBody().strength(-1 * data.nodes.length).distanceMin(<?= $personRadiusSize * 2 ?>).distanceMax(width / 4))
             .force("center", d3.forceCenter(width / 2, height / 2))
-            .force("collide", d3.forceCollide().radius(<?= $personRadiusSize * 2 ?>).strength(1).iterations(2))
+            .force("collide", d3.forceCollide().radius(<?= $personRadiusSize * 2 ?>).strength(0.7).iterations(2))
             .on("tick", ticked);
 
         // Create the SVG container.
@@ -1025,11 +1033,13 @@ function makeSubgraphs($d3Data) {
         }
         createOrIncrementLink($subgraphs[$weight]["links"], $nodeAName, $nodeBName, $topics);
     }
-    for ($weight = 1; $weight <= max(array_keys($subgraphs)); $weight++) {
-        if (!isset($subgraphs[$weight])) {
-            $subgraphs[$weight] = ["nodes" => [], "links" => []];
-        } else {
-            $subgraphs[$weight]["nodes"] = array_values($nodesByName[$weight]);
+    if (!empty($subgraphs)) {
+        for ($weight = 1; $weight <= max(array_keys($subgraphs)); $weight++) {
+            if (!isset($subgraphs[$weight])) {
+                $subgraphs[$weight] = ["nodes" => [], "links" => []];
+            } else {
+                $subgraphs[$weight]["nodes"] = array_values($nodesByName[$weight]);
+            }
         }
     }
     return $subgraphs;
