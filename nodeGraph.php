@@ -6,6 +6,9 @@ use \ExternalModules\ExternalModules;
 
 require_once(__DIR__."/FlightConnectorExternalModule.php");
 require_once(__DIR__."/base.php");
+require_once(APP_PATH_DOCROOT."Classes/System.php");
+
+\System::increaseMaxExecTime(3600);
 
 # This page uses Flight Connector data to form a social network edge graph
 # Inspired by https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9825768/
@@ -24,7 +27,11 @@ if (($uniqueHash === "") || ($uniqueHash !== $_GET['h'])) {
 $json = \REDCap::getDataDictionary($pid, "json");
 $metadata = json_decode($json, TRUE);
 $choices = getChoices($metadata);
+$time1 = time();
 $redcapData = getData($pid);
+if (isset($_GET['timings'])) {
+    echo "Downloaded REDCap Data in ".(time() - $time1)." seconds<br/>";
+}
 $projectTitle = shortenTitle(\REDCap::getProjectTitle());
 $defaultHighlightedName= str_replace("&amp;", "&", preg_replace("/&#0?39;/", "'", htmlentities($_GET['highlightedName'] ?? "")));
 $defaultHighlightedTopic = str_replace("&amp;", "&", preg_replace("/&#0?39;/", "'", htmlentities($_GET['highlightedTopic'] ?? "")));
@@ -37,6 +44,7 @@ if ($isMulti) {
 
 $width = 900;
 $sliderWidth = 500;
+$sliderHeight = 100;
 $height = 680;
 $numParts = 4;
 $nodeColor = "#5c5c7a";
@@ -84,30 +92,21 @@ $d3DataOriginal = [
     "links" => [],
 ];
 if ($isMulti) {
-    $personRadiusSize = 10;
-    $fontSize = 10;
-    $zoomFactor = 20;
+    $zoomFactor = 2;
 } else if (count($redcapData) < 100) {
-    $personRadiusSize = 15;
-    $fontSize = 15;
-    $zoomFactor = 35;
+    $zoomFactor = 3.5;
 } else if (count($redcapData) < 200) {
-    $personRadiusSize = 8;
-    $fontSize = 8;
-    $zoomFactor = 20;
+    $zoomFactor = 2;
 } else {
-    $personRadiusSize = 5;
-    $fontSize = 0;
-    $zoomFactor = 5;
+    $zoomFactor = 0;
 }
 # TODO - Dream List
-# move scaling into JS so that they can scale off the number of nodes in the graph
-# add traditional slider for zoomFactor next to slider-SVG
-# show topics in common for neighbors in tooltip
-# scale
+# test for scale issues
 # EFS Retreat - activity based on software before lunch/break - dispel power dynamics - do something productive together
-# Mobile view for EFS Retreat
-$padding = 2 * $personRadiusSize + 8;
+# Mobile view for EFS Retreat - interactivity & concept map
+# pick a cluster?
+
+$padding = 36;
 $groups = [
     "contents" => "content",
     "methods" => "method",
@@ -136,6 +135,7 @@ if ($combineWithGreater) {
     $plus = "";
 }
 $allNames = [];
+$time1 = time();
 foreach ($redcapData as $row) {
     $name = $row['name'];
     $allNames[] = $name;
@@ -158,7 +158,6 @@ foreach ($redcapData as $row) {
         "id" => $name,
         "email" => "<a href='mailto:".$row['email']."'>".$row['email']."</a>",
         "group" => "person",
-        "radius" => $personRadiusSize,
         "initials" => $initials,
         "topics" => $topics,
         "color" => $nodeColor,
@@ -171,14 +170,29 @@ foreach ($redcapData as $row) {
     }
     $d3DataOriginal["nodes"][] = $node;
 }
+if (isset($_GET['timings'])) {
+    echo "Made nodes in ".(time() - $time1)." seconds<br/>";
+}
+$time1 = time();
 foreach ($categories as $category => $names) {
+    $roundTime = time();
     for ($i = 0; $i < count($names); $i++) {
         for ($j = $i + 1; $j < count($names); $j++) {
             createOrIncrementLink($d3DataOriginal["links"], $names[$i], $names[$j], [$category]);
         }
     }
+    if (isset($_GET['timings'])) {
+        echo "Created links for $category ($i of ".count($names)."): ".(time() - $roundTime)." seconds<br/>";
+    }
 }
+if (isset($_GET['timings'])) {
+    echo "Made links in ".(time() - $time1)." seconds<br/>";
+}
+$time1 = time();
 $subgraphsAtStrength = makeSubgraphs($d3DataOriginal);
+if (isset($_GET['timings'])) {
+    echo "Made subgraphs in " . (time() - $time1) . " seconds<br/>";
+}
 if (empty($subgraphsAtStrength)) {
     $maxStrength = 1;
 } else {
@@ -186,6 +200,7 @@ if (empty($subgraphsAtStrength)) {
 }
 
 $sliderData = [];
+$lastTime = time();
 for ($strength = 1; $strength <= $maxStrength; $strength++) {
     if (isset($subgraphsAtStrength[$strength])) {
         $data = $subgraphsAtStrength[$strength];
@@ -213,6 +228,9 @@ for ($strength = 1; $strength <= $maxStrength; $strength++) {
     }
     $sliderData[] = ["x" => $strength, "members" => $memberCount, "density" => $averageDensity];
 }
+if (isset($_GET['timings'])) {
+    echo "$maxStrength Strengths: Combined in " . (time() - $lastTime) . " seconds<br/>";
+}
 $sliderJSON = json_encode($sliderData);
 
 $strength = 1;
@@ -231,7 +249,7 @@ if ($isMulti) {
     $subHeight = $height / $scale - 2;
     $html = "";
     for ($i = 1; $i <= $numParts; $i++) {
-        $html .= "<div id='graph$i' style='width: $subWidth; height: $subHeight; float: left; border: 1px solid #AAA;'></div>";
+        $html .= "<div id='graph$i' style='width: $subWidth; height: $subHeight; border: 1px solid #AAA;'></div>";
     }
     $mainCall = "$('#graph').html(\"$html\");";
     $saveDiv = "";    // turn off for multi - they can reproduce at large scale if desired
@@ -293,8 +311,8 @@ if ($isMulti) {
         $callStem .= "
         }";
     }
-    $mainCall = "$('#graph').append(chart($width + $padding, $height + $padding, $dataJSON, $strength, $zoomFactor));";
-    $sliderCall = "$('#configuration').html(slider($sliderWidth, 100, $sliderJSON));";
+    $mainCall = "$('#graph').append(chart(FlightConnectorNodeGraph.width + $padding, FlightConnectorNodeGraph.height + $padding, $dataJSON, $strength, $zoomFactor));";
+    $sliderCall = "$('#configuration').html(slider($('#configuration').width(), $sliderHeight, $sliderJSON));";
     $nameOptions = [];
     foreach ($allNames as $name) {
         if ($defaultHighlightedName == $name) {
@@ -317,12 +335,12 @@ if ($isMulti) {
             $topicOptions[] = $optionHTML;
         }
     }
-    $nameFinderHTML = "<p class='centered' style='margin-bottom: 0;'>
-<label for='highlightName' style='padding-left: 3px; color: white; background-color: $nameHighlightColor; font-weight: bold;'>Name to Highlight: </label>
-<select class='combobox' id='highlightName' onchange='FlightConnectorNodeGraph.highlightName(FlightConnectorNodeGraph.lastStrength, $(\"#highlightName :selected\").val(), false);'><option value=''></option>".implode("", array_values($nameOptions))."</select>
-<label style='margin-left: 40px; padding-left: 3px; background-color: $topicHighlightColor; color: $topicHighlightFontColor; font-weight: bold;'for='highlightTopic'>Topic to Highlight: </label>
-<select class='combobox' id='highlightTopic' onchange='FlightConnectorNodeGraph.highlightTopic(FlightConnectorNodeGraph.lastStrength, $(\"#highlightTopic :selected\").text(), false);'><option value=''></option>".implode("", array_values($topicOptions))."</select>
-<button style='margin-left: 45px;' onclick='FlightConnectorNodeGraph.refreshData(FlightConnectorNodeGraph.getDataByStrength(FlightConnectorNodeGraph.lastStrength), FlightConnectorNodeGraph.lastStrength, \"\", \"\", false); return false;'>Reset</button>
+    $nameFinderHTML = "<p class='centered' id='configurations' style='margin-bottom: 0;'>
+<span class='nobreak'><label for='highlightName' style='padding-left: 3px; color: white; background-color: $nameHighlightColor; font-weight: bold;'>Name to Highlight: </label>
+<select class='combobox' id='highlightName' onchange='FlightConnectorNodeGraph.highlightName(FlightConnectorNodeGraph.lastStrength, $(\"#highlightName :selected\").val(), false);'><option value=''></option>".implode("", array_values($nameOptions))."</select></span>
+<span class='nobreak'><label style='margin-left: 40px; padding-left: 3px; background-color: $topicHighlightColor; color: $topicHighlightFontColor; font-weight: bold;'for='highlightTopic'>Topic to Highlight: </label>
+<select class='combobox' id='highlightTopic' onchange='FlightConnectorNodeGraph.highlightTopic(FlightConnectorNodeGraph.lastStrength, $(\"#highlightTopic :selected\").text(), false);'><option value=''></option>".implode("", array_values($topicOptions))."</select></span>
+<br/><button style='margin-left: 45px;' onclick='FlightConnectorNodeGraph.refreshData(FlightConnectorNodeGraph.getDataByStrength(FlightConnectorNodeGraph.lastStrength), FlightConnectorNodeGraph.lastStrength, \"\", \"\", false); return false;'>Reset</button>
 </p>";
 }
 
@@ -382,27 +400,53 @@ echo "
         </p>
 		<div class='wrap'>
 			<div id='main'>
-			    <div style='width: 900px; float: left;'>
+			    <div style='max-width: 900px; float: left;'>
 			        <div id='graph' style='border: 1px solid #888; width: 100%;'></div>
 				    $saveDiv
                 </div>
-				<div id='main-graph-info' class='graph-info' style='padding: 8px; width: calc(100% - 960px); float: left; margin: 0 0 0 15px; height: 660px; overflow: scroll;'></div>
+				<div id='main-graph-info' class='graph-info' style='float: left;'></div>
+                <div id='configuration' style='max-width: $sliderWidth"."px;'></div>
 			</div>			
-            <div id='configuration' style='max-width: $sliderWidth"."px;'></div>
 		</div>
 	</div>";
 
 ?>
 <style>
-    .clusterMember { line-height: 0.8em; margin-top: 0.6em; margin-bottom: 0.6em; }
+    .nobreak { word-break: keep-all; }
+    .clusterMember { line-height: 0.95em; margin-top: 0.6em; margin-bottom: 0.6em; }
     #popupContainer { z-index: 1000;  position: absolute; width: 100%;  height: 500px; }
     #graphDefinitions { margin: 0 auto; background-color: #eff7e4; overflow: scroll; height: 100%; position: relative; min-width: 400px; max-width: 600px; padding: 24px; }
     .tooltip { text-decoration: underline dotted #888888; }
+    .tooltip:hover .tooltipText { visibility: visible; }
+    .tooltip .tooltipText { margin-top: 1.5em; font-weight: normal; line-height: 1.2em; font-size: 0.8em; visibility: hidden; max-width: 200px; background-color: #d2d2eb; color: black; padding: 4px; text-align: left; border-radius: 5px; position: absolute; z-index: 1; }
+    #main-graph-info { padding: 8px; width: calc(100% - 960px); margin: 0 0 0 15px; height: 660px; overflow: scroll; overflow-x: hidden; -ms-overflow-x: hidden; }
+    @media (max-width: 800px) {
+        #configurations {
+            font-size: 0.8em;
+        }
+
+        #configurations .custom-combobox-input {
+            width: 60%;
+        }
+    }
+    @media (max-width: <?= $width + 300 ?>px) {
+        #main-graph-info { min-width: 200px; max-width: 300px; margin: 10px 0; }
+    }
+    @media (max-width: <?= $width + 200 ?>px) {
+        #main-graph-info { width: 300px; margin: 10px 0; height: 300px; }
+        #configuration { width: 100%; }
+    }
+    @media (max-width: 360px) {
+        #main-graph-info { width: 90%; }
+    }
 </style>
 <script>
 
     class FlightConnectorNodeGraph {
         static lastStrength = <?= $strength ?>;
+        static originalLinks = [];
+        static width = <?= $width ?>;
+        static height = <?= $height ?>;
 
         static showDefinitions = function() {
             $('#popupContainer').slideDown();
@@ -500,14 +544,14 @@ echo "
                 const stats = FlightConnectorNodeGraph.getClusterNodeStats(cluster, edges, nodes);
                 const lines = FlightConnectorNodeGraph.getInfoDataLines(stats.members, stats.densities, stats.centralities);
                 const clusterInfo = FlightConnectorNodeGraph.getClusterInfo(cluster[0], nodes, edges);
-                clusteringStats.push('<h4 style=\"margin-bottom: 0;\">Cluster #'+num+'</h4>'+lines.join('<br/>')+clusterInfo);
+                clusteringStats.push('<h4 style=\"margin-bottom: 0;\"><span class=\"tooltip\"><span class=\"tooltipText\">Nodes that are interconnected in some way to each other. Multiple clusters can exist if there are no edges between them.</span>Cluster</span> #'+num+'</h4>'+lines.join('<br/>')+clusterInfo);
             }
             $('#main-graph-info').html('<h3>'+numClusters+' Cluster'+(numClusters === 1 ? '' : 's')+'</h3>'+clusteringStats.join('<hr/>'));
         }
 
         static refreshData = function(data, strength, name, topic, isInitial) {
             if (!data.nodes || !data.links) {
-                FlightConnectorNodeGraph.refreshGraph({nodes: [], links: []}, strength);
+                FlightConnectorNodeGraph.refreshGraph({nodes: [], links: []}, strength, <?= $zoomFactor ?>);
             }
             const topicHighlightColor = '<?= $topicHighlightColor ?>';
             const topicHighlightFontColor = '<?= $topicHighlightFontColor ?>'
@@ -530,7 +574,7 @@ echo "
             for (let i = 0; i < data.nodes.length; i++) {
                 if (data.nodes[i].id === name) {
                     data.nodes[i].color = nameHighlightColor;
-                    FlightConnectorNodeGraph.inspectAndDisplayNode(data.nodes[i], data.links);
+                    FlightConnectorNodeGraph.inspectAndDisplayNode(data.nodes[i], FlightConnectorNodeGraph.originalLinks);
                     changed = true;
                 }
                 if ((data.nodes[i].topics.indexOf(topic) >= 0) && (data.nodes[i].color !== nameHighlightColor)) {
@@ -540,7 +584,7 @@ echo "
                 }
             }
             if (changed) {
-                FlightConnectorNodeGraph.refreshGraph(data, strength);
+                FlightConnectorNodeGraph.refreshGraph(data, strength, <?= $zoomFactor ?>);
             }
         }
 
@@ -550,8 +594,30 @@ echo "
             FlightConnectorNodeGraph.refreshData(data, strength, name, topic, isInitial);
         }
 
-        static refreshGraph = function(data, strength) {
-            $('#graph').html(updateChart(<?= $width + $padding ?>, <?= $height + $padding ?>, data, strength, <?= $zoomFactor ?>));
+        static getInitialFontSize = function(zoomFactor) {
+            if (zoomFactor <= 1) {
+                return 0;
+            } else {
+                return FlightConnectorNodeGraph.getInitialRadiusSize(zoomFactor);
+            }
+        }
+
+        static getInitialRadiusSize = function(zoomFactor) {
+            if (zoomFactor > 4) {
+                return 15;
+            } else if (zoomFactor > 3) {
+                return 13;
+            } else if (zoomFactor > 2) {
+                return 10;
+            } else if (zoomFactor > 1) {
+                return 8;
+            } else {
+                return 5;
+            }
+        }
+
+        static refreshGraph = function(data, strength, zoomFactor) {
+            $('#graph').html(updateChart(FlightConnectorNodeGraph.width + <?= $padding ?>, FlightConnectorNodeGraph.height + <?= $padding ?>, data, strength, zoomFactor));
         }
 
         static highlightName = function(strength, name, isInitial) {
@@ -597,7 +663,9 @@ echo "
             const topicList = FlightConnectorNodeGraph.makeUnorderedList(node.topics);
             const picture = FlightConnectorNodeGraph.getPictureFromNode(node);
             const neighborDescriptionHTML = FlightConnectorNodeGraph.makeMemberDescriptionHTML(neighbors);
-            $('#main-graph-info').html("<h3 style='margin-bottom: 0;'>"+node.id+"</h3><p style='margin-top: 0;' class='smaller'>"+picture+"["+node.email+"]<br/>[<a href='"+pubMedLink+"' target='_new'>Search PubMed</a>]"+department+"</p><h4>"+neighbors.length+" Neighbor"+(neighbors.length === 1 ? "" : "s")+"</h4>"+neighborDescriptionHTML+"<h4>"+node.topics.length+" Topic"+((node.topics.length !== 1) ? "s" : "")+" Selected</h4>"+topicList);
+            $('#main-graph-info')
+                .html("<h3 style='margin-bottom: 0;'>"+node.id+"</h3><p style='margin-top: 0;' class='smaller'>"+picture+"["+node.email+"]<br/>[<a href='"+pubMedLink+"' target='_new'>Search PubMed</a>]"+department+"</p><h4>"+neighbors.length+" Neighbor"+(neighbors.length === 1 ? "" : "s")+"</h4>"+neighborDescriptionHTML+"<h4>"+node.topics.length+" Topic"+((node.topics.length !== 1) ? "s" : "")+" Selected</h4>"+topicList)
+                .animate({scrollTop: 0}, "fast");
         }
 
         static getPictureFromNode = function(node) {
@@ -717,8 +785,8 @@ echo "
                 const node = nodes[i];
                 const picture = FlightConnectorNodeGraph.getPictureFromNode(node);
                 const pubMedLink = FlightConnectorNodeGraph.makePubMedLink(node.id);
-                const topicTooltip = node.topics.length+" Topic"+(node.topics.length === 1 ? "" : "s")+": "+node.topics.join('; ');
-                const newInfo = "<span class='tooltip' title='"+topicTooltip+"'>"+node.id+"</span>"+picture+"<span class='smaller'><br/>["+node.email+"]</a><br/>[<a href='"+pubMedLink+"' target='_new'>Search PubMed</a>]</span>";
+                const topicTooltip = "<strong>"+node.topics.length+" Topic"+(node.topics.length === 1 ? "" : "s")+"</strong><br/>&bull; "+node.topics.join('<br/>&bull; ');
+                const newInfo = "<span class='tooltip'><span class='tooltipText'>"+topicTooltip+"</span>"+node.id+"</span>"+picture+"<span class='smaller'><br/>["+node.email+"]</a><br/>[<a href='"+pubMedLink+"' target='_new'>Search PubMed</a>]</span>";
                 descriptions.push(newInfo);
             }
             return "<p class='clusterMember'>"+descriptions.join("</p><p class='clusterMember'>")+"</p>";
@@ -731,15 +799,15 @@ echo "
                 infoLines.push("Number of Members: "+members.length);
             }
             if (densities.length > 0) {
-                infoLines.push("<span class='tooltip' title=\"The average of each node's number of connections divided by the number of possible connections.\">Average Density</span>: "+average(densities).toFixed(3));
+                infoLines.push("<span class='tooltip'><span class='tooltipText'>The average of each node's number of connections divided by the number of possible connections.</span>Average Density</span>: "+average(densities).toFixed(3));
             }
             if (centralities.length > 0) {
                 const centralityAverage = average(centralities);
                 const centralityDefinition = "The average of each node's number of connections.";
                 if (Number.isInteger(centralityAverage)) {
-                    infoLines.push("<span title=\""+centralityDefinition+"\" style='text-decoration: underline dotted #888888;'>Average Degree Centrality</span>: "+centralityAverage);
+                    infoLines.push("<span class='tooltip'><span class='tooltipText'>"+centralityDefinition+"</span>Average Degree Centrality</span>: "+centralityAverage);
                 } else {
-                    infoLines.push("<span title=\""+centralityDefinition+"\" style='text-decoration: underline dotted #888888;'>Average Degree Centrality</span>: "+centralityAverage.toFixed(3));
+                    infoLines.push("<span class='tooltip'><span class='tooltipText'>"+centralityDefinition+"</span>Average Degree Centrality</span>: "+centralityAverage.toFixed(3));
                 }
             }
             return infoLines;
@@ -880,6 +948,8 @@ echo "
     }
 
     const chart = function(width, height, data, strength, zoomFactor) {
+        const personRadiusSize = FlightConnectorNodeGraph.getInitialRadiusSize(zoomFactor);
+        const personFontSize = FlightConnectorNodeGraph.getInitialFontSize(zoomFactor);
         if (data['nodes'].length === 0) {
             return "<div style='width: "+width+"px; height: "+height+"px;'><h3>No clusters with "+strength+" common topic"+((strength > 1) ? "s" : "")+"</h3></div>";
         }
@@ -887,15 +957,21 @@ echo "
         // The force simulation mutates links and nodes, so create a copy
         // so that re-evaluating this cell produces the same result.
         const links = data.links.map(d => ({...d}));
+        FlightConnectorNodeGraph.originalLinks = links;
         const nodes = data.nodes.map(d => ({...d}));
+        const linkIterations = (data.nodes.length > 5) ? 5 : 1;
+        const collideIterations = (data.nodes.length > 5) ? 2 : 1;
+        const alphaDecay = (data.nodes.length > 5) ? 0.1 : 0.3;
 
         // Create a simulation with several forces.
         const simulation = d3.forceSimulation(nodes)
-            .force("link", d3.forceLink(links).id(d => d.id).distance(t => t.value).strength(link => 1 / link.value).iterations(5))
-            .force("charge", d3.forceManyBody().strength(-1 * data.nodes.length).distanceMin(<?= $personRadiusSize * 2 ?>).distanceMax(width / 4))
+            .alphaDecay(alphaDecay)
+            .force("link", d3.forceLink(links).id(d => d.id).distance(t => t.value).strength(link => 1 / link.value).iterations(linkIterations))
+            .force("charge", d3.forceManyBody().strength(-1 * data.nodes.length).distanceMin(personRadiusSize * 2).distanceMax(width / 4))
             .force("center", d3.forceCenter(width / 2, height / 2))
-            .force("collide", d3.forceCollide().radius(<?= $personRadiusSize * 2 ?>).strength(0.7).iterations(2))
-            .on("tick", ticked);
+            .force("collide", d3.forceCollide().radius(personRadiusSize * 2).strength(0.7).iterations(collideIterations))
+            .on("tick", ticked)
+            .on("end", zoomToFit);
 
         // Create the SVG container.
         const svg = d3.create("svg")
@@ -905,6 +981,7 @@ echo "
             .attr("style", "max-width: 100%; height: auto;");
 
         const container = svg.append("g");
+        const textContainer = svg.append("g");
 
         const link = container.append("g")
             .selectAll()
@@ -927,8 +1004,11 @@ echo "
             .append("g");
 
         const node = circles.append("circle")
-            .attr("r", d => (d.radius))
-            .attr("fill", d => d.color);
+            .attr("r", personRadiusSize)
+            .attr("fill", d => d.color)
+            .on("click", (i, d) => {
+                FlightConnectorNodeGraph.inspectAndDisplayNode(d, links);
+            });
 
         const label = circles.append("text")
             .attr("text-anchor", "middle")
@@ -936,14 +1016,14 @@ echo "
             .attr("fill", d => d.fontColor)
             .attr("stroke-width", 1)
             .attr("stroke", d => d.fontColor)
-            .attr("font-size", "<?= $fontSize ?>px")
+            .attr("font-size", personFontSize+"px")
             .attr("font-weight", 500)
             .text(d => d.initials)
             .on("click", (i, d) => {
                 FlightConnectorNodeGraph.inspectAndDisplayNode(d, links);
             });
 
-        container.append("text")
+        textContainer.append("text")
             .attr("x", width - 100)
             .attr("y", 20)
             .attr("fill", "#000")
@@ -952,6 +1032,39 @@ echo "
             .attr("font-size", "11px")
             .attr("font-weight", 500)
             .text(strength+"<?= $plus ?> common topic"+(((strength !== 1) || ('<?= $plus ?>')) ? "s" : ""))
+
+        function zoomToFit() {
+            const bBox = container.node().getBBox();
+            if (!bBox.height || !bBox.width) {
+                return;
+            }
+            const padding = <?= $padding ?>;
+            const hRatio = height / (bBox.height + padding);
+            const wRatio = width / (bBox.width + padding);
+            const ratio = (hRatio < wRatio ? hRatio : wRatio);
+            const xOffset = (width - ratio * width) / 2;
+            const yOffset = (height - ratio * height) / 2;
+            const transform = "translate("+xOffset+","+yOffset+") scale("+ratio+")";
+            const animDuration = 1000;
+
+            const circleBBox = circles.node().getBBox();
+            const diameter = circleBBox.width;
+            if (diameter * ratio >= 8 && (personFontSize === 0)) {
+                label.attr("font-size", Math.floor(diameter)+"px");
+            } else if (diameter * ratio < 8) {
+                label.attr("font-size", "0");
+            }
+
+            circles
+                .transition()
+                .duration(animDuration)
+                .attr("transform", transform);
+            link
+                .transition()
+                .duration(animDuration)
+                .attr("transform", transform);
+
+        };
 
         // Set the position attributes of links and nodes each time the simulation ticks.
         function ticked() {
@@ -981,6 +1094,16 @@ echo "
     }
 
     $(document).ready(() => {
+        const windowWidth = $("body").prop("clientWidth");
+        const windowHeight = $("body").prop("clientHeight");
+        if (windowWidth < FlightConnectorNodeGraph.width) {
+            FlightConnectorNodeGraph.width = windowWidth - <?= $padding ?>;
+            FlightConnectorNodeGraph.height = windowHeight * FlightConnectorNodeGraph.width / windowWidth - <?= $padding ?>;
+            if (FlightConnectorNodeGraph.height > FlightConnectorNodeGraph.width) {
+                FlightConnectorNodeGraph.height = FlightConnectorNodeGraph.width;
+            }
+        }
+
         <?= $mainCall ?>
         <?= $sliderCall ?>
         window.updateChart = chart;
