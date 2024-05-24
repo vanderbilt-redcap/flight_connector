@@ -68,7 +68,7 @@ if (empty($redcapData)) {
     echo makeBothLinks($module, "map");
     exit;
 }
-$choices = [];
+$choices = ["contents" => [], "methods" => []];
 foreach (array_keys($module->getFields($pid)) as $field) {
     $choices[$field] = downloadChoicesForField($module, $pid, $field);
 }
