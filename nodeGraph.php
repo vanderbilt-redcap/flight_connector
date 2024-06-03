@@ -376,18 +376,18 @@ echo "
             <div style='text-align: right'><a href='javascript:;' style='text-decoration: none; color: black; font-size: 12px;' onclick='FlightConnectorNodeGraph.hideDefinitions();'>X</a></div>
             <h3>About This Social Network Graph</h3>
             <h4>How to Use</h4>
-                <p>The goal of the graph is to identify potential collaborators based on common and unique topics. People with more common topics are in the middle of the graph while those with less common topics are on the outside. People without enough topics in common are not displayed.</p>
+                <p>This graph identifies potential collaborators based on common and unique topics. People with more topics in common are in the middle of the graph while those with fewer topics in common are on the outside. People without enough topics in common are not displayed.</p>
                 <p>Clicking on a circle will describe that person with a picture (if submitted), a PubMed search for their name, and their email address. A list of the person's neighbors (those with topics in common) will appear along with their checked topics.</p>
                 <p>You can search for one name to be highlighted in orange. You might want to search for yourself.</p>
                 <p>You can also search for a given topic to be highlighted in light blue. The shaded nodes will identify those with expertise in that area.</p>
-                <p>You can filter the graph based on the minimum number of common topics through the line graph at the bottom. By default, one-or-more topics are shown, but more selectivity can be configured by moving the red line over the graph. This feature uses <a href='https://doi.org/10.1093/bioinformatics/btac780' target='_new'>the algorithm described in this paper</a>.</p>
+                <p>You can filter the graph based on a minimum number of common topics through the line graph at the bottom. By default, one-or-more topics are shown, but more selectivity can be configured by moving the red line over the graph. This feature uses <a href='https://doi.org/10.1093/bioinformatics/btac780' target='_new'>the algorithm described in this paper</a>.</p>
             <h4>Graphics</h4>
-                <p>Each circle/node represents a person who has filled out an associated survey. When a person fills out more than one survey, only the latest survey's data is used. If the circle is large enough, a person's initials are in the middle.</p>
+                <p>Each circle/node represents a person who has filled out an associated research expertise survey. When a person fills out more than one survey, only the latest survey's data is used. If the circle is large enough, a person's initials are in the middle.</p>
                 <p>Each line/edge between two nodes indicates that they have picked a topic in common through the two checkbox topics in the survey. The more common topics, the thicker the line becomes due to an increased summed 'edge weight.'</p>
                 <p>Nodes are arranged via <a href='https://d3js.org/d3-force' target='_new'>a force-directed graph from d3.js</a>. Nodes closer to the center have more summated edge-weight. Nodes are pulled and kept together by a process mimicking gravity. Nodes with a less summed edge-weight are arranged on the outside.</p>
             <h4>Definitions</h4>
-                <p><strong>Clusters</strong> consist of nodes that are interconnected in some way to each other. Multiple clusters can exist if there are no edges between them.</p>
-                <p>A node's <strong>Degree Centrality</strong> is the number of edges it have.</p>
+                <p><strong>Clusters</strong> consist of nodes that are interconnected in some way with each other. Multiple clusters can exist if there are no edges between them.</p>
+                <p>A node's <strong>Degree Centrality</strong> is the number of edges it has.</p>
                 <p>A node's <strong>Density</strong> is the number of edges a node has divided by the total possible edges a node could have.</p>
         </div>
     </div>
