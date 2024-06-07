@@ -150,7 +150,35 @@ $ucPersonLabel = "PERSON";
 $width = 1200;
 $height = 900;
 
-echo "<script type='text/javascript'>
+echo "
+<style>
+
+#graph { width: $width"."px; height: $height"."px; margin: 10px 0; }
+    @media (max-width: 800px) {
+        #graph { margin: 0; }
+        
+    }
+";
+$step = 30;
+for ($i=$width; $i >= 360; $i -= $step) {
+    if ($i >= 800) {
+        $stepWidth = $i - $step - 20;    // margin
+    } else {
+        $stepWidth = $i - $step - 10;
+    }
+    echo "
+    @media (max-width: $i"."px) {
+        #graph { width: $stepWidth"."px; height: $stepWidth"."px; }
+    }";
+}
+echo "
+    @media (max-width: 360px) {
+        #graph { width: 95%; }
+    }
+</style>
+
+
+<script type='text/javascript'>
 (function() {
     d3.selection.prototype.moveToFront = function() {
         return this.each(function(){
@@ -158,8 +186,8 @@ echo "<script type='text/javascript'>
         });
     };
     var maxScholarsWithNamesShown = 120;
-    var a = $width,
-        c = $height,
+    var a = $('#graph').width(),
+        c = $('#graph').height(),
         h = c,
         U = 150,
         K = ($numRows < 60) ? 16 : ($numRows < 75) ? 14 : ($numRows < 90) ? 12 : ($numRows < 100) ? 10 : ($numRows < maxScholarsWithNamesShown) ? 8 : ($numRows < 240) ? 4 : 2,
@@ -169,7 +197,7 @@ echo "<script type='text/javascript'>
         J = 30,
         o = 15,
         t = 10,
-        w = 1000,
+        w = $('#graph').width(),
         F = 'elastic',
         peripheralCircleColor = '#ebebf8',
         accentColor = '#48489d',
@@ -177,13 +205,13 @@ echo "<script type='text/javascript'>
         mainCircleColor = '#8dc63f',
         contentColor = '#b0d87a',
         methodColor = '#d4d4eb';
-    var headerFontSize = 24;
+    var headerFontSize = getHeaderFontSize(a);
+    var maxCircleSize = getMaxCircleSize(100, a);    // default as starter
     var T, q, x, j, H, A, P;
     var L = {},
         k = {};
     var i, y;
     var maxZCount = 0;
-    var maxCircleSize = 40;
     var r = d3.layout.tree().size([360, h / 2 - R]).separation(function(Y, X) {
         return (Y.parent == X.parent ? 1 : 2) / Y.depth;
     });
@@ -350,7 +378,7 @@ echo "<script type='text/javascript'>
         L.node.children = j.get(Y.canonicalKey);
         L.map = {};
         var Z = 0;
-        maxCircleSize = getMaxCircleSize(L.node.children.length);
+        maxCircleSize = getMaxCircleSize(L.node.children.length, a);
         L.node.children.forEach(function(ac) {
             L.map[ac.key] = true;
             ac._children = j.get(ac.key).filter(function(ad) {
@@ -399,17 +427,21 @@ echo "<script type='text/javascript'>
         z();
     }
     
-    function getMaxCircleSize(numNodes) {
-        if (numNodes < 20) {
-            return 70;
-        } else if (numNodes < 30) {
-            return 50;
-        } else if (numNodes < 40) {
-            return 30;
-        } else if (numNodes < 60) {
-            return 25;
-        } else {
+    function getMaxCircleSize(numNodes, width) {
+        if ((width <= 420) || (numNodes >= 60)) {
+            return 16;
+        } else if ((width <= 560) || (numNodes >= 50)) {
             return 20;
+        } else if ((width <= 640) || (numNodes >= 40)) {
+            return 24;
+        } else if ((width <= 720) || (numNodes >= 35)) {
+            return 28;
+        } else if ((width <= 800) || (numNodes >= 30)) {
+            return 30;
+        } else if (numNodes >= 20) {
+            return 50;
+        } else {
+            return 70;
         }
     }
 
@@ -516,9 +548,33 @@ echo "<script type='text/javascript'>
         return '<h3>Relevant $conjugation</h3>';
     }
     
+    function getMiddleHeaderFontSize(width) {
+        if (width >= 800) {
+            return 15;
+        } else if (width >= 620) {
+            return 13;
+        } else if (width >= 480) {
+            return 11;
+        } else {
+            return 10;
+        }
+    }
+    
+    function getHeaderFontSize(width) {
+        if (width >= 800) {
+            return 24;
+        } else if (width >= 620) {
+            return 18;
+        } else if (width >= 480) {
+            return 14;
+        } else {
+            return 10;
+        }
+    }
+    
     function makeTable(names) {
         let hasData = false;
-        let html = '<table style=\"margin: 0 auto; text-align: center;\"><tbody><tr>'
+        let html = '<table style=\"margin: 0 auto; text-align: center; max-width: '+a+'px;\"><tbody><tr>'
         for (let col in names) {
             if (names[col].length > 0) {
                 let header = '$peopleLabel';
@@ -528,7 +584,11 @@ echo "<script type='text/javascript'>
                     header = '$methodsLabel';
                 }
                 hasData = true;
-                html += '<td style=\"vertical-align: top; max-width: 300px; padding-left: 10px; padding-right: 10px;\"><h4>'+header+'</h4><p style=\"margin: 8px auto;\">'+names[col].join('</p><p style=\"margin: 8px auto;\">')+'</p></td>';
+                const formattedNames = [];
+                for (let i=0; i < names[col].length; i++) {
+                    formattedNames.push(names[col][i].replaceAll('/', ' / '));
+                }
+                html += '<td style=\"vertical-align: top; max-width: 300px; padding-left: 10px; padding-right: 10px;\"><h4>'+header+'</h4><p style=\"margin: 8px auto;\">'+formattedNames.join('</p><p style=\"margin: 8px auto;\">')+'</p></td>';
             }
         }
         if (!hasData) {
@@ -560,7 +620,19 @@ echo "<script type='text/javascript'>
         });
         X.selectAll('circle').transition().duration(w).ease(F).attr('r', function(Z) {
             if (Z == L.node) {
-                return 100;
+                if (a >= 800) {
+                    return 100;
+                } else if (a >= 720) {
+                    return 80;
+                } else if (a >= 640) {
+                    return 60;
+                } else if (a >= 560) {
+                    return 45;
+                } else if (a >= 480) {
+                    return 36;
+                } else {
+                    return 24;
+                }
             } else {
                 if (Z.isGroup) {
                     return getScaledSize(Z.count);
@@ -581,7 +653,7 @@ echo "<script type='text/javascript'>
             }
             return '-0.2em';
         }).attr('font-size', function(Z) {
-            return getFontSize(Z);
+            return getFontSize(Z, a);
         }).text(function(Z) {
             return Z.name;
         }).attr('text-anchor', function(Z) {
@@ -591,35 +663,34 @@ echo "<script type='text/javascript'>
             return Z.x < 180 ? 'start' : 'end'
         }).attr('transform', function(Z) {
             if (Z === L.node) {
-                return null;
+                return '';
             } else {
                 if (Z.isGroup) {
-                    return Z.x > 180 ? 'rotate(180)' : null;
+                    return Z.x > 180 ? 'rotate(180)' : '';
                 }
             }
-            return Z.x < 180 ? 'translate(' + t + ')' : 'rotate(180)translate(-' + t + ')';
             return Z.x < 180 ? 'translate(' + t + ')' : 'rotate(180)translate(-' + t + ')';
         })
         X.on('mouseover', function(Z) {
             g(Z);
             d3.select(this).select('text.label-stroke')
                 .attr('font-size', function(Z) {
-                    return increaseFontSizeIfSmall(Z);
+                    return increaseFontSizeIfSmall(Z, a);
                 });
             d3.select(this).select('text.label')
                 .attr('font-size', function(Z) {
-                    return increaseFontSizeIfSmall(Z);
+                    return increaseFontSizeIfSmall(Z, a);
                 }).attr('fill', '#000');
         });
         X.on('mouseout', function(Z) {
             n(Z);
             d3.select(this).select('text.label-stroke')
                 .attr('font-size', function(Z) {
-                    return getFontSize(Z);
+                    return getFontSize(Z, a);
                 });
             d3.select(this).select('text.label')
                 .attr('font-size', function(Z) {
-                    return getFontSize(Z);
+                    return getFontSize(Z, a);
                 });
         });
         X.selectAll('text.label').attr('class', function(Z) {
@@ -657,7 +728,7 @@ echo "<script type='text/javascript'>
              }).append('tspan')
                 .attr('x', 0)
                 .attr('dy', function(Z) {
-                    return getFontSize(Z);
+                    return getFontSize(Z, a);
                 })
                 .text(function(Z) {
                     const lines = FlightConnector.wrap(Z.name).split(/[\\n\\r]+/);
@@ -670,7 +741,7 @@ echo "<script type='text/javascript'>
             ml.append('tspan')
                 .attr('x', 0)
                 .attr('dy', function(Z) {
-                    return getFontSize(Z);
+                    return getFontSize(Z, a);
                 })
                 .text(function(Z) {
                     if ((L.node.type === 'method' || L.node.type === 'content') && (Z.type === 'method' || Z.type === 'content') && L.node != Z) {
@@ -687,7 +758,7 @@ echo "<script type='text/javascript'>
             ml.append('tspan')
                 .attr('x', 0)
                 .attr('dy', function(Z) {
-                    return getFontSize(Z);
+                    return getFontSize(Z, a);
                 }).text(function(Z) {
                     if ((L.node.type === 'method' || L.node.type === 'content') && (Z.type === 'method' || Z.type === 'content') && L.node != Z) {
                         return '';
@@ -713,16 +784,53 @@ echo "<script type='text/javascript'>
         return 7 + (ZCount * maxCircleSize / maxZCount);
     }
     
-    function increaseFontSizeIfSmall(Z) {
-        const fontSize = getFontSize(Z);
-        if (fontSize <= 14) {
+    function getMinFontSize(width) {
+        if (width <= 420) {
+            return 10;
+        } else if (width <= 560) {
+            return 11;
+        } else if (width <= 640) {
+            return 12;
+        } else if (width <= 720) {
+            return 13;
+        } else {
             return 14;
+        }
+    }
+    
+    function increaseFontSizeIfSmall(Z, width) {
+        const fontSize = getFontSize(Z, width);
+        const minFontSize = getMinFontSize(width);
+        if (fontSize <= minFontSize) {
+            return minFontSize;
         }
         return fontSize;
     }
     
-    function getFontSize(Z) {
-        if (Z.depth === 0) {
+    function getSmallerScholarFontSize(width) {
+        if (width >= 800) {
+            return 16;
+        } else if (width >= 620) {
+            return 12;
+        } else if (width >= 480) {
+            return 10;
+        } else {
+            return 8;
+        }
+    }
+    
+    function getFontSize(Z, width) {
+        if (width <= 360) {
+            return 8;
+        } else if (width <= 480) {
+            return 10;
+        } else if (width <= 640) {
+            return 12;
+        } else if (width <= 720) {
+            return 13;
+        } else if (width <= 800) {
+            return 14;
+        } else if (Z.depth === 0) {
             return 20;
         } else if ((Z.type === 'method') || (Z.type === 'content')) {
             if (window.location.hash && (L.node.type === 'method'  || L.node.type === 'theme')) {
@@ -774,7 +882,8 @@ echo "<script type='text/javascript'>
             } else if (ab.type === 'method') {
                 text = '$ucMethodLabel';
             }
-            Y.append('text').attr('fill', '#888').attr('text-anchor', 'middle').attr('y', (o + t) * -2).text(text).attr('font-weight', 'bold').attr('font-size', 15);
+            const fontSize = getMiddleHeaderFontSize(a);
+            Y.append('text').attr('fill', '#888').attr('text-anchor', 'middle').attr('y', fontSize * -2.5).text(text).attr('font-weight', 'bold').attr('font-size', fontSize);
         }
         ac.exit().remove();
     }
@@ -804,7 +913,7 @@ echo "<script type='text/javascript'>
         X.attr('display', 'block');
         X.enter().append('text').attr('id', 'peopleHeader').attr('text-anchor', 'middle').attr('x', 0).attr('y', 0 - (c / 2 - 2 * t)).text(numScholars+' $peopleLabel').attr('class', 'header').attr('font-size', headerFontSize).on('click', O);
         if (numScholars >= maxScholarsWithNamesShown) {
-            X.enter().append('text').attr('id', 'peopleSubHeader').attr('text-anchor', 'middle').attr('x', 0).attr('y', 0 - (c / 2 - 2 * t) + headerFontSize - 8).attr('class', 'header').text('(Scroll over names to view)').attr('class', 'header').attr('font-size', 12).on('click', O);
+            X.enter().append('text').attr('id', 'peopleSubHeader').attr('text-anchor', 'middle').attr('x', 0).attr('y', 0 - (c / 2 - 2 * t) + getSmallerScholarFontSize(a)).attr('class', 'header').text('(Scroll over names to view)').attr('class', 'header').attr('font-size', 12).on('click', O);
         }
         X.exit().remove();
 

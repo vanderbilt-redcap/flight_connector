@@ -101,10 +101,9 @@ if ($isMulti) {
     $zoomFactor = 0;
 }
 # TODO - Dream List
-# test for scale issues
+# test on mobile devices: scaling and tooltips
 # EFS Retreat - activity based on software before lunch/break - dispel power dynamics - do something productive together
-# Mobile view for EFS Retreat - interactivity & concept map
-# pick a cluster?
+# pick a group?
 
 $padding = 36;
 $groups = [
@@ -405,7 +404,11 @@ echo "
 				    $saveDiv
                 </div>
 				<div id='main-graph-info' class='graph-info' style='float: left;'></div>
-                <div id='configuration' style='max-width: $sliderWidth"."px;'></div>
+				<div style='clear: both;'></div>
+				<div style='width: $sliderWidth"."px; margin: 0 auto;'>
+				    <h4 style='margin-top: 0; margin-bottom: 0; max-width: $sliderWidth"."px;'>Click or tap to view a new graph</h4>
+                    <div id='configuration' style='max-width: $sliderWidth"."px;'></div>
+                </div>
 			</div>			
 		</div>
 	</div>";
@@ -420,6 +423,12 @@ echo "
     .tooltip:hover .tooltipText { visibility: visible; }
     .tooltip .tooltipText { margin-top: 1.5em; font-weight: normal; line-height: 1.2em; font-size: 0.8em; visibility: hidden; max-width: 200px; background-color: #d2d2eb; color: black; padding: 4px; text-align: left; border-radius: 5px; position: absolute; z-index: 1; }
     #main-graph-info { padding: 8px; width: calc(100% - 960px); margin: 0 0 0 15px; height: 660px; overflow: scroll; overflow-x: hidden; -ms-overflow-x: hidden; }
+
+    /* for mobile tootips */
+    @media (pointer: coarse), (hover: none) {
+        .tooltip:focus .tooltipText { visibility: visible; }
+    }
+
     @media (max-width: 800px) {
         #configurations {
             font-size: 0.8em;
@@ -906,7 +915,7 @@ echo "
                 }
             }
         };
-        svg.on("pointerenter pointermove", pointermoved);
+        svg.on("click", pointermoved);
 
 
         const x = d3.scaleTime()
