@@ -101,9 +101,9 @@ if ($isMulti) {
     $zoomFactor = 0;
 }
 # TODO - Dream List
-# test on mobile devices: scaling and tooltips
-# EFS Retreat - activity based on software before lunch/break - dispel power dynamics - do something productive together
-# pick a group?
+# Mobile view for EFS Retreat - interactivity of line graph & sizing of concept map
+# pick a cluster?
+# cache page (for what timespan? On cron?) for larger groups
 
 $padding = 36;
 $groups = [
