@@ -158,20 +158,9 @@ echo "
         #graph { margin: 0; }
         
     }
-";
-$step = 30;
-for ($i=$width; $i >= 360; $i -= $step) {
-    if ($i >= 800) {
-        $stepWidth = $i - $step - 20;    // margin
-    } else {
-        $stepWidth = $i - $step - 10;
+    @media (max-width: $width"."px) {
+        #graph { width: 90%; aspect-ratio: 1 / 1; }
     }
-    echo "
-    @media (max-width: $i"."px) {
-        #graph { width: $stepWidth"."px; height: $stepWidth"."px; }
-    }";
-}
-echo "
     @media (max-width: 360px) {
         #graph { width: 95%; }
     }
