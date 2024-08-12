@@ -10,7 +10,7 @@ require_once(__DIR__."/base.php");
 
 # Edge for Scholars and Forum Flight Trackers
 $sourcePids = [176037, 182331];
-$destPid = 72516;    // Content and Methods survey
+$destPid = FlightConnectorExternalModule::CONTENT_AND_METHODS_VANDERBILT;
 
 $sourceData = [];
 $sourceMetadata = [];
