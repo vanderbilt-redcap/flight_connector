@@ -678,7 +678,7 @@ echo "
         }
 
         static getPictureFromNode = function(node) {
-            return node.picture ? "<br/><img src='<?= $pictureUrl ?>&fileId="+node.picture+"' alt='Picture' style='width: 100px; height: auto; margin-bottom: -2px;' />" : "";
+            return node.picture ? "<div><img src='<?= $pictureUrl ?>&fileId="+node.picture+"' alt='Picture' style='width: 100px; height: auto; margin-bottom: -2px;' /></div>" : "";
         }
 
         static getCluster = function(node, nodes, edges) {
