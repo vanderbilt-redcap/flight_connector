@@ -59,9 +59,9 @@ function getData($pid) {
         if (!isset($row['name'])) {
             $name = "";
             if (isset($row['firstname'])) {
-                $name = $row['firstname']." ".$row['lastname'];
+                $name = trim($row['firstname'])." ".trim($row['lastname']);
             } else if (isset($row['first_name'])) {
-                $name = $row['first_name']." ".$row['last_name'];
+                $name = trim($row['first_name'])." ".trim($row['last_name']);
             }
             $name = trim($name);
             if ($name) {
