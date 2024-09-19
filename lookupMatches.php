@@ -41,7 +41,7 @@ foreach ($pids as $currPid) {
                         $metadataJSON = \REDCap::getDataDictionary($currPid, "json");
                         $currMetadata = json_decode($metadataJSON, TRUE);
                     }
-                    addRow($dataByName, $currPid, $row, $currMetadata, $module);
+                    addRow($dataByName, $currPid, $_GET['pid'], $row, $currMetadata, $module);
                 }
             }
         } catch (\Exception $e) {
@@ -54,7 +54,7 @@ foreach ($pids as $currPid) {
                     $metadataJSON = \REDCap::getDataDictionary($currPid, "json");
                     $currMetadata = json_decode($metadataJSON, TRUE);
                 }
-                addRow($dataByName, $currPid, $row, $currMetadata, $module);
+                addRow($dataByName, $currPid, $_GET['pid'], $row, $currMetadata, $module);
             } else if ($email) {
                 list($userid, $domain) = explode("@", trim(strtolower($row['email'])));
                 list($postUserid, $postDomain) = explode("@", $email);
@@ -67,7 +67,7 @@ foreach ($pids as $currPid) {
                         $metadataJSON = \REDCap::getDataDictionary($currPid, "json");
                         $currMetadata = json_decode($metadataJSON, TRUE);
                     }
-                    addRow($dataByName, $currPid, $row, $currMetadata, $module);
+                    addRow($dataByName, $currPid, $_GET['pid'], $row, $currMetadata, $module);
                 }
             }
         }
@@ -76,33 +76,49 @@ foreach ($pids as $currPid) {
 $data = array_values($dataByName);
 echo json_encode($data);
 
-function getChecks($row, $checkField, $choices) {
+function getChecks(array $row, string $checkField, array $choices): array {
+    $abbrevField = substr($checkField, 0, 1);
     $regex = "/^$checkField"."___/";
+    $abbrevRegex = "/^$abbrevField"."___/";
     $checks = [];
     foreach ($row as $field => $value) {
-        if (($value == '1') && preg_match($regex, $field)) {
+        if (
+            ($value == '1')
+            && (
+                preg_match($regex, $field)
+                || preg_match($abbrevRegex, $field)
+            )
+        ) {
             list($f, $index) = explode("___", $field);
-            $checks[$index] = $choices[$checkField][$index] ?? FlightConnectorExternalModule::UNKNOWN_CHOICE;
+            $checks[$index] = $choices[$checkField][$index] ?? $choices[$abbrevField][$index] ?? FlightConnectorExternalModule::UNKNOWN_CHOICE;
         }
     }
     return $checks;
 }
 
-function addRow(&$dataByName, $currPid, $row, $metadata, $module) {
+function addRow(array &$dataByName, string $currPid, string $targetPid, array $row, array $metadata, \ExternalModules\AbstractExternalModule $module): void {
     $choices = getChoices($metadata);
-    $name = $row['name'] ?: $row['firstname']." ".$row['lastname'];
+    if ($row['name']) {
+        $name = $row['name'];
+    } else if ($row['firstname'] || $row['lastname']) {
+        $name = $row['firstname']." ".$row['lastname'];
+    } else if ($row['name_first'] || $row['name_last']) {
+        $name = $row['name_first']." ".$row['name_last'];
+    } else {
+        $name = "";
+    }
     $projectName = getProjectName($module, $currPid);
     $projectName = preg_replace("/\s*Flight Connector\s*/", "", $projectName);
     $projectName = preg_replace("/^-\s*/", "", $projectName);
-    $isContentsAndMethods = FlightConnectorExternalModule::isContentsAndMethods($currPid) || FlightConnectorExternalModule::isVFRS($currPid);
+    $isContentsAndMethods = FlightConnectorExternalModule::isContentsAndMethods($targetPid) || FlightConnectorExternalModule::isVFRS($targetPid);
     $contentsField = $isContentsAndMethods ? "c" : "contents";
     $methodsField = $isContentsAndMethods ? "m" : "methods";
     $dataByName[$name."|".$row['email']] = [
-        "record" => $row['record_id'],
+        "record" => $row['record_id'] ?? $row['participant_id'],
         "pid" => $currPid,
         "projectName" => $projectName,
         "name" => $name,
-        "email" => $row['email'],
+        "email" => $row['email'] ?: FlightConnectorExternalModule::UNKNOWN_CHOICE,
         $contentsField => getChecks($row, "contents", $choices),
         $methodsField => getChecks($row, "methods", $choices),
     ];
