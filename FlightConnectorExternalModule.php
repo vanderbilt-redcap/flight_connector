@@ -27,6 +27,8 @@ class FlightConnectorExternalModule extends AbstractExternalModule
             return 87;
         } else if (($name == "Contents and Methods") && ($_SERVER['SSL_SERVER_S_DN_Email'] == "scott.j.pearson@vumc.org")) {
             return 95;
+        } else if (($name == "VFRS") && ($_SERVER['SSL_SERVER_S_DN_Email'] == "scott.j.pearson@vumc.org")) {
+            return 166;
         }
         return "";
     }
@@ -90,6 +92,19 @@ class FlightConnectorExternalModule extends AbstractExternalModule
             || (
                 self::isVanderbilt()
                 && ($project_id == FlightConnectorExternalModule::CONTENT_AND_METHODS_VANDERBILT)
+            )
+        );
+    }
+
+    public static function isVFRS($project_id) {
+        return (
+            (
+                self::isLocalhost()
+                && ($project_id == self::getLocalhostProject("VFRS"))
+            )
+            || (
+                self::isVanderbilt()
+                && ($project_id == FlightConnectorExternalModule::VFRS_SURVEY_OF_INTENT)
             )
         );
     }

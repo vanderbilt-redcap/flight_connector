@@ -5,6 +5,17 @@ namespace Vanderbilt\FlightConnectorExternalModule;
 require_once(__DIR__."/NameMatcher.php");
 
 $pids = $module->getProjectsWithModuleEnabled();
+if (FlightConnectorExternalModule::isVanderbilt()) {
+    $vfrsPid = FlightConnectorExternalModule::VFRS_SURVEY_OF_INTENT;
+} else if (FlightConnectorExternalModule::isLocalhost()) {
+    $vfrsPid = FlightConnectorExternalModule::getLocalhostProject("VFRS");
+} else {
+    $vfrsPid = FALSE;
+}
+if ($vfrsPid) {
+    $pids[] = $vfrsPid;
+}
+
 $dataByName = [];
 foreach ($pids as $currPid) {
     $currMetadata = NULL;
@@ -18,6 +29,9 @@ foreach ($pids as $currPid) {
             foreach ($redcapData as $row) {
                 if ($row['name']) {
                     list($first, $last) = NameMatcher::splitName($row['name'], 2);
+                } else if ($row['name_first'] && $row['name_last']) {
+                    $first = $row['name_first'];
+                    $last = $row['name_last'];
                 } else {
                     $first = $row['firstname'] ?? "";
                     $last = $row['lastname'] ?? "";
@@ -80,7 +94,7 @@ function addRow(&$dataByName, $currPid, $row, $metadata, $module) {
     $projectName = getProjectName($module, $currPid);
     $projectName = preg_replace("/\s*Flight Connector\s*/", "", $projectName);
     $projectName = preg_replace("/^-\s*/", "", $projectName);
-    $isContentsAndMethods = FlightConnectorExternalModule::isContentsAndMethods($currPid);
+    $isContentsAndMethods = FlightConnectorExternalModule::isContentsAndMethods($currPid) || FlightConnectorExternalModule::isVFRS($currPid);
     $contentsField = $isContentsAndMethods ? "c" : "contents";
     $methodsField = $isContentsAndMethods ? "m" : "methods";
     $dataByName[$name."|".$row['email']] = [
