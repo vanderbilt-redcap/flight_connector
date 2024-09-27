@@ -151,6 +151,7 @@ if (!empty($_POST)) {
     $module->setProjectSetting(FlightConnectorExternalModule::REQUIRE_LOGIN_SETTING, $requireLogin, $pid);
 
     if (empty($rowIndexes)) {
+        $module->setProjectSetting($hashSetting, bin2hex(random_bytes(8)), $pid);
         $sql = "UPDATE redcap_projects SET surveys_enabled='1' WHERE project_id = ?";
         $module->query($sql, [$pid]);
 
@@ -170,8 +171,6 @@ if (!empty($_POST)) {
             $sql = "INSERT INTO redcap_surveys_participants (survey_id, event_id, hash) VALUES (?, ?, ?)";
             $module->query($sql, [$surveyId, $eventId, $hash]);
             $publicSurveyLink = APP_PATH_SURVEY_FULL."index.php?s=$hash";
-
-            $module->setProjectSetting($hashSetting, bin2hex(random_bytes(8)), $pid);
         } else {
             throw new \Exception("Did not set up survey!");
         }
