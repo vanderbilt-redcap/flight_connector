@@ -15,7 +15,6 @@ $thisUrl = $module->getUrl("install.php");
 
 $fields = $module->getFields($pid);
 $applicableInstrument = FlightConnectorExternalModule::INSTRUMENT;
-$hashSetting = FlightConnectorExternalModule::UNIQUE_HASH_SETTING;
 $instrumentLabel = "Flight Connector";
 $publicSurveyLink = "";
 $csvData = \REDCap::getDataDictionary($pid, "csv", FALSE);
@@ -151,9 +150,11 @@ if (!empty($_POST)) {
     $module->setProjectSetting(FlightConnectorExternalModule::REQUIRE_LOGIN_SETTING, $requireLogin, $pid);
 
     if (empty($rowIndexes)) {
-        $module->setProjectSetting($hashSetting, bin2hex(random_bytes(8)), $pid);
-        $sql = "UPDATE redcap_projects SET surveys_enabled='1' WHERE project_id = ?";
-        $module->query($sql, [$pid]);
+        $module->setProjectSetting(FlightConnectorExternalModule::UNIQUE_HASH_SETTING, bin2hex(random_bytes(8)), $pid);
+
+        $customRecordLabel = "[name]";
+        $sql = "UPDATE redcap_projects SET surveys_enabled='1', custom_record_label = ? WHERE project_id = ?";
+        $module->query($sql, [$customRecordLabel, $pid]);
 
         $conceptLink = $module->getMapURL();
         $clusterGraph = $module->getNodeGraphURL();
