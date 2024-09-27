@@ -157,7 +157,7 @@ if (!empty($_POST)) {
         $conceptLink = $module->getMapURL();
         $clusterGraph = $module->getNodeGraphURL();
         $surveyIntroText = '<p><strong>Please complete the survey below with your areas of expertise. Check liberally since the more items you check for your expertises, the more overlap you will have with other scholars!</strong></p><p>Thank you!</p>';
-        $surveyCompletionText = "<p><strong>Thank you for taking the survey.</strong></p><p>To view results as they come in, checkout the <a href='$conceptLink'>Concept Map</a> &amp; the <a href='$clusterGraph'>Cluster Graph</a></p>";
+        $surveyCompletionText = "<p><strong>Thank you for taking the survey.</strong></p><p>To view results as they come in, checkout the <a href='$conceptLink'>Concept Map</a> &amp; the <a href='$clusterGraph'>Cluster Graph</a>.</p>";
         $sql = "INSERT INTO redcap_surveys (project_id, font_family, form_name, title, instructions, acknowledgement, question_by_section, question_auto_numbering, survey_enabled, save_and_return, logo, hide_title, view_results, min_responses_view_results, check_diversity_view_results, end_survey_redirect_url, survey_expiration) VALUES (?, '16', ?, ?, ?, ?, 0, 1, 1, 1, NULL, 0, 0, 10, 0, NULL, NULL)";
         $module->query($sql, [$pid, $applicableInstrument, $instrumentLabel, $surveyIntroText, $surveyCompletionText]);
 
