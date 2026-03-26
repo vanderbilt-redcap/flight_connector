@@ -9,8 +9,8 @@ a { color: black; }
 h1,h2,h3,h4 { text-align: center; }
 h1 { font-size: 44px; font-family: 'museo sans', europa, Arial, Helvetica, sans-serif; margin-top: 6px; margin-bottom: 2px; }
 h2 { font-size: 24px; letter-spacing: 0.3rem; position: relative; }
-h2::before { content: ""; top: 50%; position: absolute; left: 0; right: 0; bottom: 0; text-align: center; z-index: -1; width: 95%; margin: 0 auto; border-top: 2px solid #d2d2eb; }
-.thickBorder { border-radius: 10px; border: 4px solid #5764ae; }
+h2::before { content: ""; top: 50%; position: absolute; left: 0; right: 0; bottom: 0; text-align: center; z-index: -1; width: 95%; margin: 0 auto; border-top: 2px solid #21a6cf; }
+.thickBorder { border-radius: 10px; border: 4px solid #158ab1; }
 .padded { padding: 8px; }
 .bolded { font-weight: bold; }
 div.centered,table.centered { margin-left: auto; margin-right: auto; }
@@ -19,8 +19,8 @@ div.centered,table.centered { margin-left: auto; margin-right: auto; }
 dl dt, blockquote, blockquote blockquote blockquote, #site-title, #menu-primary li a { font-family: 'Abel', serif; }
 
 /* Link color. */
-a, a:visited, .page-template-front .hfeed-more .hentry .entry-title a:hover, .entry-title a, .entry-title a:visited { color: #029F4C; }
-.read-more, .read-more:visited, .pagination a:hover, .comment-navigation a:hover, #respond #submit, .button, a.button, #subscribe #subbutton, .wpcf7-submit, #loginform .button-primary { background-color: #029F4C; }
+a, a:visited, .page-template-front .hfeed-more .hentry .entry-title a:hover, .entry-title a, .entry-title a:visited { color: #4cb150; }
+.read-more, .read-more:visited, .pagination a:hover, .comment-navigation a:hover, #respond #submit, .button, a.button, #subscribe #subbutton, .wpcf7-submit, #loginform .button-primary { background-color: #4cb150; }
 a:hover, a:focus { color: #000; }
 .read-more:hover, #respond #submit:hover, .button:hover, a.button:hover, #subscribe #subbutton:hover, .wpcf7-submit:hover, #loginform .button-primary:hover { background-color: #111; }
 #graph {
@@ -67,7 +67,7 @@ path {
     filter: drop-shadow(5px 5px 10px #efefef);
 }
 #main-graph-info {
-    background-color: #b0d87a44;
+    background-color: #4cb15044;
 }
 
 /* references */

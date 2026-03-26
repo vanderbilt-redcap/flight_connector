@@ -2,7 +2,7 @@
 
 namespace Vanderbilt\FlightConnectorExternalModule;
 
-use \ExternalModules\ExternalModules;
+use ExternalModules\ExternalModules;
 
 require_once(__DIR__."/FlightConnectorExternalModule.php");
 require_once(__DIR__."/base.php");
@@ -10,9 +10,9 @@ require_once(__DIR__."/base.php");
 $pid = getPid();
 $projectTitle = shortenTitle(\REDCap::getProjectTitle());
 $cssUrl = $module->getUrl("connect.css");
-$ftLogo = $module->getUrl("flight_tracker_icon.png");
+$ftLogo = $module->getUrl("images/flight-connector_icon.png");
 $json = \REDCap::getDataDictionary($pid, "json");
-$metadata = json_decode($json, TRUE);
+$metadata = json_decode($json, true);
 
 $fields = array_keys($module->getFields($pid));
 $contentsField = $fields[0];
@@ -22,21 +22,21 @@ $contentsLabel = "Contents";
 $methodsLabel = "Methods";
 $peopleLabel = "People";
 if (!FlightConnectorExternalModule::isEFSRetreat($pid)) {
-    foreach ($metadata as $row) {
-        if ($row['field_name'] == $contentsField) {
-            $contentsLabel = $row['field_label'];
-        } else if ($row['field_name'] == $methodsField) {
-            $methodsLabel = $row['field_label'];
-        }
-    }
+	foreach ($metadata as $row) {
+		if ($row['field_name'] == $contentsField) {
+			$contentsLabel = $row['field_label'];
+		} elseif ($row['field_name'] == $methodsField) {
+			$methodsLabel = $row['field_label'];
+		}
+	}
 }
 
 if (!$module->isSetup($pid)) {
-    header("Location: ".$module->getUrl("install.php"));
+	header("Location: ".$module->getUrl("install.php"));
 }
 $uniqueHash = $module->getProjectSetting(FlightConnectorExternalModule::UNIQUE_HASH_SETTING, $pid) ?? "";
 if (($uniqueHash === "") || ($uniqueHash !== $_GET['h'])) {
-    die("No access.");
+	die("No access.");
 }
 
 echo "<!doctype html><html lang='en-US'>";
@@ -60,25 +60,25 @@ echo "	<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
 	<link rel='icon' href='$ftLogo' />";
 echo "</head>";
 echo "<body>";
-echo makeHeader($module, "Flight Connector", 800, TRUE);
+echo makeHeader($module, "Flight Connector", 800, true);
 
 $redcapData = getData($pid);
 if (empty($redcapData)) {
-    echo "<p class='centered max-width thickBorder padded'>No data have been entered.</p>";
-    echo makeBothLinks($module, "map");
-    exit;
+	echo "<p class='centered max-width thickBorder padded'>No data have been entered.</p>";
+	echo makeBothLinks($module, "map");
+	exit;
 }
 $choices = ["contents" => [], "methods" => []];
 foreach (array_keys($module->getFields($pid)) as $field) {
-    $choices[$field] = downloadChoicesForField($module, $pid, $field);
+	$choices[$field] = downloadChoicesForField($module, $pid, $field);
 }
 $inputData = makeD3Data($redcapData, $choices, $module);
 $matchedItems = [];
 foreach (array_keys($module->getFields($pid)) as $field) {
-    $matchedItems[$field] = [];
-    foreach ($inputData[$field] as $ary) {
-        $matchedItems[$field][] = $ary['name'];
-    }
+	$matchedItems[$field] = [];
+	foreach ($inputData[$field] as $ary) {
+		$matchedItems[$field][] = $ary['name'];
+	}
 }
 $inputJSON = json_encode($inputData);
 
@@ -90,28 +90,28 @@ $saveDiv = makeSaveDiv($module, "svg");
 $options = [];
 $options[] = "<option value='' selected></option>";
 foreach ($choices as $field => $fieldChoices) {
-    foreach ($fieldChoices as $index => $label) {
-        if (in_array($label, $matchedItems[$field])) {
-            $label = str_replace("'", "\\'", $label);
-            $options[] = "<option value='$label' class='select_$field'>$label</option>";
-        }
-    }
+	foreach ($fieldChoices as $index => $label) {
+		if (in_array($label, $matchedItems[$field])) {
+			$label = str_replace("'", "\\'", $label);
+			$options[] = "<option value='$label' class='select_$field'>$label</option>";
+		}
+	}
 }
 foreach ($redcapData as $row) {
-    $name = $row['name'] ?: $row['firstname']." ".$row['lastname'];
-    $name = str_replace("'", "\\'", $name);
-    $options[] = "<option value='$name' class='select_scholars'>$name</option>";
+	$name = $row['name'] ?: $row['firstname']." ".$row['lastname'];
+	$name = str_replace("'", "\\'", $name);
+	$options[] = "<option value='$name' class='select_scholars'>$name</option>";
 }
 $optionHTML = implode("", $options);
 
 $radioConfig = [
-    "contents" => $contentsLabel,
-    "scholars" => $peopleLabel,
-    "methods" => $methodsLabel,
+	"contents" => $contentsLabel,
+	"scholars" => $peopleLabel,
+	"methods" => $methodsLabel,
 ];
 $radios = [];
 foreach ($radioConfig as $filterTerm => $label) {
-    $radios[] = "<input type='radio' name='filter' value='$filterTerm' id='$filterTerm' onclick='FlightConnector.filterSelect(this);' /><label for='$filterTerm'>$label</label>";
+	$radios[] = "<input type='radio' name='filter' value='$filterTerm' id='$filterTerm' onclick='FlightConnector.filterSelect(this);' /><label for='$filterTerm'>$label</label>";
 }
 $radioHTML = implode("&nbsp;&nbsp;&nbsp;&nbsp;", $radios);
 $resetLink = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}";
@@ -138,11 +138,11 @@ echo "
 
 $numRows = count($redcapData);
 if ((count($choices['methods']) > 80) || (count($choices['contents']) > 80)) {
-    $defaultFontSize = 9;
-} else if ((count($choices['methods']) > 40) || (count($choices['contents']) > 40)) {
-    $defaultFontSize = 12;
+	$defaultFontSize = 9;
+} elseif ((count($choices['methods']) > 40) || (count($choices['contents']) > 40)) {
+	$defaultFontSize = 12;
 } else {
-    $defaultFontSize = 14;
+	$defaultFontSize = 14;
 }
 $ucContentLabel = strtoupper(preg_replace("/s$/", "", $contentsLabel));
 $ucMethodLabel = strtoupper(preg_replace("/s$/", "", $methodsLabel));
@@ -188,12 +188,12 @@ echo "
         t = 10,
         w = $('#graph').width(),
         F = 'elastic',
-        peripheralCircleColor = '#ebebf8',
-        accentColor = '#48489d',
-        boxColor = '#5764ae',
-        mainCircleColor = '#8dc63f',
-        contentColor = '#b0d87a',
-        methodColor = '#d4d4eb';
+        peripheralCircleColor = '#e1f5fe',
+        accentColor = '#158ab1',
+        boxColor = '#21a6cf',
+        mainCircleColor = '#4cb150',
+        contentColor = '#81c784',
+        methodColor = '#81d4fa';
     var headerFontSize = getHeaderFontSize(a);
     var maxCircleSize = getMaxCircleSize(100, a);    // default as starter
     var T, q, x, j, H, A, P;
