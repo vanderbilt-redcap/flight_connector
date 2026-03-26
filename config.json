@@ -17,12 +17,12 @@
 	"links": {
 		"project": [
 			{
-				"name": "Flight Connector Map",
+				"name": "Flight Connector Concept Map",
 				"icon": "fa-regular fa-map",
 				"url": "map.php?NOAUTH"
 			},
 			{
-				"name": "Flight Connector Node Graph",
+				"name": "Flight Connector Cluster Graph",
 				"icon": "fa-regular fa-circle",
 				"url": "nodeGraph.php?NOAUTH"
 			},
@@ -48,16 +48,5 @@
 		"getPicture"
 	],
 	"project-settings": [
-	],
-
-	"crons": [
-		{
-			"cron_name": "flight_connector_cron",
-			"cron_description": "Flight Connector Cron",
-			"method": "cron",
-			"cron_weekday": "1",
-			"cron_hour": "05",
-			"cron_minute": "00"
-		}
 	]
 }
