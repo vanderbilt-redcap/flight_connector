@@ -410,6 +410,7 @@ class LdapLookup
     public static function lookupUserDetailsByKey($value, $key, $oneLine=true)
     {
         self::initialize();
+        $FCEM = new FlightConnectorExternalModule();
 
         ## Search LDAP for any user matching the vunet ID
         $allData = [];
@@ -417,7 +418,7 @@ class LdapLookup
             $sr = ldap_search($ldapConn, "cn=users,dc=ds,dc=vanderbilt,dc=edu", "(".$key."=".$value.")");
 
             if ($sr) {
-                $data = ldap_get_entries($ldapConn, $sr);
+                $data = $FCEM->framework->escape(ldap_get_entries($ldapConn, $sr));
                 if ($oneLine) {
                     for ($i=0; $i < count($data); $i++) {
                         return $data[$i];
@@ -442,6 +443,7 @@ class LdapLookup
     public static function lookupUsersByNameFragment($nameFragment)
     {
         self::initialize();
+        $FCEM = new FlightConnectorExternalModule();
 
         ## Search LDAP for any user matching the $nameFragment on vunet, surname or givenname
         $allData = [];
@@ -449,7 +451,7 @@ class LdapLookup
             $sr = ldap_search($ldapConn, "cn=users,dc=ds,dc=vanderbilt,dc=edu", "(|(cn=$nameFragment*)(sn=$nameFragment*)(givenname=$nameFragment*))");
 
             if ($sr) {
-                $data = ldap_get_entries($ldapConn, $sr);
+                $data = $FCEM->framework->escape(ldap_get_entries($ldapConn, $sr));
                 $allData = self::mergeAndDiscardDups($allData, $data);
             } else {
                 throw new \Exception(ldap_error($ldapConn));

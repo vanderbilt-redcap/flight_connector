@@ -22,7 +22,8 @@ function getLDAP($pid)
         }
     }
 
-    $redcapData = \REDCap::getData($pid, "json-array");
+    $FCEM = new FlightConnectorExternalModule();
+    $redcapData = $FCEM->framework->escape(\REDCap::getData($pid, "json-array"));
     $upload = [];
     foreach ($redcapData as $row) {
         $recordId = $row['record_id'];

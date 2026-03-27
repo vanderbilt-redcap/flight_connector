@@ -12,7 +12,8 @@ getAdjuncts($pid);
 
 function getAdjuncts($pid)
 {
-    $redcapData = \REDCap::getData($pid, "json-array");
+    $FCEM = new FlightConnectorExternalModule();
+    $redcapData = $FCEM->framework->escape(\REDCap::getData($pid, "json-array"));
     foreach ($redcapData as $row) {
         $recordId = $row['record_id'];
         $name = $row['name'] ?: $row['firstname'] . " " . $row['lastname'];
