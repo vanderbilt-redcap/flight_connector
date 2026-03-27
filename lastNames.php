@@ -2,6 +2,8 @@
 
 namespace Vanderbilt\FlightConnectorExternalModule;
 
+use ExternalModules\Framework;
+
 require_once(__DIR__."/FlightConnectorExternalModule.php");
 require_once(__DIR__."/NameMatcher.php");
 
@@ -10,7 +12,8 @@ if (!$pid) {
     die("No project");
 }
 
-$redcapData = \REDCap::getData($pid, "json-array");
+$FCEM = new FlightConnectorExternalModule();
+$redcapData = $FCEM->framework->escape(\REDCap::getData($pid, "json-array"));
 
 $names = [];
 foreach ($redcapData as $row) {

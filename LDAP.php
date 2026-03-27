@@ -2,29 +2,40 @@
 
 namespace Vanderbilt\FlightConnectorExternalModule;
 
-class LDAP {
-	public static function getLDAPByMultiple($types, $values)
-	{
-		return LdapLookup::lookupUserDetailsByKeys($values, $types, true, false);
-	}
+class LDAP
+{
+    private $FCEM;
 
-	public static function getLDAP($type, $value) {
-		return self::getLDAPByMultiple(array($type), array($value));
-	}
+    private function __construct()
+    {
+        $this->FCEM = new FlightConnectorExternalModule();
+    }
+    public static function getLDAPByMultiple($types, $values)
+    {
+        return LdapLookup::lookupUserDetailsByKeys($values, $types, true, false);
+    }
 
-    public static function getNameAssociations($first, $last) {
+    public static function getLDAP($type, $value)
+    {
+        return self::getLDAPByMultiple(array($type), array($value));
+    }
+
+    public static function getNameAssociations($first, $last)
+    {
         return ["givenname" => $first, "sn" => $last];
     }
 
-	public static function getVUNetsAndDepartments($first, $last) {
-		$key = self::getNameAssociations($first, $last);
-		$info = self::getLDAPByMultiple(array_keys($key), array_values($key));
-		$vunets = self::findField($info, "cn");
-		$departments = self::findField($info, "department");
-		return array($vunets, $departments);
-	}
+    public static function getVUNetsAndDepartments($first, $last)
+    {
+        $key = self::getNameAssociations($first, $last);
+        $info = self::getLDAPByMultiple(array_keys($key), array_values($key));
+        $vunets = self::findField($info, "cn");
+        $departments = self::findField($info, "department");
+        return array($vunets, $departments);
+    }
 
-    public static function getName($uid) {
+    public static function getName($uid)
+    {
         $info = self::getLDAP("cn", $uid);
         if ($info['count'] > 0) {
             return self::findField($info, "givenname", 0)." ".self::findField($info, "sn", 0);
@@ -32,7 +43,8 @@ class LDAP {
         return "";
     }
 
-    public static function getNameFromEmail($email) {
+    public static function getNameFromEmail($email)
+    {
         $info = self::getLDAP("mail", $email);
         if ($info['count'] > 0) {
             return self::findField($info, "givenname", 0)." ".self::findField($info, "sn", 0);
@@ -40,7 +52,8 @@ class LDAP {
         return "";
     }
 
-    public static function getDepartmentAndRank($uid) {
+    public static function getDepartmentAndRank($uid)
+    {
         $info = self::getLDAP("cn", $uid);
         $department = "";
         $rank = "";
@@ -63,7 +76,8 @@ class LDAP {
         return [$department, $rank];
     }
 
-    public static function getVUNet($first, $last) {
+    public static function getVUNet($first, $last)
+    {
         $key = self::getNameAssociations($first, $last);
         $info = self::getLDAPByMultiple(array_keys($key), array_values($key));
         if ($info['count'] > 0) {
@@ -72,56 +86,59 @@ class LDAP {
         return "";
     }
 
-    public static function getAllVUNets($first, $last) {
+    public static function getAllVUNets($first, $last)
+    {
         $key = self::getNameAssociations($first, $last);
         $info = self::getLDAPByMultiple(array_keys($key), array_values($key));
         return self::findField($info, "cn");
     }
 
     # $info is line from getLDAP
-	# returns array from $info with the field $field
-	public static function findField($info, $field, $idx = "all") {
-	    if (!isset($info['count'])) {
-	        return [];
+    # returns array from $info with the field $field
+    public static function findField($info, $field, $idx = "all")
+    {
+        if (!isset($info['count'])) {
+            return [];
         }
-		$separator = ";";
-		$values = [];
-		for ($i = 0; $i < $info['count']; $i++) {
-			$line = $info[$i];
-			$value = "";
-			foreach ($line as $var => $results) {
-				if ($var == $field) {
-					if (isset($results['count'])) {
-						$r = array();
-						for ($j = 0; $j < $results['count']; $j++) {
-							$r[] = $results[$j];
-						}
-						$value = implode($separator, $r);
-					}
-				}
-			}
-			$values[] = $value;
-		}
-		if (isset($_GET['test'])) {
-		    echo "findField values: ".json_encode($values)."<br>\n";
-		    echo "findField idx: $idx<br>\n";
+        $separator = ";";
+        $values = [];
+        for ($i = 0; $i < $info['count']; $i++) {
+            $line = $info[$i];
+            $value = "";
+            foreach ($line as $var => $results) {
+                if ($var == $field) {
+                    if (isset($results['count'])) {
+                        $r = array();
+                        for ($j = 0; $j < $results['count']; $j++) {
+                            $r[] = $results[$j];
+                        }
+                        $value = implode($separator, $r);
+                    }
+                }
+            }
+            $values[] = $value;
         }
-		if ($idx === "all") {
+        if (isset($_GET['test'])) {
+            echo "findField values: ".json_encode($values)."<br>\n";
+            echo "findField idx: $idx<br>\n";
+        }
+        if ($idx === "all") {
             if (isset($_GET['test'])) {
                 echo "findField return all $idx<br>\n";
             }
             return $values;
-        } else if (isset($values[$idx])) {
+        } elseif (isset($values[$idx])) {
             if (isset($_GET['test'])) {
                 echo "findField return index $idx: ".json_encode($values[$idx])."<br>\n";
             }
             return $values[$idx];
         } else {
-		    throw new \Exception("Could not find index $idx for uid $field");
+            throw new \Exception("Could not find index $idx for uid $field");
         }
-	}
+    }
 
-    public static function getEmailFromName($first, $last) {
+    public static function getEmailFromName($first, $last)
+    {
         $key = self::getNameAssociations($first, $last);
         $info = self::getLDAPByMultiple(array_keys($key), array_values($key));
         if ($info['count'] > 0) {
@@ -130,7 +147,8 @@ class LDAP {
         return "";
     }
 
-    public static function getEmailFromUid($uid) {
+    public static function getEmailFromUid($uid)
+    {
         $info = self::getLDAP("cn", $uid);
         if ($info['count'] > 0) {
             return self::findField($info, "mail", 0);
@@ -138,7 +156,8 @@ class LDAP {
         return "";
     }
 
-    public static function getFields() {
+    public static function getFields()
+    {
         return [
             "cn",
             "sn",
@@ -189,8 +208,9 @@ class LDAP {
         ];
     }
 
-    public static function getFieldsOldLDAP() {
-		return [
+    public static function getFieldsOldLDAP()
+    {
+        return [
             "modifytimestamp",
             "modifiersname",
             "departmentnumber",
@@ -228,7 +248,7 @@ class LDAP {
             "vanderbiltpersonjobcode",
             "vanderbiltpersonjobname",
         ];
-	}
+    }
 }
 
 
@@ -236,7 +256,8 @@ class LDAP {
 # originally authored by Kyle McGuffin
 # modifications by Scott J. Pearson
 
-class LdapLookup {
+class LdapLookup
+{
     const VUNET_KEY = "cn";
     const EMAIL_KEY = "mail";
     const FIRST_NAME_KEY = "givenname";
@@ -249,8 +270,9 @@ class LdapLookup {
     private static $ldapConns;
     private static $ldapBinds;
 
-    private static function resetConnections() {
-        self::initialize(TRUE);
+    private static function resetConnections()
+    {
+        self::initialize(true);
     }
 
     /**
@@ -261,8 +283,10 @@ class LdapLookup {
      * @return array|bool
      * @throws \Exception
      */
-    public static function lookupUserDetailsByKeys($values,$keys,$and,$oneLine = true) {
+    public static function lookupUserDetailsByKeys($values, $keys, $and, $oneLine = true)
+    {
         self::initialize();
+        $FCEM = new FlightConnectorExternalModule();
 
         $cnt = count($keys);
         if ($cnt > count($values)) {
@@ -279,7 +303,7 @@ class LdapLookup {
             }
         }
 
-        $sr = NULL;
+        $sr = null;
         $allData = [];
         if (!empty($searchTerms)) {
             ## Search LDAP for any user matching the vunet ID
@@ -290,26 +314,26 @@ class LdapLookup {
             $searchFilter = "($char".implode("", $searchTerms).")";
             $resetTries = 0;
             do {
-                $hasReset = FALSE;
+                $hasReset = false;
                 foreach (self::$ldapConns as $ldapConn) {
                     $currTry = 0;
-                    $sr = NULL;
+                    $sr = null;
                     while (($currTry < self::MAX_RETRIES) && !$sr) {
                         $currTry++;
                         $sr = ldap_search($ldapConn, "cn=users,dc=ds,dc=vanderbilt,dc=edu", $searchFilter);
                         if ($sr) {
-                            $data = ldap_get_entries($ldapConn, $sr);
+                            $data = $FCEM->framework->escape(ldap_get_entries($ldapConn, $sr));
                             if ($oneLine) {
-                                for($i = 0; $i < count($data); $i++) {
+                                for ($i = 0; $i < count($data); $i++) {
                                     return $data[$i];
                                 }
                             } else {
                                 $allData = self::mergeAndDiscardDups($allData, $data);
                             }
-                        } else if (ldap_error($ldapConn) != "") {
+                        } elseif (ldap_error($ldapConn) != "") {
                             if (ldap_error($ldapConn) == "Can't contact LDAP server") {
                                 self::resetConnections();
-                                $hasReset = TRUE;
+                                $hasReset = true;
                                 $resetTries++;
                                 break;
                             }
@@ -319,7 +343,7 @@ class LdapLookup {
                         }
                     }
                 }
-            } while($hasReset && ($resetTries < self::MAX_RETRIES));
+            } while ($hasReset && ($resetTries < self::MAX_RETRIES));
         }
         return $allData;
     }
@@ -329,7 +353,8 @@ class LdapLookup {
      * @param $data2 array
      * @return array
      */
-    private static function mergeAndDiscardDups($data1, $data2) {
+    private static function mergeAndDiscardDups($data1, $data2)
+    {
         $sources = [$data1, $data2];
 
         $deDuped = [];
@@ -338,10 +363,10 @@ class LdapLookup {
                 for ($i = 0; $i < $source['count']; $i++) {
                     $entry = $source[$i];
                     $currUID = self::getUID($entry);
-                    $add = TRUE;
+                    $add = true;
                     foreach ($deDuped as $existingEntry) {
                         if ($currUID && (self::getUID($existingEntry) == $currUID)) {
-                            $add = FALSE;
+                            $add = false;
                             break;
                         }
                     }
@@ -360,7 +385,8 @@ class LdapLookup {
      * @param $entry array
      * returns string
      */
-    public static function getUID($entry) {
+    public static function getUID($entry)
+    {
         foreach ($entry as $var => $results) {
             if ($var == "cn") {
                 if (isset($results['count'])) {
@@ -381,8 +407,10 @@ class LdapLookup {
      * @return array|bool
      * @throws \Exception
      */
-    public static function lookupUserDetailsByKey($value,$key,$oneLine=true) {
+    public static function lookupUserDetailsByKey($value, $key, $oneLine=true)
+    {
         self::initialize();
+        $FCEM = new FlightConnectorExternalModule();
 
         ## Search LDAP for any user matching the vunet ID
         $allData = [];
@@ -390,7 +418,7 @@ class LdapLookup {
             $sr = ldap_search($ldapConn, "cn=users,dc=ds,dc=vanderbilt,dc=edu", "(".$key."=".$value.")");
 
             if ($sr) {
-                $data = ldap_get_entries($ldapConn, $sr);
+                $data = $FCEM->framework->escape(ldap_get_entries($ldapConn, $sr));
                 if ($oneLine) {
                     for ($i=0; $i < count($data); $i++) {
                         return $data[$i];
@@ -399,7 +427,7 @@ class LdapLookup {
                     $allData = self::mergeAndDiscardDups($allData, $data);
                 }
             } else {
-                if(ldap_error($ldapConn) != "") {
+                if (ldap_error($ldapConn) != "") {
                     throw new \Exception(ldap_error($ldapConn));
                 }
             }
@@ -407,12 +435,15 @@ class LdapLookup {
         return $allData;
     }
 
-    public static function lookupUserDetailsByVunet($vunet) {
-        return self::lookupUserDetailsByKey($vunet,self::VUNET_KEY);
+    public static function lookupUserDetailsByVunet($vunet)
+    {
+        return self::lookupUserDetailsByKey($vunet, self::VUNET_KEY);
     }
 
-    public static function lookupUsersByNameFragment($nameFragment) {
+    public static function lookupUsersByNameFragment($nameFragment)
+    {
         self::initialize();
+        $FCEM = new FlightConnectorExternalModule();
 
         ## Search LDAP for any user matching the $nameFragment on vunet, surname or givenname
         $allData = [];
@@ -420,7 +451,7 @@ class LdapLookup {
             $sr = ldap_search($ldapConn, "cn=users,dc=ds,dc=vanderbilt,dc=edu", "(|(cn=$nameFragment*)(sn=$nameFragment*)(givenname=$nameFragment*))");
 
             if ($sr) {
-                $data = ldap_get_entries($ldapConn, $sr);
+                $data = $FCEM->framework->escape(ldap_get_entries($ldapConn, $sr));
                 $allData = self::mergeAndDiscardDups($allData, $data);
             } else {
                 throw new \Exception(ldap_error($ldapConn));
@@ -429,7 +460,8 @@ class LdapLookup {
         return $allData;
     }
 
-    public static function initialize($force = FALSE) {
+    public static function initialize($force = false)
+    {
         $ldappass = "";
         $ldapuser = "";
         $includeFile = "/app001/credentials/con_redcap_ldap_user.php";
@@ -438,7 +470,7 @@ class LdapLookup {
         }
         self::$ldapConns = [];
         self::$ldapBinds = [];
-        if(!self::$ldapBinds || $force) {
+        if (!self::$ldapBinds || $force) {
             include $includeFile;
 
             if (!$ldapuser || !$ldappass) {
@@ -460,14 +492,15 @@ class LdapLookup {
     }
 
     // Returns true if the vunetid and password are valid (and false otherwise).
-    public static function authenticate($vunetid, $password){
-        if(empty($vunetid) || empty($password)){
+    public static function authenticate($vunetid, $password)
+    {
+        if (empty($vunetid) || empty($password)) {
             return false;
         }
 
-        foreach(self::getDSNs() as $dsn){
+        foreach (self::getDSNs() as $dsn) {
             $connection = @ldap_connect($dsn['url']);
-            if(@ldap_bind($connection, "cn=$vunetid,cn=users,dc=ds,dc=vanderbilt,dc=edu", $password)){
+            if (@ldap_bind($connection, "cn=$vunetid,cn=users,dc=ds,dc=vanderbilt,dc=edu", $password)) {
                 return true;
             }
         }
@@ -498,4 +531,3 @@ class LdapLookup {
 
     const MAX_RETRIES = 5;
 }
-

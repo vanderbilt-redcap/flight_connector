@@ -5,23 +5,25 @@ namespace Vanderbilt\FlightConnectorExternalModule;
 require_once(__DIR__."/LDAP.php");
 require_once(__DIR__."/NameMatcher.php");
 
-function getLDAP($pid) {
+function getLDAP($pid)
+{
     $json = \REDCap::getDataDictionary($pid, "json");
-    $metadata = json_decode($json, TRUE);
+    $metadata = json_decode($json, true);
     $ldapField = "in_ldap";
     $deptField = "department";
-    $hasLDAPField = FALSE;
-    $hasDepartmentField = FALSE;
+    $hasLDAPField = false;
+    $hasDepartmentField = false;
     foreach ($metadata as $row) {
         if ($row['field_name'] == $ldapField) {
-            $hasLDAPField = TRUE;
+            $hasLDAPField = true;
         }
         if ($row['field_name'] == $deptField) {
-            $hasDepartmentField = TRUE;
+            $hasDepartmentField = true;
         }
     }
 
-    $redcapData = \REDCap::getData($pid, "json-array");
+    $FCEM = new FlightConnectorExternalModule();
+    $redcapData = $FCEM->framework->escape(\REDCap::getData($pid, "json-array"));
     $upload = [];
     foreach ($redcapData as $row) {
         $recordId = $row['record_id'];
@@ -47,16 +49,16 @@ function getLDAP($pid) {
                 $newInLDAP = 1;
                 $dept = LDAP::findField($nameInfo, "department", 0);
             }
-        } else if (
+        } elseif (
             $email
             && ($vumcInfo['count'] > 0)
         ) {
             $newInLDAP = 1;
             $dept = LDAP::findField($vumcInfo, "department", 0);
-        } else if ($email && ($vuInfo['count'] > 0)) {
+        } elseif ($email && ($vuInfo['count'] > 0)) {
             $newInLDAP = 1;
             $dept = LDAP::findField($vuInfo, "department", 0);
-        } else if ($name && ($nameInfo['count'] > 1)) {
+        } elseif ($name && ($nameInfo['count'] > 1)) {
             $employeeType = LDAP::findField($nameInfo, "employeetype", 0);
             $jobTitle = LDAP::findField($nameInfo, "title", 0);
             if (($employeeType == "Non-Employee") || ($jobTitle == "Adjunct Professor")) {

@@ -15,7 +15,7 @@ require_once(__DIR__."/FlightConnectorExternalModule.php");
 if (FlightConnectorExternalModule::isLocalhost()) {
     $pid = FlightConnectorExternalModule::getLocalhostProject("Contents and Methods");
     $destPid = 135;
-} else if (FlightConnectorExternalModule::isVanderbilt()) {
+} elseif (FlightConnectorExternalModule::isVanderbilt()) {
     $pid = FlightConnectorExternalModule::VANDERBILT_MAIN_PROJECT;
     $destPid = 188759;
 } else {
@@ -25,16 +25,16 @@ if (FlightConnectorExternalModule::isLocalhost()) {
 $redcapData = \REDCap::getData($pid, "json-array");
 
 $fp = fopen(__DIR__."/open_lab_list_03_2024.csv", "r");
-$headers = fgetcsv($fp);
+$headers = fgetcsv($fp, null, ',', "", '\\');
 $notFound = [];
 $upload = [];
 $currRecordId = 1;
-while ($line = fgetcsv($fp)) {
+while ($line = fgetcsv($fp, null, ',', "", '\\')) {
     $piName = $line[0];
     if ($piName) {
         $vuEmail = strtolower($line[1]);
         $vumcEmail = strtolower($line[2]);
-        list ($piFirst, $piLast) = NameMatcher::splitName($piName, 2);
+        list($piFirst, $piLast) = NameMatcher::splitName($piName, 2);
         $emailUsers = [];
         if ($vuEmail) {
             $emailUsers[] = explode("@", $vuEmail)[0];
@@ -42,13 +42,13 @@ while ($line = fgetcsv($fp)) {
         if ($vumcEmail) {
             $emailUsers[] = explode("@", $vumcEmail)[0];
         }
-        $found = FALSE;
+        $found = false;
         foreach ($redcapData as $row) {
             $connectorEmailUser = strtolower($row['email'] ? explode("@", $row['email'])[0] : "");
             list($connectorFirst, $connectorLast) = NameMatcher::splitName($row['name'], 2);
             if (in_array($connectorEmailUser, $emailUsers) || NameMatcher::matchName($connectorFirst, $connectorLast, $piFirst, $piLast)) {
                 echo "Matched $piName<br/>";
-                $found = TRUE;
+                $found = true;
                 $row['record_id'] = $currRecordId;
                 unset($row['in_ldap']);
                 unset($row['department']);
