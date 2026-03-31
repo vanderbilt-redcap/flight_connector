@@ -22,21 +22,21 @@ $contentsLabel = "Contents";
 $methodsLabel = "Methods";
 $peopleLabel = "People";
 if (!FlightConnectorExternalModule::isEFSRetreat($pid)) {
-	foreach ($metadata as $row) {
-		if ($row['field_name'] == $contentsField) {
-			$contentsLabel = $row['field_label'];
-		} elseif ($row['field_name'] == $methodsField) {
-			$methodsLabel = $row['field_label'];
-		}
-	}
+    foreach ($metadata as $row) {
+        if ($row['field_name'] == $contentsField) {
+            $contentsLabel = $row['field_label'];
+        } elseif ($row['field_name'] == $methodsField) {
+            $methodsLabel = $row['field_label'];
+        }
+    }
 }
 
 if (!$module->isSetup($pid)) {
-	header("Location: ".$module->getUrl("install.php"));
+    header("Location: ".$module->getUrl("install.php"));
 }
 $uniqueHash = $module->getProjectSetting(FlightConnectorExternalModule::UNIQUE_HASH_SETTING, $pid) ?? "";
 if (($uniqueHash === "") || ($uniqueHash !== $_GET['h'])) {
-	die("No access.");
+    die("No access.");
 }
 
 echo "<!doctype html><html lang='en-US'>";
@@ -49,7 +49,7 @@ echo makeJS($module);
 echo "	<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
 	<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1' />
 	<meta name='viewport' content='width=device-width,initial-scale=1' />	 	
-	<link rel='profile' href='http://gmpg.org/xfn/11' />
+	<link rel='profile' href='https://gmpg.org/xfn/11' />
 	<link rel='stylesheet' href='https://use.typekit.net/ght7wyw.css' />
 	<link rel='stylesheet' href='$jqueryUICSS' />
 	<script type='text/javascript' src='$migrateLink'></script>
@@ -64,21 +64,21 @@ echo makeHeader($module, "Flight Connector", 800, true);
 
 $redcapData = getData($pid);
 if (empty($redcapData)) {
-	echo "<p class='centered max-width thickBorder padded'>No data have been entered.</p>";
-	echo makeBothLinks($module, "map");
-	exit;
+    echo "<p class='centered max-width thickBorder padded'>No data have been entered.</p>";
+    echo makeBothLinks($module, "map");
+    exit;
 }
 $choices = ["contents" => [], "methods" => []];
 foreach (array_keys($module->getFields($pid)) as $field) {
-	$choices[$field] = downloadChoicesForField($module, $pid, $field);
+    $choices[$field] = downloadChoicesForField($module, $pid, $field);
 }
 $inputData = makeD3Data($redcapData, $choices, $module);
 $matchedItems = [];
 foreach (array_keys($module->getFields($pid)) as $field) {
-	$matchedItems[$field] = [];
-	foreach ($inputData[$field] as $ary) {
-		$matchedItems[$field][] = $ary['name'];
-	}
+    $matchedItems[$field] = [];
+    foreach ($inputData[$field] as $ary) {
+        $matchedItems[$field][] = $ary['name'];
+    }
 }
 $inputJSON = json_encode($inputData);
 
@@ -90,28 +90,28 @@ $saveDiv = makeSaveDiv($module, "svg");
 $options = [];
 $options[] = "<option value='' selected></option>";
 foreach ($choices as $field => $fieldChoices) {
-	foreach ($fieldChoices as $index => $label) {
-		if (in_array($label, $matchedItems[$field])) {
-			$label = str_replace("'", "\\'", $label);
-			$options[] = "<option value='$label' class='select_$field'>$label</option>";
-		}
-	}
+    foreach ($fieldChoices as $index => $label) {
+        if (in_array($label, $matchedItems[$field])) {
+            $label = str_replace("'", "\\'", $label);
+            $options[] = "<option value='$label' class='select_$field'>$label</option>";
+        }
+    }
 }
 foreach ($redcapData as $row) {
-	$name = $row['name'] ?: $row['firstname']." ".$row['lastname'];
-	$name = str_replace("'", "\\'", $name);
-	$options[] = "<option value='$name' class='select_scholars'>$name</option>";
+    $name = $row['name'] ?: $row['firstname']." ".$row['lastname'];
+    $name = str_replace("'", "\\'", $name);
+    $options[] = "<option value='$name' class='select_scholars'>$name</option>";
 }
 $optionHTML = implode("", $options);
 
 $radioConfig = [
-	"contents" => $contentsLabel,
-	"scholars" => $peopleLabel,
-	"methods" => $methodsLabel,
+    "contents" => $contentsLabel,
+    "scholars" => $peopleLabel,
+    "methods" => $methodsLabel,
 ];
 $radios = [];
 foreach ($radioConfig as $filterTerm => $label) {
-	$radios[] = "<input type='radio' name='filter' value='$filterTerm' id='$filterTerm' onclick='FlightConnector.filterSelect(this);' /><label for='$filterTerm'>$label</label>";
+    $radios[] = "<input type='radio' name='filter' value='$filterTerm' id='$filterTerm' onclick='FlightConnector.filterSelect(this);' /><label for='$filterTerm'>$label</label>";
 }
 $radioHTML = implode("&nbsp;&nbsp;&nbsp;&nbsp;", $radios);
 $resetLink = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}";
@@ -138,11 +138,11 @@ echo "
 
 $numRows = count($redcapData);
 if ((count($choices['methods']) > 80) || (count($choices['contents']) > 80)) {
-	$defaultFontSize = 9;
+    $defaultFontSize = 9;
 } elseif ((count($choices['methods']) > 40) || (count($choices['contents']) > 40)) {
-	$defaultFontSize = 12;
+    $defaultFontSize = 12;
 } else {
-	$defaultFontSize = 14;
+    $defaultFontSize = 14;
 }
 $ucContentLabel = strtoupper(preg_replace("/s$/", "", $contentsLabel));
 $ucMethodLabel = strtoupper(preg_replace("/s$/", "", $methodsLabel));

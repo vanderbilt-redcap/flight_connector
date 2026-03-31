@@ -18,12 +18,12 @@ $sourceChoices = [];
 foreach ($sourcePids as $sourcePid) {
     $sourceData[$sourcePid] = \REDCap::getData($sourcePid, "json-array");
     $json = \REDCap::getDataDictionary($sourcePid, "json");
-    $sourceMetadata[$sourcePid] = json_decode($json, TRUE);
+    $sourceMetadata[$sourcePid] = json_decode($json, true);
     $sourceChoices[$sourcePid] = getChoices($sourceMetadata[$sourcePid]);
 }
-$destData = \REDCap::getData($destPid, "json-array", NULL, ["record_id", "first_name", "last_name"]);
+$destData = \REDCap::getData($destPid, "json-array", null, ["record_id", "first_name", "last_name"]);
 $json = \REDCap::getDataDictionary($destPid, "json");
-$destMetadata = json_decode($json, TRUE);
+$destMetadata = json_decode($json, true);
 $destChoices = getChoices($destMetadata);
 
 $matchesToDest = [];
@@ -70,7 +70,7 @@ foreach ($matchesToDest as $destRecordId => $sourceLicensePlate) {
         "methods" => "m",
     ];
     foreach ($sourceRow as $field => $value) {
-        if ($value && preg_match("/___/",$field)) {
+        if ($value && str_contains($field, "___")) {
             list($sourceField, $sourceIndex) = explode("___", $field);
             $destField = $mappings[$sourceField] ?? "";
             if ($destField) {
@@ -97,7 +97,8 @@ if (!empty($upload)) {
     echo "Nothing to upload.";
 }
 
-function getDataRows($redcapData, $recordId) {
+function getDataRows($redcapData, $recordId)
+{
     $rows = [];
     foreach ($redcapData as $row) {
         if ($row['record_id'] == $recordId) {

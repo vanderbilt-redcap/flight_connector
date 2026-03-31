@@ -31,7 +31,7 @@ function getLDAP($pid)
         $email = $row['email'];
         $vuEmail = preg_replace("/@vumc\.org$/i", "@vanderbilt.edu", $email);
         $vumcEmail = preg_replace("/@vanderbilt\.edu$/i", "@vumc.org", $email);
-        list($first, $last) = NameMatcher::splitName($name, 2);
+        list($first, $last) = NameMatcher::splitName($name);
         $first = preg_replace("/\s+\(\w+\)/", "", $first);    // parentheses throw off LDAP
         $key = LDAP::getNameAssociations($first, $last);
         $nameInfo = LDAP::getLDAPByMultiple(array_keys($key), array_values($key));
@@ -90,8 +90,7 @@ function getLDAP($pid)
 
     if (!empty($upload)) {
         $json = json_encode($upload);
-        $feedback = \REDCap::saveData($pid, "json", $json, 'overwrite');
-        return $feedback;
+        return \REDCap::saveData($pid, "json", $json, 'overwrite');
     }
     return ["error" => "No data to upload"];
 }

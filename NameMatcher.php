@@ -2,21 +2,25 @@
 
 namespace Vanderbilt\FlightConnectorExternalModule;
 
-class NameMatcher {
-    public static function matchInstitution($institution, $allInstitutions) {
+class NameMatcher
+{
+    public static function matchInstitution($institution, $allInstitutions)
+    {
         foreach ($allInstitutions as $inst) {
             if (self::doInstitutionsMatch($inst, $institution)) {
-                return TRUE;
+                return true;
             }
         }
-        return FALSE;
+        return false;
     }
 
-    public static function matchDepartment($dept1, $dept2) {
+    public static function matchDepartment($dept1, $dept2)
+    {
         return self::doInstitutionsMatch($dept1, $dept2);
     }
 
-    public static function makeArrayOfFormattedNames($nameStr) {
+    public static function makeArrayOfFormattedNames($nameStr)
+    {
         if (preg_match("/\band\b/", $nameStr)) {
             $queueToParse = preg_split("/\s*\band\b\s*/", $nameStr);
             $nameStr = implode("; ", $queueToParse);
@@ -30,7 +34,8 @@ class NameMatcher {
         return $formattedNames;
     }
 
-    private static function getNodes($name, $ridOfSpacesOnly = FALSE) {
+    private static function getNodes($name, $ridOfSpacesOnly = false)
+    {
         if ($ridOfSpacesOnly) {
             return preg_split("/\s+/", $name);
         } else {
@@ -38,12 +43,14 @@ class NameMatcher {
         }
     }
 
-    public static function getNumberOfNodes($name) {
+    public static function getNumberOfNodes($name)
+    {
         $nodes = self::getNodes($name);
         return count($nodes);
     }
 
-    public static function formatName($first, $middle, $last) {
+    public static function formatName($first, $middle, $last)
+    {
         if ($middle) {
             return $first." ".$middle." ".$last;
         } else {
@@ -51,14 +58,15 @@ class NameMatcher {
         }
     }
 
-    public static function doInstitutionsMatch($i1, $i2) {
+    public static function doInstitutionsMatch($i1, $i2)
+    {
         if (!$i1 || !$i2) {
-            return FALSE;
+            return false;
         }
         $i1 = strtolower($i1);
         $i2 = strtolower($i2);
         if ($i1 == $i2) {
-            return TRUE;
+            return true;
         }
         $delim = "|";
         return (
@@ -67,7 +75,8 @@ class NameMatcher {
         );
     }
 
-    public static function matchLastName($lastName, $tokenOrArrayOfFirsts, $serverOrArrayOfLasts) {
+    public static function matchLastName($lastName, $tokenOrArrayOfFirsts, $serverOrArrayOfLasts)
+    {
         if (!$lastName) {
             return [];
         }
@@ -85,21 +94,23 @@ class NameMatcher {
         return $names;
     }
 
-    private static function testLastName($lastName1, $lastName2) {
+    private static function testLastName($lastName1, $lastName2)
+    {
         return preg_match("/".preg_quote($lastName2, "/")."/", $lastName1) || preg_match("/".preg_quote($lastName1, "/")."/", $lastName2);
     }
 
-    public static function eliminateInitials($name) {
+    public static function eliminateInitials($name)
+    {
         $name = preg_replace("/\b[A-Z]\b\.?/", "", $name);
-        $name = trim($name);
-        return $name;
+        return trim($name);
     }
 
-    private static function doNamesMatch($name1, $name2) {
+    private static function doNamesMatch($name1, $name2)
+    {
         $name1WithoutApostrophes = str_replace("'", "", $name1);
         $name2WithoutApostrophes = str_replace("'", "", $name2);
         if (strtolower($name1WithoutApostrophes) == strtolower($name2WithoutApostrophes)) {
-            return TRUE;
+            return true;
         }
         $nodes1 = self::getNodes($name1);
         $nodes2 = self::getNodes($name2);
@@ -107,7 +118,7 @@ class NameMatcher {
             foreach ($nodes1 as $node1) {
                 foreach ($nodes2 as $node2) {
                     if (!self::isInitial($node1) && !self::isInitial($node2) && (strtolower($node1) == strtolower($node2))) {
-                        return TRUE;
+                        return true;
                     }
                 }
             }
@@ -141,64 +152,68 @@ class NameMatcher {
             $n2 = $pair[1];
             if (!self::isShortName($n1)) {
                 if (preg_match($delim.preg_quote($n1, $delim).$delim."i", $n2)) {
-                    return TRUE;
+                    return true;
                 }
             }
             if (!self::isShortName($n2)) {
                 if (preg_match($delim.preg_quote($n2, $delim).$delim."i", $n1)) {
-                    return TRUE;
+                    return true;
                 }
             }
             if (strtolower($n1) == strtolower($n2)) {
-                return TRUE;
+                return true;
             }
         }
-        return FALSE;
+        return false;
     }
 
-    public static function isShortName($name) {
+    public static function isShortName($name)
+    {
         return (strlen($name) <= 4);
     }
 
-    public static function isShortLastName($lastName) {
+    public static function isShortLastName($lastName)
+    {
         return self::isShortName($lastName);
     }
 
-    public static function explodeAlternates($name) {
+    public static function explodeAlternates($name)
+    {
         $list = [$name];
-        if (preg_match("/'/", $name)) {
+        if (str_contains($name, "'")) {
             $list[] = preg_replace("/'/", "", $name);
         }
         return $list;
     }
 
-	public static function matchNames($firsts, $lasts, $first, $last, $secondPairRecordId = -1) {
-		if (!$firsts || !$lasts) {
-			return "";
-		}
+    public static function matchNames($firsts, $lasts, $first, $last, $secondPairRecordId = -1)
+    {
+        if (!$firsts || !$lasts) {
+            return "";
+        }
         $nameRow = [
             "record_id" => $secondPairRecordId,
             "identifier_first_name" => $first,
             "identifier_last_name" => $last,
         ];
         $namesToSearch = [$nameRow];
-		$recordIds = array();
-		for ($i = 0; $i < count($firsts) && $i < count($lasts); $i++) {
-			$myFirst = self::prepareName($firsts[$i]);
-			$myLast = self::prepareName($lasts[$i]);
-            $recordIds[$i] = FALSE;
-			if ($myFirst && $myLast) {
+        $recordIds = array();
+        for ($i = 0; $i < count($firsts) && $i < count($lasts); $i++) {
+            $myFirst = self::prepareName($firsts[$i]);
+            $myLast = self::prepareName($lasts[$i]);
+            $recordIds[$i] = false;
+            if ($myFirst && $myLast) {
                 foreach ($namesToSearch as $row) {
                     $sFirst = self::prepareName($row['identifier_first_name']);
                     $sLast = self::prepareName($row['identifier_last_name']);
-                    $found = FALSE;
+                    $found = false;
                     foreach (self::explodeFirstName($sFirst) as $sFirst) {
                         foreach (self::explodeLastName($sLast) as $sLast) {
                             if (self::doNamesMatch($sLast, $myLast)) {
                                 if (self::isInitialsOnly($myFirst)) {
                                     if (self::matchByInitials($sLast, $sFirst, $myLast, $myFirst)) {
                                         $recordIds[$i] = $row['record_id'];
-                                        $found = TRUE;
+                                        $found = true;
                                         break;  // inner
                                     }
                                 }
@@ -207,44 +222,44 @@ class NameMatcher {
                                     $myFirstInitial = self::turnIntoOneInitial($myFirst);
                                     if (self::matchByInitials($sLast, $sFirstInitial, $myLast, $myFirstInitial)) {
                                         $recordIds[$i] = $row['record_id'];
-                                        $found = TRUE;
+                                        $found = true;
                                         break;  // inner
                                     }
-                                    $myNodes = self::getNodes($myFirst, TRUE);
-                                    $sNodes = self::getNodes($sFirst, TRUE);
+                                    $myNodes = self::getNodes($myFirst, true);
+                                    $sNodes = self::getNodes($sFirst, true);
                                     if ((count($myNodes) > 1) && (count($sNodes) > 1)) {
-                                        $matchFound = FALSE;
+                                        $matchFound = false;
                                         foreach ($myNodes as $myNode) {
                                             foreach ($sNodes as $sNode) {
                                                 if (self::doNamesMatch($myNode, $sNode)) {
-                                                    $matchFound = TRUE;
+                                                    $matchFound = true;
                                                 }
                                             }
                                         }
                                         if ($matchFound) {
                                             $recordIds[$i] = $row['record_id'];
-                                            $found = TRUE;
+                                            $found = true;
                                             break;  // inner
                                         }
-                                    } else if (count($myNodes) > 1) {
+                                    } elseif (count($myNodes) > 1) {
                                         $myMiddleName = $myNodes[1];
                                         if (self::doNamesMatch($sFirst, $myMiddleName)) {
                                             $recordIds[$i] = $row['record_id'];
-                                            $found = TRUE;
+                                            $found = true;
                                             break;  // inner
                                         }
-                                    } else if (count($sNodes) > 1) {
+                                    } elseif (count($sNodes) > 1) {
                                         $sMiddleName = $sNodes[1];
                                         if (self::doNamesMatch($sMiddleName, $myFirst)) {
                                             $recordIds[$i] = $row['record_id'];
-                                            $found = TRUE;
+                                            $found = true;
                                             break;  // inner
                                         }
                                     }
                                 }
                                 if (self::doNamesMatch($sFirst, $myFirst)) {
                                     $recordIds[$i] = $row['record_id'];
-                                    $found = TRUE;
+                                    $found = true;
                                     break;  // inner
                                 }
                             }
@@ -258,43 +273,44 @@ class NameMatcher {
                     }
                 }
             }
-		}
-		return $recordIds;
-	}
-
-	private static function prepareName($name) {
-        $name = strtolower($name);
-        $name = preg_replace("/\s+/", "-", $name);
-        return $name;
+        }
+        return $recordIds;
     }
 
-    public static function removeParenthesesAndQuotes($name) {
+    private static function prepareName($name)
+    {
+        $name = strtolower($name);
+        return preg_replace("/\s+/", "-", $name);
+    }
+
+    public static function removeParenthesesAndQuotes($name)
+    {
         $name = preg_replace("/[\(\)]/", " ", $name);
         $name = preg_replace("/\"(\w+)\"/", "\1", $name);
         $name = preg_replace("/'(\w+)'/", "\1", $name);
         $name = trim($name);
-        $name = preg_replace("/\s\s+/", " ", $name);
-        return $name;
+        return preg_replace("/\s\s+/", " ", $name);
     }
 
-	public static function explodeFirstName($first, $middle = "") {
+    public static function explodeFirstName($first, $middle = "")
+    {
         $first = self::removeParenthesesAndQuotes($first);
         $firstWithAccentMarks = $first;
         $first = self::getRidOfAccentMarks($firstWithAccentMarks);
-	    $firstNodes = self::getNodes($first);
-	    $middleNodes = [];
-	    if ($middle) {
-	        $middleNodes = self::getNodes($middle);
+        $firstNodes = self::getNodes($first);
+        $middleNodes = [];
+        if ($middle) {
+            $middleNodes = self::getNodes($middle);
         }
-	    $nodes = array_unique(array_merge($firstNodes, $middleNodes));
+        $nodes = array_unique(array_merge($firstNodes, $middleNodes));
 
-	    $newNodes = [$first];
-	    foreach ($nodes as $node) {
-	        $isMiddleInitial = FALSE;
-	        if (self::isInitial($node) && in_array($node, $middleNodes)) {
-	            $isMiddleInitial = TRUE;
+        $newNodes = [$first];
+        foreach ($nodes as $node) {
+            $isMiddleInitial = false;
+            if (self::isInitial($node) && in_array($node, $middleNodes)) {
+                $isMiddleInitial = true;
             }
-	        if ($node && !in_array($node, $newNodes) && !$isMiddleInitial) {
+            if ($node && !in_array($node, $newNodes) && !$isMiddleInitial) {
                 $newNodes[] = $node;
             }
         }
@@ -305,7 +321,8 @@ class NameMatcher {
         return self::trimArray($newNodes);
     }
 
-    private static function decodeHTML($entity) {
+    private static function decodeHTML($entity)
+    {
         if (is_array($entity)) {
             foreach ($entity as $key => $value) {
                 $key = self::decodeHTML($key);
@@ -318,7 +335,8 @@ class NameMatcher {
         }
     }
 
-    private static function trimArray($ary) {
+    private static function trimArray($ary)
+    {
         $newAry = [];
         foreach ($ary as $elem) {
             $newAry[] = trim($elem);
@@ -326,11 +344,13 @@ class NameMatcher {
         return $newAry;
     }
 
-    private static function getSuffixes() {
+    private static function getSuffixes()
+    {
         return ["I", "II", "III", "IV", "JR", "JR.", "SR", "SR."];
     }
 
-    public static function getRidOfAccentMarks($name) {
+    public static function getRidOfAccentMarks($name)
+    {
         $unwanted_array = array(    'Š'=>'S', 'š'=>'s', 'Ž'=>'Z', 'ž'=>'z', 'À'=>'A', 'Á'=>'A', 'Â'=>'A', 'Ã'=>'A', 'Ä'=>'A', 'Å'=>'A', 'Æ'=>'A', 'Ç'=>'C', 'È'=>'E', 'É'=>'E',
             'Ê'=>'E', 'Ë'=>'E', 'Ì'=>'I', 'Í'=>'I', 'Î'=>'I', 'Ï'=>'I', 'Ñ'=>'N', 'Ò'=>'O', 'Ó'=>'O', 'Ô'=>'O', 'Õ'=>'O', 'Ö'=>'O', 'Ø'=>'O', 'Ù'=>'U',
             'Ú'=>'U', 'Û'=>'U', 'Ü'=>'U', 'Ý'=>'Y', 'Þ'=>'B', 'ß'=>'Ss', 'à'=>'a', 'á'=>'a', 'â'=>'a', 'ã'=>'a', 'ä'=>'a', 'å'=>'a', 'æ'=>'a', 'ç'=>'c',
@@ -339,24 +359,25 @@ class NameMatcher {
         return strtr($name, $unwanted_array);
     }
 
-    public static function explodeLastName($last) {
+    public static function explodeLastName($last)
+    {
         $last = self::removeParenthesesAndQuotes($last);
         $lastWithAccentMarks = $last;
         $last = self::getRidOfAccentMarks($lastWithAccentMarks);
-	    $nodes = self::getNodes($last);
-	    $newNodes = [$last];
-	    $i = 0;
-	    $suffixesInUpper = self::getSuffixes();
-	    $prefixesInLower = ["van", "von", "de", "der"];
-	    foreach ($nodes as $node) {
-	        if (in_array(strtoupper($node), $suffixesInUpper) && ($i == 1)) {
-	            return [$nodes[0], $nodes[0]." ".$nodes[1]];
-            } else if (in_array(strtolower($node), $prefixesInLower) && ($i == 0) && (count($nodes) >= 2)) {
+        $nodes = self::getNodes($last);
+        $newNodes = [$last];
+        $i = 0;
+        $suffixesInUpper = self::getSuffixes();
+        $prefixesInLower = ["van", "von", "de", "der"];
+        foreach ($nodes as $node) {
+            if (in_array(strtoupper($node), $suffixesInUpper) && ($i == 1)) {
+                return [$nodes[0], $nodes[0]." ".$nodes[1]];
+            } elseif (in_array(strtolower($node), $prefixesInLower) && ($i == 0) && (count($nodes) >= 2)) {
                 return self::collapseNames($nodes, 1);
-            } else if ($node && !in_array($node, $newNodes)) {
-	            $newNodes[] =  $node;
+            } elseif ($node && !in_array($node, $newNodes)) {
+                $newNodes[] =  $node;
             }
-	        $i++;
+            $i++;
         }
         if (preg_match("/\s/", $last)) {
             $newNodes[] = preg_replace("/\s/", "-", $last);
@@ -371,40 +392,45 @@ class NameMatcher {
         return self::trimArray($newNodes);
     }
 
-	# returns recordId that matches
-	# returns "" if no match
+    # returns recordId that matches
+    # returns "" if no match
     # $secondPairRecordId is for second pair if they are names
-	public static function matchName($first, $last, $tokenOrFirst, $serverOrLast, $secondPairRecordId = -1) {
+    public static function matchName($first, $last, $tokenOrFirst, $serverOrLast, $secondPairRecordId = -1)
+    {
         if ($first && $last) {
             $ary = self::matchNames(array($first), array($last), $tokenOrFirst, $serverOrLast, $secondPairRecordId);
             if (count($ary) > 0) {
                 return $ary[0];
             }
         }
-		return "";
-	}
+        return "";
+    }
 
-    public static function matchByLastName($lastName1, $lastName2) {
+    public static function matchByLastName($lastName1, $lastName2)
+    {
         $lastName1 = strtolower($lastName1);
         $lastName2 = strtolower($lastName2);
         return ($lastName1 == $lastName2);
     }
 
-    public static function matchByFirstName($firstName1, $firstName2) {
+    public static function matchByFirstName($firstName1, $firstName2)
+    {
         return self::matchByLastName($firstName1, $firstName2);
     }
 
-    public static function dashes2Spaces($name) {
+    public static function dashes2Spaces($name)
+    {
         return preg_replace("/\-/", " ", $name);
     }
 
     # case-insensitive match based on last name and first initial only
-	# returns TRUE/FALSE
-	public static function matchByInitials($lastName1, $firstName1, $lastName2, $firstName2) {
+    # returns TRUE/FALSE
+    public static function matchByInitials($lastName1, $firstName1, $lastName2, $firstName2)
+    {
         $firstNames1 = is_array($firstName1) ? $firstName1 : [$firstName1];
         $firstNames2 = is_array($firstName2) ? $firstName2 : [$firstName2];
 
-        $firstInitialMatch = FALSE;
+        $firstInitialMatch = false;
         foreach ($firstNames1 as $fn1) {
             $fn1 = strtolower($fn1);
             foreach ($firstNames2 as $fn2) {
@@ -412,36 +438,38 @@ class NameMatcher {
                 $fi1 = self::turnIntoOneInitial($fn1);
                 $fi2 = self::turnIntoOneInitial($fn2);
                 if ($fi1 == $fi2) {
-                    $firstInitialMatch = TRUE;
+                    $firstInitialMatch = true;
                 }
             }
         }
         if (!$firstInitialMatch) {
-            return FALSE;
+            return false;
         }
 
-		$lastNames1 = is_array($lastName1) ? $lastName1 : self::explodeLastName(self::dashes2Spaces($lastName1));
-		$lastNames2 = is_array($lastName2) ? $lastName2 : self::explodeLastName(self::dashes2Spaces($lastName2));
-		foreach ($lastNames1 as $ln1) {
-		    $ln1 = strtolower($ln1);
-		    foreach ($lastNames2 as $ln2) {
-		        $ln2 = strtolower($ln2);
+        $lastNames1 = is_array($lastName1) ? $lastName1 : self::explodeLastName(self::dashes2Spaces($lastName1));
+        $lastNames2 = is_array($lastName2) ? $lastName2 : self::explodeLastName(self::dashes2Spaces($lastName2));
+        foreach ($lastNames1 as $ln1) {
+            $ln1 = strtolower($ln1);
+            foreach ($lastNames2 as $ln2) {
+                $ln2 = strtolower($ln2);
                 if ($ln1 == $ln2) {
-                    return TRUE;
+                    return true;
                 }
             }
         }
-		return FALSE;
-	}
+        return false;
+    }
 
-	public static function turnIntoOneInitial($name) {
-		if (strlen($name) >= 1) {
-			return substr($name, 0, 1);
-		}
-		return "";
-	}
+    public static function turnIntoOneInitial($name)
+    {
+        if (strlen($name) >= 1) {
+            return substr($name, 0, 1);
+        }
+        return "";
+    }
 
-    public static function prettyOneName($namePart) {
+    public static function prettyOneName($namePart)
+    {
         if (($namePart == strtoupper($namePart)) || ($namePart == strtolower($namePart))) {
             return ucfirst(strtolower($namePart));
         } else {
@@ -449,14 +477,16 @@ class NameMatcher {
         }
     }
 
-	public static function pretty($name) {
-		list($first, $last) = self::splitName($name);
-		return "$first $last";
-	}
+    public static function pretty($name)
+    {
+        list($first, $last) = self::splitName($name);
+        return "$first $last";
+    }
 
-	# from 2010 census
+    # from 2010 census
     # https://www.census.gov/topics/population/genealogy/data/2010_surnames.html
-	public static function isCommonLastName($lastName) {
+    public static function isCommonLastName($lastName)
+    {
         # criteria 200,000+ names in US
         $listOfCommonLastNames = [
             "SMITH",
@@ -585,45 +615,45 @@ class NameMatcher {
         return in_array($lastName, $listOfCommonLastNames);
     }
 
-    public static function isLastNameFirst($name) {
+    public static function isLastNameFirst($name)
+    {
         return preg_match("/^\S+,\s+\S/", $name);
     }
 
-	# returns list($firstName, $lastName)
-	public static function splitName($name, $parts = 2) {
-        $clearOfExtraTitles = FALSE;
+    # returns list($firstName, $lastName)
+    public static function splitName($name, $parts = 2)
+    {
+        $clearOfExtraTitles = false;
         $simpleLastNamePrefixes = ["von", "van", "de"];
         $complexLastNamePrefixes = [["von", "van", "de"], ["der", "la"]];
 
         if ($parts <= 0) {
             throw new \Exception("Parts must be positive! ($parts)");
         }
-		if ($name == "") {
-		    $returnValues = [];
-		    for ($i = 0; $i < $parts; $i++) {
-		        $returnValues[] = "";
+        if ($name == "") {
+            $returnValues = [];
+            for ($i = 0; $i < $parts; $i++) {
+                $returnValues[] = "";
             }
-			return $returnValues;
-		}
-		if ($parts == 1) {
-		    return [$name];
+            return $returnValues;
+        }
+        if ($parts == 1) {
+            return [$name];
         }
 
-		$nodes = preg_split("/\s*,\s*/", $name);
-		if ($clearOfExtraTitles) {
-            $nodes = self::clearOfDegrees($nodes);
-        }
+        $nodes = preg_split("/\s*,\s*/", $name);
+
         $nodes = self::clearOfHonorifics($nodes);
-		if (count($nodes) == 1) {
-		    if (preg_match("/\band\b/", $name)) {
+        if (count($nodes) == 1) {
+            if (preg_match("/\band\b/", $name)) {
                 $nodes = preg_split("/\s*\band\b\s*/", $name);
             }
         }
-		if (count($nodes) >= 2) {
-			# last-name, first-name
+        if (count($nodes) >= 2) {
+            # last-name, first-name
             if ($parts == 2) {
                 return [$nodes[1], $nodes[0]];
-            } else if (count($nodes) >= $parts) {
+            } elseif (count($nodes) >= $parts) {
                 $returnValues = [$nodes[1], $nodes[0]];
                 for ($i = 2; $i < $parts; $i++) {
                     $returnValues[] = $nodes[$i];
@@ -637,18 +667,15 @@ class NameMatcher {
                 $nodesInRightOrder[] = $nodes[0];    // last name
                 return self::padWithSpaces($nodesInRightOrder, $parts);
             }
-		} else if (count($nodes) == 1) {
+        } elseif (count($nodes) == 1) {
             if ($parts >= 2) {
                 $prevName = $nodes[0];
-                $nodes = self::getNodes($prevName, TRUE);
-                if ($clearOfExtraTitles) {
-                    $nodes = self::clearOfDegrees($nodes);
-                    $nodes = self::clearOfHonorifics($nodes);
-                }
+                $nodes = self::getNodes($prevName, true);
+
                 $lastNodeIdx = count($nodes) - 1;
 
                 do {
-                    $changed = FALSE;
+                    $changed = false;
                     if (count($nodes) == $parts) {
                         if (($parts == 2) && preg_match("/^[A-Z][A-Z]?[A-Z]?$/", $nodes[1])) {
                             # Initials
@@ -656,70 +683,71 @@ class NameMatcher {
                         } else {
                             return $nodes;
                         }
-                    } else if ((count($nodes) == 3) && (self::isInitial($nodes[0]) || self::isInitial($nodes[1]))) {
+                    } elseif ((count($nodes) == 3) && (self::isInitial($nodes[0]) || self::isInitial($nodes[1]))) {
                         if ($parts == 2) {
                             if (self::isInitial($nodes[1])) {
                                 return [$nodes[0], $nodes[2]];
-                            } else if (self::isInitial($nodes[0])) {
+                            } elseif (self::isInitial($nodes[0])) {
                                 return [$nodes[1], $nodes[2]];
                             } else {
                                 return [$nodes[0] . " " . $nodes[1], $nodes[2]];
                             }
-                        } else if ($parts > 3) {
+                        } elseif ($parts > 3) {
                             return self::padWithSpaces($nodes, $parts);
-                        } else if ($parts == 3) {
+                        } elseif ($parts == 3) {
                             return $nodes;
                         }
-                    } else if (count($nodes) > $parts) {
+                    } elseif (count($nodes) > $parts) {
                         if (in_array(strtolower($nodes[$lastNodeIdx - 1]), $simpleLastNamePrefixes)) {
                             $newNodes = [];
                             for ($i = 0; $i < $lastNodeIdx - 1; $i++) {
                                 $newNodes[] = $nodes[$i];
                             }
                             $newNodes[] = $nodes[$lastNodeIdx - 1] . " " . $nodes[$lastNodeIdx];
-                            $changed = TRUE;
+                            $changed = true;
                             $nodes = $newNodes;
-                        } else if (($lastNodeIdx > 2) && in_array(strtolower($nodes[$lastNodeIdx - 2]), $complexLastNamePrefixes[0]) && in_array(strtolower($nodes[$lastNodeIdx - 1]), $complexLastNamePrefixes[1])) {
+                        } elseif (($lastNodeIdx > 2) && in_array(strtolower($nodes[$lastNodeIdx - 2]), $complexLastNamePrefixes[0]) && in_array(strtolower($nodes[$lastNodeIdx - 1]), $complexLastNamePrefixes[1])) {
                             $newNodes = [];
                             for ($i = 0; $i < $lastNodeIdx - 2; $i++) {
                                 $newNodes[] = $nodes[$i];
                             }
                             $newNodes[] = $nodes[$lastNodeIdx - 2] . " " . $nodes[$lastNodeIdx - 1] . " " . $nodes[$lastNodeIdx];
-                            $changed = TRUE;
+                            $changed = true;
                             $nodes = $newNodes;
-                        } else if (preg_match("/^\((.+)\)$/", $nodes[$lastNodeIdx] ?? "", $matches)) {
+                        } elseif (preg_match("/^\((.+)\)$/", $nodes[$lastNodeIdx] ?? "", $matches)) {
                             $newNodes = [];
                             for ($i = 0; $i < $lastNodeIdx - 1; $i++) {
                                 $newNodes[] = $nodes[$i];
                             }
                             $newNodes[] = $nodes[$lastNodeIdx - 1] . " " . $matches[1];   # remove parentheses
-                            $changed = TRUE;
+                            $changed = true;
                             $nodes = $newNodes;
                         } else {
                             return self::collapseNames($nodes, $parts);
                         }
-                    } else if (count($nodes) < $parts) {
+                    } elseif (count($nodes) < $parts) {
                         return self::padWithSpaces($nodes, $parts);
                     }
-                } while($changed);
+                } while ($changed);
 
                 if (count($nodes) > $parts) {
                     return self::collapseNames($nodes, $parts);
-                } else if (count($nodes) < $parts) {
+                } elseif (count($nodes) < $parts) {
                     return self::padWithSpaces($nodes, $parts);
                 } else {
                     throw new \Exception("This should never happen!");
                 }
             }
-		}
-		return array("", "");
-	}
+        }
+        return array("", "");
+    }
 
-	public static function clearOfHonorifics($nodes) {
-        $returnString = FALSE;
+    public static function clearOfHonorifics($nodes)
+    {
+        $returnString = false;
         if (is_string($nodes)) {
-            $returnString = TRUE;
-            $nodes = self::getNodes($nodes, TRUE);
+            $returnString = true;
+            $nodes = self::getNodes($nodes, true);
         }
         $honorifics = [
             "Mr.",
@@ -761,11 +789,12 @@ class NameMatcher {
         }
     }
 
-	public static function clearOfDegrees($nodes) {
-        $returnString = FALSE;
+    public static function clearOfDegrees($nodes)
+    {
+        $returnString = false;
         if (is_string($nodes)) {
-            $returnString = TRUE;
-            $nodes = self::getNodes($nodes, TRUE);
+            $returnString = true;
+            $nodes = self::getNodes($nodes, true);
         }
         $degreesInUpperCase = [
             "MD,",
@@ -813,12 +842,13 @@ class NameMatcher {
         }
     }
 
-	private static function collapseNames($nodes, $parts) {
+    private static function collapseNames($nodes, $parts)
+    {
         $suffixes = self::getSuffixes();
-        $hasSuffix = FALSE;
+        $hasSuffix = false;
         for ($i = 1; $i < count($nodes); $i++) {
             if (in_array(strtoupper($nodes[$i]), $suffixes)) {
-                $hasSuffix = TRUE;
+                $hasSuffix = true;
                 break;
             }
         }
@@ -856,14 +886,15 @@ class NameMatcher {
         return $returnValues;
     }
 
-    private static function isFirstInitalMiddleName($name) {
+    private static function isFirstInitalMiddleName($name)
+    {
         if (preg_match("/^\w\.[\s\-]\w+/", $name)) {
-            return TRUE;
+            return true;
         }
         if (preg_match("/^\w[\s\-]\w+/", $name)) {
-            return TRUE;
+            return true;
         }
-        return FALSE;
+        return false;
     }
 
     // TRUE for E or E.
@@ -871,27 +902,30 @@ class NameMatcher {
     // TRUE for W E B or W. E. B.
     // FALSE for WEB or W.E.B.
     // FALSE for Ryan
-    public static function isInitialsOnly($name) {
+    public static function isInitialsOnly($name)
+    {
         if (preg_match("/^[A-Z]\.?$/", $name)) {
-            return TRUE;
+            return true;
         }
         if (preg_match("/^[A-Z]\.?[A-Z]\.?$/", $name)) {
-            return TRUE;
+            return true;
         }
         $nodes = self::getNodes($name);
         foreach ($nodes as $node) {
             if (!self::isInitial($node)) {
-                return FALSE;
+                return false;
             }
         }
-        return TRUE;
+        return true;
     }
 
-	public static function isInitial($name) {
+    public static function isInitial($name)
+    {
         return preg_match("/^\w\.?$/", $name);
     }
 
-    private static function padWithSpaces($nodes, $parts) {
+    private static function padWithSpaces($nodes, $parts)
+    {
         $returnValues = [$nodes[0]];
         for ($i = 0; $i < $parts - count($nodes); $i++) {
             $returnValues[] = "";
@@ -902,6 +936,6 @@ class NameMatcher {
         return $returnValues;
     }
 
-	private static $namesForMatch = NULL;
-	private static $currToken = "";
+    private static $namesForMatch = null;
+    private static $currToken = "";
 }

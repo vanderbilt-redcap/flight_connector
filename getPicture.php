@@ -17,7 +17,7 @@ foreach ($redcapData as $row) {
     if ($row['picture'] == $fileId) {
         try {
             displayEdoc($module, $fileId);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
         }
         exit;
     }

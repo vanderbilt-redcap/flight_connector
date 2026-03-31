@@ -24,7 +24,7 @@ echo "<table>";
 echo "<thead><tr><th>Record ID</th><th>First Name</th><th>Last Name</th></tr>";
 echo "<tbody>";
 foreach ($names as $recordId => $name) {
-    list($fn, $ln) = NameMatcher::splitName($name, 2);
+    list($fn, $ln) = NameMatcher::splitName($name);
     echo "<tr><td>$recordId</td><td>$fn</td><td>$ln</td></tr>";
 }
 echo "</tbody></table>";

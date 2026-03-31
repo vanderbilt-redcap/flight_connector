@@ -22,7 +22,7 @@ $csvData = \REDCap::getDataDictionary($pid, "csv", false);
 $csv = [];
 foreach (preg_split("/[\n\r]+/", $csvData) as $row) {
     if ($row) {
-        $csv[] = str_getcsv($row, ",", "", '\\');
+        $csv[] = str_getcsv($row, ",", "");
     }
 }
 if (!empty($_POST)) {
@@ -140,7 +140,7 @@ if (!empty($_POST)) {
     $filename = APP_PATH_TEMP.bin2hex(random_bytes(8))."_".$applicableInstrument.".csv";
     $fp = fopen($filename, "w");
     foreach ($csv as $row) {
-        fputcsv($fp, $row, ",", "", '\\');
+        fputcsv($fp, $row, ",", "");
     }
     fclose($fp);
     $module->importDataDictionary($pid, $filename);

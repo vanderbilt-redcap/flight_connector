@@ -17,7 +17,7 @@ function getAdjuncts($pid)
     foreach ($redcapData as $row) {
         $recordId = $row['record_id'];
         $name = $row['name'] ?: $row['firstname'] . " " . $row['lastname'];
-        list($first, $last) = NameMatcher::splitName($name, 2);
+        list($first, $last) = NameMatcher::splitName($name);
         $first = preg_replace("/\s+\(\w+\)/", "", $first);    // parentheses throw off LDAP
         $key = LDAP::getNameAssociations($first, $last);
         $nameInfo = LDAP::getLDAPByMultiple(array_keys($key), array_values($key));

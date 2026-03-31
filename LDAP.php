@@ -4,12 +4,6 @@ namespace Vanderbilt\FlightConnectorExternalModule;
 
 class LDAP
 {
-    private $FCEM;
-
-    private function __construct()
-    {
-        $this->FCEM = new FlightConnectorExternalModule();
-    }
     public static function getLDAPByMultiple($types, $values)
     {
         return LdapLookup::lookupUserDetailsByKeys($values, $types, true, false);

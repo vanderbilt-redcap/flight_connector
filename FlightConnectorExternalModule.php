@@ -22,22 +22,24 @@ class FlightConnectorExternalModule extends AbstractExternalModule
     const VFRS_SURVEY_OF_INTENT = 15941;
     const EDGE_REVIEW_SURVEY_OF_INTENT = 72575;
 
-    public static function getLocalhostProject($name) {
+    public static function getLocalhostProject($name)
+    {
         if (($name == "Vanderbilt") && ($_SERVER['SSL_SERVER_S_DN_Email'] == "scott.j.pearson@vumc.org")) {
             return 87;
-        } else if (($name == "Contents and Methods") && ($_SERVER['SSL_SERVER_S_DN_Email'] == "scott.j.pearson@vumc.org")) {
+        } elseif (($name == "Contents and Methods") && ($_SERVER['SSL_SERVER_S_DN_Email'] == "scott.j.pearson@vumc.org")) {
             return 95;
-        } else if (($name == "VFRS") && ($_SERVER['SSL_SERVER_S_DN_Email'] == "scott.j.pearson@vumc.org")) {
+        } elseif (($name == "VFRS") && ($_SERVER['SSL_SERVER_S_DN_Email'] == "scott.j.pearson@vumc.org")) {
             return 166;
         }
         return "";
     }
 
-    public function getFields($pid) {
+    public function getFields($pid)
+    {
         $option1 = ["contents" => "Concepts or Content Areas", "methods" => "Methods or Tools"];
         $option2 = ["c" => "Content Areas", "m" => "Methods"];
 
-        foreach([$option1, $option2] as $option) {
+        foreach ([$option1, $option2] as $option) {
             $fields = array_keys($option);
             $sql = "SELECT field_name FROM redcap_metadata WHERE project_id = ? AND field_name IN (?, ?)";
             $q = $this->query($sql, [$pid, $fields[0], $fields[1]]);
@@ -48,13 +50,15 @@ class FlightConnectorExternalModule extends AbstractExternalModule
         return $option1;
     }
 
-    static function isEFSRetreat($pid) {
+    public static function isEFSRetreat($pid)
+    {
         return in_array($pid, [self::EFS_RETREAT_2023_PROJECT, self::EFS_RETREAT_2024_PROJECT]) && self::isVanderbilt();
     }
 
-    function isSetup($project_id) {
+    public function isSetup($project_id)
+    {
         if (self::isEFSRetreat($project_id)) {
-            return TRUE;
+            return true;
         }
         $fields = array_keys(self::getFields($project_id));
         $sql = "SELECT field_name FROM redcap_metadata WHERE project_id = ? AND form_name = ? AND field_name IN (?, ?)";
@@ -62,7 +66,7 @@ class FlightConnectorExternalModule extends AbstractExternalModule
         return $q->fetch_assoc();
     }
 
-    function redcap_every_page_before_render($project_id)
+    public function redcap_every_page_before_render($project_id)
     {
         if (self::isLocalhost() && ($project_id == self::getLocalhostProject("Contents and Methods"))) {
             return;
@@ -83,7 +87,8 @@ class FlightConnectorExternalModule extends AbstractExternalModule
         }
     }
 
-    public static function isContentsAndMethods($project_id) {
+    public static function isContentsAndMethods($project_id)
+    {
         return (
             (
                 self::isLocalhost()
@@ -96,7 +101,8 @@ class FlightConnectorExternalModule extends AbstractExternalModule
         );
     }
 
-    public static function isVFRS($project_id) {
+    public static function isVFRS($project_id)
+    {
         return (
             (
                 self::isLocalhost()
@@ -109,7 +115,8 @@ class FlightConnectorExternalModule extends AbstractExternalModule
         );
     }
 
-    function redcap_every_page_top($project_id) {
+    public function redcap_every_page_top($project_id)
+    {
         if (self::isREDCap() && !self::isContentsAndMethods($project_id)) {
             $mapUrl = $this->getMapURL();
             $nodeGraphUrl = $this->getNodeGraphURL();
@@ -121,7 +128,7 @@ $(document).ready(() => {
     }, 30);
 });
 </script>";
-        } else if (self::isREDCap() && self::isContentsAndMethods($project_id)) {
+        } elseif (self::isREDCap() && self::isContentsAndMethods($project_id)) {
             echo "<script>
 $(document).ready(() => {
     setTimeout(() => {
@@ -133,16 +140,19 @@ $(document).ready(() => {
         }
     }
 
-    public static function isVanderbilt() {
+    public static function isVanderbilt()
+    {
         return in_array(SERVER_NAME, ["redcap.vanderbilt.edu", "redcaptest.vanderbilt.edu", "redcap.vumc.org", "redcaptest.vumc.org"]);
     }
 
-    public static function isLocalhost() {
+    public static function isLocalhost()
+    {
         global $homepage_contact_email;
         return (SERVER_NAME == "localhost") && ($homepage_contact_email == "scott.j.pearson@vumc.org");
     }
 
-    public function cron() {
+    public function cron()
+    {
         if (self::isVanderbilt()) {
             $allPids = $this->framework->getProjectsWithModuleEnabled();
             foreach ($allPids as $pid) {
@@ -155,21 +165,24 @@ $(document).ready(() => {
         }
     }
 
-    public function refreshMainFlightConnector($destPid) {
+    public function refreshMainFlightConnector($destPid)
+    {
         $identifyingFields = $this->getFieldsForMainProject();
         return $this->refreshFlightConnector($destPid, $identifyingFields);
     }
 
-    public function refreshEFSFlightConnector($destPid) {
+    public function refreshEFSFlightConnector($destPid)
+    {
         $identifyingFields = $this->getFieldsForEFSProject();
-        return $this->refreshFlightConnector($destPid, $identifyingFields, FALSE);
+        return $this->refreshFlightConnector($destPid, $identifyingFields, false);
     }
 
-    public function refreshFlightConnector($destPid, $identifyingFields, $skipEFSMentors = TRUE, $onlyIncludeNames = []) {
+    public function refreshFlightConnector($destPid, $identifyingFields, $skipEFSMentors = true, $onlyIncludeNames = [])
+    {
         $checkboxFields = ["c" => "contents", "m" => "methods"];
 
         $json = \REDCap::getDataDictionary($destPid, "json");
-        $metadata = json_decode($json, TRUE);
+        $metadata = json_decode($json, true);
         $choices = getChoices($metadata);
         $destData = \REDCap::getData($destPid, "json-array");
         $maxRecordId = 0;
@@ -189,14 +202,14 @@ $(document).ready(() => {
         $uploadByName = [];
         foreach ($identifyingFields as $pid => $fieldMappings) {
             $json = \REDCap::getDataDictionary($pid, "json");
-            $pidMetadata = json_decode($json, TRUE);
+            $pidMetadata = json_decode($json, true);
             $pidChoices = getChoices($pidMetadata);
             $redcapData = \REDCap::getData($pid, "json-array");
             foreach ($redcapData as $row) {
                 if ($skipEFSMentors && ($pid == self::EFS_RETREAT_2023_PROJECT) && in_array($row['newman_or_not'], [2, 3])) {
                     # skip mentors (2) and other (3)
-                } else if (($pid == self::CONTENT_AND_METHODS_VANDERBILT) && empty($onlyIncludeNames)) {
-                } else if ($row['is_archived'] == '1') {
+                } elseif (($pid == self::CONTENT_AND_METHODS_VANDERBILT) && empty($onlyIncludeNames)) {
+                } elseif ($row['is_archived'] == '1') {
                 } else {
                     $translation = [];
                     foreach ($fieldMappings as $to => $from) {
@@ -215,19 +228,19 @@ $(document).ready(() => {
                                 "flight_connector_survey_complete" => "2",
                             ];
                             foreach ($row as $fullField => $value) {
-                                if (($value === "1") && preg_match("/___/", $fullField)) {
+                                if (($value === "1") && str_contains($fullField, "___")) {
                                     list($field, $index) = explode("___", $fullField);
                                     if (isset($checkboxFields[$field])) {
                                         $destField = $checkboxFields[$field];
                                         $label = $pidChoices[$field][$index];
-                                        $newIndex = FALSE;
+                                        $newIndex = false;
                                         foreach ($choices[$destField] as $destIndex => $destLabel) {
                                             if ($label == $destLabel) {
                                                 $newIndex = $destIndex;
                                                 break;
                                             }
                                         }
-                                        if ($newIndex !== FALSE) {
+                                        if ($newIndex !== false) {
                                             $uploadRow[$destField."___".$newIndex] = "1";
                                         }
                                     }
@@ -258,15 +271,16 @@ $(document).ready(() => {
         }
     }
 
-    private function copyCheckboxes($destPid, $destRecordId, $checkboxRow) {
+    private function copyCheckboxes($destPid, $destRecordId, $checkboxRow)
+    {
         $uploadRow = [
             "record_id" => $destRecordId,
         ];
-        $hasCheckboxes = FALSE;
+        $hasCheckboxes = false;
         foreach ($checkboxRow as $field => $value) {
-            if (preg_match("/___/", $field)) {
+            if (str_contains($field, "___")) {
                 $uploadRow[$field] = $value;
-                $hasCheckboxes = TRUE;
+                $hasCheckboxes = true;
             }
         }
         if ($hasCheckboxes) {
@@ -275,14 +289,16 @@ $(document).ready(() => {
         }
     }
 
-    public function getFieldsForEFSProject() {
+    public function getFieldsForEFSProject()
+    {
         return [
             self::EFS_RETREAT_2023_PROJECT => ["record_id" => "record_id", "first_name" => "firstname", "last_name" => "lastname", "email" => "email"],
             self::EFS_RETREAT_2024_PROJECT => ["record_id" => "record_id", "first_name" => "firstname", "last_name" => "lastname", "email" => "email"],
         ];
     }
 
-    public function getFieldsForMainProject() {
+    public function getFieldsForMainProject()
+    {
         return [
             self::VFRS_SURVEY_OF_INTENT => ["record_id" => "participant_id", "first_name" => "name_first", "last_name" => "name_last", "email" => "email"],
             self::EDGE_REVIEW_SURVEY_OF_INTENT => ["record_id" => "record_id", "first_name" => "first_name", "last_name" => "last_name", "email" => "email"],
@@ -292,70 +308,77 @@ $(document).ready(() => {
         ];
     }
 
-    private function isActiveProject($pid) {
+    private function isActiveProject($pid)
+    {
         if (!$pid) {
-            return FALSE;
+            return false;
         }
         $sql = "SELECT date_deleted, completed_time FROM redcap_projects WHERE project_id = ? LIMIT 1";
         $q = $this->query($sql, [$pid]);
         if ($row = $q->fetch_assoc()) {
             if (!$row['date_deleted'] && !$row['completed_time']) {
-                return TRUE;
+                return true;
             }
         }
-        return FALSE;
+        return false;
     }
 
-    private function getNOAUTHPageURL($page) {
+    private function getNOAUTHPageURL($page)
+    {
         $url= $this->getUrl($page);
         $pid = getPid();
         $uniqueHash = $this->getProjectSetting(self::UNIQUE_HASH_SETTING, $pid);
         if ($uniqueHash) {
             $url .= "&h=$uniqueHash";
         }
-        if (!preg_match("/NOAUTH/", $url)) {
+        if (!str_contains($url, "NOAUTH")) {
             $url .= "&NOAUTH";
         }
         return $url;
     }
 
-    public function getMapURL() {
+    public function getMapURL()
+    {
         return $this->getNOAUTHPageURL("map.php");
     }
 
-    public function getNodeGraphURL() {
+    public function getNodeGraphURL()
+    {
         return $this->getNOAUTHPageURL("nodeGraph.php");
     }
 
-    private static function isREDCap() {
+    private static function isREDCap()
+    {
         $rootPage = $_SERVER['PHP_SELF'] ?? "";
-        if (strpos($rootPage, "ExternalModules") !== FALSE) {
-            return FALSE;
+        if (strpos($rootPage, "ExternalModules") !== false) {
+            return false;
         }
-        if (strpos($rootPage, APP_PATH_WEBROOT) === FALSE) {
-            return FALSE;
+        if (strpos($rootPage, APP_PATH_WEBROOT) === false) {
+            return false;
         }
-        return TRUE;
+        return true;
     }
 
-    private static function isExternalModulePage() {
+    private static function isExternalModulePage()
+    {
         $page = $_SERVER['PHP_SELF'] ?? "";
         if (preg_match("/ExternalModules\/manager\/project.php/", $page)) {
-            return TRUE;
+            return true;
         }
         if (preg_match("/ExternalModules\/manager\/ajax\//", $page)) {
-            return TRUE;
+            return true;
         }
         if (preg_match("/external_modules\/manager\/project.php/", $page)) {
-            return TRUE;
+            return true;
         }
         if (preg_match("/external_modules\/manager\/ajax\//", $page)) {
-            return TRUE;
+            return true;
         }
-        return FALSE;
+        return false;
     }
 
-    function redcap_survey_page($project_id, $record,$instrument,$event_id, $group_id, $survey_hash,$response_id, $repeat_instance) {
+    public function redcap_survey_page($project_id, $record, $instrument, $event_id, $group_id, $survey_hash, $response_id, $repeat_instance)
+    {
         if (version_compare(REDCAP_VERSION, '12.0.0', '<')) {
             $line = "$(ob).parent().find('label.fl').after(\"<div id='\"+row+\"-left' class='leftCol'></div><div id='\"+row+\"-right' class='rightCol'></div>\");";
         } else {
@@ -372,14 +395,14 @@ $(document).ready(() => {
             $header = "";
         }
         $url = $this->getUrl("lookupMatches.php");
-        if (!preg_match("/NOAUTH/", $url)) {
+        if (!str_contains($url, "NOAUTH")) {
             $url .= "&NOAUTH";
         }
         $jqueryUI = $this->getUrl("jquery-ui.min.js");
 
         $fieldsJSON = json_encode(array_keys($this->getFields($project_id)));
         $metadataJSON = \REDCap::getDataDictionary($project_id, "json");
-        $metadata = json_decode($metadataJSON, TRUE);
+        $metadata = json_decode($metadataJSON, true);
         $choicesJSON = json_encode(getChoices($metadata));
         $surveyTitleJS = $header ? "$('#surveytitle').replaceWith(\"<div id='surveytitle'>$header</div>\");" : "";
         if (($project_id == self::CONTENT_AND_METHODS_VANDERBILT) && (self::isVanderbilt())) {
@@ -567,7 +590,8 @@ $(document).ready(() => {
 </style>";
     }
 
-    public static function getMeharryList() {
+    public static function getMeharryList()
+    {
         if (self::isVanderbilt()) {
             return [
                 "Jamaine Davis",
@@ -583,7 +607,8 @@ $(document).ready(() => {
         }
     }
 
-    public static function getExcludeList() {
+    public static function getExcludeList()
+    {
         if (self::isVanderbilt()) {
             return [
                 "Amy Arnold",

@@ -25,16 +25,16 @@ if (FlightConnectorExternalModule::isLocalhost()) {
 $redcapData = \REDCap::getData($pid, "json-array");
 
 $fp = fopen(__DIR__."/open_lab_list_03_2024.csv", "r");
-$headers = fgetcsv($fp, null, ',', "", '\\');
+$headers = fgetcsv($fp, null, ',', "");
 $notFound = [];
 $upload = [];
 $currRecordId = 1;
-while ($line = fgetcsv($fp, null, ',', "", '\\')) {
+while ($line = fgetcsv($fp, null, ',', "")) {
     $piName = $line[0];
     if ($piName) {
         $vuEmail = strtolower($line[1]);
         $vumcEmail = strtolower($line[2]);
-        list($piFirst, $piLast) = NameMatcher::splitName($piName, 2);
+        list($piFirst, $piLast) = NameMatcher::splitName($piName);
         $emailUsers = [];
         if ($vuEmail) {
             $emailUsers[] = explode("@", $vuEmail)[0];
@@ -45,7 +45,7 @@ while ($line = fgetcsv($fp, null, ',', "", '\\')) {
         $found = false;
         foreach ($redcapData as $row) {
             $connectorEmailUser = strtolower($row['email'] ? explode("@", $row['email'])[0] : "");
-            list($connectorFirst, $connectorLast) = NameMatcher::splitName($row['name'], 2);
+            list($connectorFirst, $connectorLast) = NameMatcher::splitName($row['name']);
             if (in_array($connectorEmailUser, $emailUsers) || NameMatcher::matchName($connectorFirst, $connectorLast, $piFirst, $piLast)) {
                 echo "Matched $piName<br/>";
                 $found = true;

@@ -25,7 +25,7 @@ $dataRequest = array(
     'returnFormat' => 'json'
 );
 $json = fetchFromServer($dataRequest, $vfrsServer);
-$vfrsData = json_decode($json, TRUE);
+$vfrsData = json_decode($json, true);
 
 $metadataRequest = array(
     'token' => $vfrsToken,
@@ -34,11 +34,11 @@ $metadataRequest = array(
     'returnFormat' => 'json'
 );
 $json = fetchFromServer($metadataRequest, $vfrsServer);
-$vfrsMetadata = json_decode($json, TRUE);
+$vfrsMetadata = json_decode($json, true);
 $vfrsChoices = getChoices($vfrsMetadata);
 
 $json = \REDCap::getDataDictionary($pid, "json");
-$metadata = json_decode($json, TRUE);
+$metadata = json_decode($json, true);
 $choices = getChoices($metadata);
 
 $upload = [];

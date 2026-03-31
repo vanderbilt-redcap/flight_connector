@@ -2,615 +2,636 @@
 
 namespace Vanderbilt\FlightConnectorExternalModule;
 
-function getEventIdForClassical($module, $pid) {
-	$sql = "SELECT DISTINCT(m.event_id) AS event_id FROM redcap_events_metadata AS m INNER JOIN redcap_events_arms AS a ON (a.arm_id = m.arm_id) WHERE a.project_id = ?";
-	$q = $module->query($sql, [$pid]);
-	if ($row = $q->fetch_assoc()) {
-		return $row['event_id'];
-	}
-	throw new \Exception("The event_id is not defined. (This should never happen.)");
+function getEventIdForClassical($module, $pid)
+{
+    $sql = "SELECT DISTINCT(m.event_id) AS event_id FROM redcap_events_metadata AS m INNER JOIN redcap_events_arms AS a ON (a.arm_id = m.arm_id) WHERE a.project_id = ?";
+    $q = $module->query($sql, [$pid]);
+    if ($row = $q->fetch_assoc()) {
+        return $row['event_id'];
+    }
+    throw new \Exception("The event_id is not defined. (This should never happen.)");
 }
 
-function makeHeader($module, $title, $width = 800, $showLinks = false) {
-	$efsLogo = $module->getUrl("efs_small_logoonly.png");
-	$ftLogo = $module->getUrl("flight_tracker_icon.png");
-	$fcLogo = $module->getUrl("images/flight-connector_icon.png");
-	// TODO check with team which link to go to - remember that outsiders might use the Vanderbilt server
-	$efsLink = isVanderbilt() ? "https://edgeforscholars.vumc.org" : "https://edgeforscholars.org";
+function makeHeader($module, $title, $width = 800, $showLinks = false)
+{
+    $efsLogo = $module->getUrl("efs_small_logoonly.png");
+    $ftLogo = $module->getUrl("flight_tracker_icon.png");
+    $fcLogo = $module->getUrl("images/flight-connector_icon.png");
+    // TODO check with team which link to go to - remember that outsiders might use the Vanderbilt server
+    $efsLink = isVanderbilt() ? "https://edgeforscholars.vumc.org" : "https://edgeforscholars.org";
 
-	$html = "<style>.ftRainbow { padding-bottom: 4px; padding-top: 4px; background: linear-gradient(0deg, white 0%, transparent 50%, white 100%), linear-gradient(90deg, white 0%, #21a6cf 40%, #4cb150 60%, white 100%); }</style>";
+    $html = "<style>.ftRainbow { padding-bottom: 4px; padding-top: 4px; background: linear-gradient(0deg, white 0%, transparent 50%, white 100%), linear-gradient(90deg, white 0%, #21a6cf 40%, #4cb150 60%, white 100%); }</style>";
 
-	$links = "";
-	if ($showLinks) {
-		$pid = $module->getProjectId();
-		$conceptMapLink = $module->getMapURL();
-		$clusterLink = $module->getNodeGraphURL();
-		$links = "<p style='margin-top: 0; margin-bottom: 0; font-size: 12px;'>";
-		// $userid = getUsername($module);
-		// if ($userid && inUserRights($userid, $module, $pid)) {
-		// $recordHomePage = APP_PATH_WEBROOT."ProjectSetup/index.php?pid=".$pid;
-		// $links .= "[<a href='$recordHomePage' style='color: black;'>REDCap project</a>] ";
-		// }
-		$links .= "[<a href='$conceptMapLink' style='color: black;'>concept map</a>] [<a href='$clusterLink' style='color: black;'>cluster graph</a>]</p>";
-	}
-	$linkStyle = "color: inherit; font-size: inherit;";
-	$headerInfo = "<p style='text-align: right; font-size: 15px; line-height: 1.0em;'>A Professional Networking Tool<br/>from <a style='$linkStyle' href='$efsLink' target='_blank'>Edge for Scholars</a> <img src='$efsLogo' style='width: 27px; height: 20px;' alt='Edge for Scholars' /><br/>and <a style='$linkStyle' href='https://redcap.link/flight_tracker' target='_blank'>Flight Tracker</a> <img src='$ftLogo' style='height: 20px;' alt='Flight Tracker for Scholars' /><br/><span style='font-size: 11px; line-height: 1.3em;'>Copyright &#9400 ".date("Y")."<br/><a style='$linkStyle' href='https://vumc.org' target='_blank'>Vanderbilt University Medical Center</a></span></p>";
-	;
-	$html .= "<table class='ftRainbow' style='margin-right: auto; margin-left: auto; width: $width"."px;'><tbody>";
-	$html .= "<tr>";
-	$html .= "<td style='width: 62%; vertical-align: middle; text-align: left;'><h1 style='text-align: left; margin-top: 0; margin-bottom: 0;'><img src='$fcLogo' style='height: 40px; vertical-align: middle; margin-right: 10px;' alt='Flight Connector Logo' />$title</h1><div style='text-align: center; width: 100%;'><h3 style='margin-top: 0; margin-bottom: 0; display: inline-block;'>Build A Network</h3></div>$links</td>";
-	$html .= "<td style='width: 38%; vertical-align: middle;'>$headerInfo</td>";
-	$html .= "</tr>";
-	$html .= "</tbody></table>";
+    $links = "";
+    if ($showLinks) {
+        $pid = $module->getProjectId();
+        $conceptMapLink = $module->getMapURL();
+        $clusterLink = $module->getNodeGraphURL();
+        $links = "<p style='margin-top: 0; margin-bottom: 0; font-size: 12px;'>";
+        // $userid = getUsername($module);
+        // if ($userid && inUserRights($userid, $module, $pid)) {
+        // $recordHomePage = APP_PATH_WEBROOT."ProjectSetup/index.php?pid=".$pid;
+        // $links .= "[<a href='$recordHomePage' style='color: black;'>REDCap project</a>] ";
+        // }
+        $links .= "[<a href='$conceptMapLink' style='color: black;'>concept map</a>] [<a href='$clusterLink' style='color: black;'>cluster graph</a>]</p>";
+    }
+    $linkStyle = "color: inherit; font-size: inherit;";
+    $headerInfo = "<p style='text-align: right; font-size: 15px; line-height: 1.0em;'>A Professional Networking Tool<br/>from <a style='$linkStyle' href='$efsLink' target='_blank'>Edge for Scholars</a> <img src='$efsLogo' style='width: 27px; height: 20px;' alt='Edge for Scholars' /><br/>and <a style='$linkStyle' href='https://redcap.link/flight_tracker' target='_blank'>Flight Tracker</a> <img src='$ftLogo' style='height: 20px;' alt='Flight Tracker for Scholars' /><br/><span style='font-size: 11px; line-height: 1.3em;'>Copyright &#9400 ".date("Y")."<br/><a style='$linkStyle' href='https://vumc.org' target='_blank'>Vanderbilt University Medical Center</a></span></p>";
+    $html .= "<table class='ftRainbow' style='margin-right: auto; margin-left: auto; width: $width"."px;'><tbody>";
+    $html .= "<tr>";
+    $html .= "<td style='width: 62%; vertical-align: middle; text-align: left;'><h1 style='text-align: left; margin-top: 0; margin-bottom: 0;'><img src='$fcLogo' style='height: 40px; vertical-align: middle; margin-right: 10px;' alt='Flight Connector Logo' />$title</h1><div style='text-align: center; width: 100%;'><h3 style='margin-top: 0; margin-bottom: 0; display: inline-block;'>Build A Network</h3></div>$links</td>";
+    $html .= "<td style='width: 38%; vertical-align: middle;'>$headerInfo</td>";
+    $html .= "</tr>";
+    $html .= "</tbody></table>";
 
-	return $html;
+    return $html;
 }
 
-function isVanderbilt() {
-	return FlightConnectorExternalModule::isVanderbilt();
+function isVanderbilt()
+{
+    return FlightConnectorExternalModule::isVanderbilt();
 }
 
-function getData($pid) {
-	if (version_compare(REDCAP_VERSION, "12.5.2", ">=")) {
-		$data = \REDCap::getData($pid, "json-array");
-	} else {
-		$json = \REDCap::getData($pid, "json");
-		$data = json_decode($json, true);
-	}
-	foreach ($data as $i => $row) {
-		if (!isset($row['name'])) {
-			$name = "";
-			if (isset($row['firstname'])) {
-				$name = trim($row['firstname'])." ".trim($row['lastname']);
-			} elseif (isset($row['first_name'])) {
-				$name = trim($row['first_name'])." ".trim($row['last_name']);
-			}
-			$name = trim($name);
-			if ($name) {
-				$data[$i]["name"] = $name;
-			}
-		}
-	}
+function getData($pid)
+{
+    if (version_compare(REDCAP_VERSION, "12.5.2", ">=")) {
+        $data = \REDCap::getData($pid, "json-array");
+    } else {
+        $json = \REDCap::getData($pid, "json");
+        $data = json_decode($json, true);
+    }
+    foreach ($data as $i => $row) {
+        if (!isset($row['name'])) {
+            $name = "";
+            if (isset($row['firstname'])) {
+                $name = trim($row['firstname'])." ".trim($row['lastname']);
+            } elseif (isset($row['first_name'])) {
+                $name = trim($row['first_name'])." ".trim($row['last_name']);
+            }
+            $name = trim($name);
+            if ($name) {
+                $data[$i]["name"] = $name;
+            }
+        }
+    }
 
-	$data = filterOutDuplicateNames($data);
-	$data = filterOutViaLDAP($data);
-	$data = alphabetizeByLastName($data);
-	if (in_array(SERVER_NAME, ["redcap.vanderbilt.edu", "redcap.vumc.org"])) {
-		$data = screenOutEFSStaff($data);
-	}
-	$data = screenOutEmptyChecks($data);
+    $data = filterOutDuplicateNames($data);
+    $data = filterOutViaLDAP($data);
+    $data = alphabetizeByLastName($data);
+    if (in_array(SERVER_NAME, ["redcap.vanderbilt.edu", "redcap.vumc.org"])) {
+        $data = screenOutEFSStaff($data);
+    }
+    $data = screenOutEmptyChecks($data);
 
-	if (isset($_GET['rows']) && is_numeric($_GET['rows'])) {
-		$newData = [];
-		$i = 0;
-		foreach ($data as $row) {
-			if ($i < $_GET['rows']) {
-				$newData[] = $row;
-			}
-			$i++;
-		}
-		return $newData;
-	}
-	return $data;
+    if (isset($_GET['rows']) && is_numeric($_GET['rows'])) {
+        $newData = [];
+        $i = 0;
+        foreach ($data as $row) {
+            if ($i < $_GET['rows']) {
+                $newData[] = $row;
+            }
+            $i++;
+        }
+        return $newData;
+    }
+    return $data;
 }
 
-function screenOutEmptyChecks($data) {
-	$newData = [];
-	foreach ($data as $row) {
-		$hasCheck = false;
-		foreach ($row as $field => $value) {
-			if (($value === "1") && preg_match("/___/", $field)) {
-				$hasCheck = true;
-				break;
-			}
-		}
-		if ($hasCheck) {
-			$newData[] = $row;
-		}
-	}
-	return $newData;
+function screenOutEmptyChecks($data)
+{
+    $newData = [];
+    foreach ($data as $row) {
+        $hasCheck = false;
+        foreach ($row as $field => $value) {
+            if (($value === "1") && str_contains($field, "___")) {
+                $hasCheck = true;
+                break;
+            }
+        }
+        if ($hasCheck) {
+            $newData[] = $row;
+        }
+    }
+    return $newData;
 }
 
-function screenOutEFSStaff($data) {
-	$staffInLower = [
-		"scott pearson",
-		"rebecca helton",
-		"adrienne babcock",
-		"helen bird",
-		"scott gubala",
-		"ashley hood",
-	];
+function screenOutEFSStaff($data)
+{
+    $staffInLower = [
+        "scott pearson",
+        "rebecca helton",
+        "adrienne babcock",
+        "helen bird",
+        "scott gubala",
+        "ashley hood",
+    ];
 
-	$newData = [];
-	foreach ($data as $row) {
-		$name = $row['name'] ?: $row['firstname']." ".$row['lastname'];
-		if (!in_array(strtolower($name), $staffInLower)) {
-			$newData[] = $row;
-		}
-	}
-	return $newData;
+    $newData = [];
+    foreach ($data as $row) {
+        $name = $row['name'] ?: $row['firstname']." ".$row['lastname'];
+        if (!in_array(strtolower($name), $staffInLower)) {
+            $newData[] = $row;
+        }
+    }
+    return $newData;
 }
 
-function alphabetizeByLastName($data) {
-	$dataByLastName = [];
-	foreach ($data as $row) {
-		if ($row['name']) {
-			list($first, $last) = splitName($row['name'], 2);
-			$dataByLastName[strtolower($last.", ".$first)] = $row;
-		} elseif ($row['firstname'] && $row['lastname']) {
-			$first = $row['firstname'];
-			$last = $row['lastname'];
-			$dataByLastName[strtolower($last.", ".$first)] = $row;
-		}
-	}
-	ksort($dataByLastName);
-	return array_values($dataByLastName);
+function alphabetizeByLastName($data)
+{
+    $dataByLastName = [];
+    foreach ($data as $row) {
+        if ($row['name']) {
+            list($first, $last) = splitName($row['name'], 2);
+            $dataByLastName[strtolower($last.", ".$first)] = $row;
+        } elseif ($row['firstname'] && $row['lastname']) {
+            $first = $row['firstname'];
+            $last = $row['lastname'];
+            $dataByLastName[strtolower($last.", ".$first)] = $row;
+        }
+    }
+    ksort($dataByLastName);
+    return array_values($dataByLastName);
 }
 
-function filterOutViaLDAP($data) {
-	$newData = [];
-	$meharryList = FlightConnectorExternalModule::getMeharryList();
-	foreach ($data as $row) {
-		if (!isset($row['in_ldap']) || ($row['in_ldap'] !== "0") || in_array($row['name'], $meharryList)) {
-			$newData[] = $row;
-		}
-	}
-	return $newData;
+function filterOutViaLDAP($data)
+{
+    $newData = [];
+    $meharryList = FlightConnectorExternalModule::getMeharryList();
+    foreach ($data as $row) {
+        if (!isset($row['in_ldap']) || ($row['in_ldap'] !== "0") || in_array($row['name'], $meharryList)) {
+            $newData[] = $row;
+        }
+    }
+    return $newData;
 }
 
-function filterOutDuplicateNames($data) {
-	$newDataByName = [];
-	foreach ($data as $row) {
-		if ($row['name']) {
-			$newDataByName[$row['name']] = $row;
-		} elseif ($row['firstname'] && $row['lastname']) {
-			$name = $row['firstname']." ".$row['lastname'];
-			$newDataByName[$name] = $row;
-		}
-	}
-	return array_values($newDataByName);
+function filterOutDuplicateNames($data)
+{
+    $newDataByName = [];
+    foreach ($data as $row) {
+        if ($row['name']) {
+            $newDataByName[$row['name']] = $row;
+        } elseif ($row['firstname'] && $row['lastname']) {
+            $name = $row['firstname']." ".$row['lastname'];
+            $newDataByName[$name] = $row;
+        }
+    }
+    return array_values($newDataByName);
 }
 
-function getPid() {
-	$pid = (int) htmlspecialchars($_GET['pid']);
-	if (!$pid) {
-		die("Error");
-	}
-	return $pid;
+function getPid()
+{
+    $pid = (int) htmlspecialchars($_GET['pid']);
+    if (!$pid) {
+        die("Error");
+    }
+    return $pid;
 }
 
-function makeJS($module) {
-	$jsUrl = $module->getUrl("jquery.min.js");
-	$baseLink = $module->getUrl("base.js");
-	$html = "<script type='text/javascript' src='$jsUrl'></script><script type='text/javascript' src='$baseLink'></script>";
-	return $html;
+function makeJS($module)
+{
+    $jsUrl = $module->getUrl("jquery.min.js");
+    $baseLink = $module->getUrl("base.js");
+    return "<script type='text/javascript' src='$jsUrl'></script><script type='text/javascript' src='$baseLink'></script>";
 }
 
-function makeBothLinks($module, $page) {
-	if ($page == "map") {
-		$urls = ["Concept Map" => $module->getMapURL()];
-	} elseif ($page == "nodeGraph") {
-		$urls = ["Cluster Graph" => $module->getNodeGraphURL()];
-	} elseif ($page == "all") {
-		$urls = [
-			"Concept Map" => $module->getMapURL(),
-			"Cluster Graph" => $module->getNodeGraphURL(),
-		];
-	}
-	$pid = getPid();
-	$requireLogin = $module->getProjectSetting(FlightConnectorExternalModule::REQUIRE_LOGIN_SETTING, $pid);
-	if (
-		$requireLogin
-		|| (
-			FlightConnectorExternalModule::isVanderbilt()
-			&& ($pid == FlightConnectorExternalModule::VANDERBILT_MAIN_PROJECT)
-		)
-	) {
-		$publicSurveyLink = str_replace("&pid=", "&project_id=", $module->getUrl("viewSurvey.php"));
-		$descriptor = "";
-	} elseif ($pid) {
-		$publicSurveyLink = $module->getPublicSurveyUrl($pid) ?? "";
-		$descriptor = "public";
-	} else {
-		return "";
-	}
-	if ($publicSurveyLink && !empty($urls)) {
-		$surveyQRCode = getQRCodeUrl($module, $publicSurveyLink);
-		$html = "<p class='centered bolded' style='font-size: 1.5em; margin: 0;'><a href='$publicSurveyLink'>Add Your Data Now or Share With Others</a></p>";
-		$html .= "<table class='centered max-width'><tr>";
-		$html .= "<td class='centered'><p class='centered'>Use or share this $descriptor link with others to add data.<br/><input id='surveyUrl' value='$publicSurveyLink' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#surveyUrl\"));'>Copy</a></span></p>";
-		foreach ($urls as $pageTitle => $url) {
-			$code = makeHTMLCode($pageTitle);
-			$html .= "<p class='centered'>Share this public link to see the Flight Tracker $pageTitle real-time as the data grows.<br/><input id='".$code."Url' value='$url' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#".$code."Url\"));'>Copy</a> <a href='javascript:;' onclick='$(\".pageQR\").show(); $(\"#surveyQR\").show();' >Show QR Codes</a></span></p></td>";
-		}
-		$html .= "<td id='surveyQR' style='display: none;'><div class='smallest'>Survey Link:</div><img src='$surveyQRCode' alt='Survey QR Code' /></td>";
-		foreach ($urls as $pageTitle => $url) {
-			$pageQRCode = getQRCodeUrl($module, $url);
-			$html .= "<td class='pageQR' style='display: none;'><div class='smaller'>$pageTitle Link:</div><img src='$pageQRCode' alt='$pageTitle QR Code' /></td>";
-		}
-		$html .= "</tr></table>";
-		return $html;
-	} else {
-		return "";
-	}
+function makeBothLinks($module, $page)
+{
+    if ($page == "map") {
+        $urls = ["Concept Map" => $module->getMapURL()];
+    } elseif ($page == "nodeGraph") {
+        $urls = ["Cluster Graph" => $module->getNodeGraphURL()];
+    } elseif ($page == "all") {
+        $urls = [
+            "Concept Map" => $module->getMapURL(),
+            "Cluster Graph" => $module->getNodeGraphURL(),
+        ];
+    }
+    $pid = getPid();
+    $requireLogin = $module->getProjectSetting(FlightConnectorExternalModule::REQUIRE_LOGIN_SETTING, $pid);
+    if (
+        $requireLogin
+        || (
+            FlightConnectorExternalModule::isVanderbilt()
+            && ($pid == FlightConnectorExternalModule::VANDERBILT_MAIN_PROJECT)
+        )
+    ) {
+        $publicSurveyLink = str_replace("&pid=", "&project_id=", $module->getUrl("viewSurvey.php"));
+        $descriptor = "";
+    } elseif ($pid) {
+        $publicSurveyLink = $module->getPublicSurveyUrl($pid) ?? "";
+        $descriptor = "public";
+    } else {
+        return "";
+    }
+    if ($publicSurveyLink && !empty($urls)) {
+        $surveyQRCode = getQRCodeUrl($module, $publicSurveyLink);
+        $html = "<p class='centered bolded' style='font-size: 1.5em; margin: 0;'><a href='$publicSurveyLink'>Add Your Data Now or Share With Others</a></p>";
+        $html .= "<table class='centered max-width'><tr>";
+        $html .= "<td class='centered'><p class='centered'>Use or share this $descriptor link with others to add data.<br/><input id='surveyUrl' value='$publicSurveyLink' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#surveyUrl\"));'>Copy</a></span></p>";
+        foreach ($urls as $pageTitle => $url) {
+            $code = makeHTMLCode($pageTitle);
+            $html .= "<p class='centered'>Share this public link to see the Flight Tracker $pageTitle real-time as the data grows.<br/><input id='".$code."Url' value='$url' onclick='this.select();' readonly='readonly' style='width: 90%; max-width: 450px; margin-right: 5px; margin-left: 5px;' /><span class='smaller'><a href='javascript:;' onclick='FlightConnector.copyToClipboard($(\"#".$code."Url\"));'>Copy</a> <a href='javascript:;' onclick='$(\".pageQR\").show(); $(\"#surveyQR\").show();' >Show QR Codes</a></span></p></td>";
+        }
+        $html .= "<td id='surveyQR' style='display: none;'><div class='smallest'>Survey Link:</div><img src='$surveyQRCode' alt='Survey QR Code' /></td>";
+        foreach ($urls as $pageTitle => $url) {
+            $pageQRCode = getQRCodeUrl($module, $url);
+            $html .= "<td class='pageQR' style='display: none;'><div class='smaller'>$pageTitle Link:</div><img src='$pageQRCode' alt='$pageTitle QR Code' /></td>";
+        }
+        $html .= "</tr></table>";
+        return $html;
+    } else {
+        return "";
+    }
 
 }
 
-function getQRCodeUrl($module, $value) {
-	return $module->getUrl("generateQR.php")."&NOAUTH&value=".urlencode($value);
+function getQRCodeUrl($module, $value)
+{
+    return $module->getUrl("generateQR.php")."&NOAUTH&value=".urlencode($value);
 }
 
-function getChoices($metadata) {
-	$choicesStrs = [];
-	$multis = ["checkbox", "dropdown", "radio"];
-	foreach ($metadata as $row) {
-		if (in_array($row['field_type'], $multis) && $row['select_choices_or_calculations']) {
-			$choicesStrs[$row['field_name']] = $row['select_choices_or_calculations'];
-		} elseif ($row['field_type'] == "yesno") {
-			$choicesStrs[$row['field_name']] = "0,No|1,Yes";
-		} elseif ($row['field_type'] == "truefalse") {
-			$choicesStrs[$row['field_name']] = "0,False|1,True";
-		}
-	}
-	$choices = [];
-	foreach ($choicesStrs as $fieldName => $choicesStr) {
-		$choices[$fieldName] = getRowChoices($choicesStr);
-	}
-	return $choices;
+function getChoices($metadata)
+{
+    $choicesStrs = [];
+    $multis = ["checkbox", "dropdown", "radio"];
+    foreach ($metadata as $row) {
+        if (in_array($row['field_type'], $multis) && $row['select_choices_or_calculations']) {
+            $choicesStrs[$row['field_name']] = $row['select_choices_or_calculations'];
+        } elseif ($row['field_type'] == "yesno") {
+            $choicesStrs[$row['field_name']] = "0,No|1,Yes";
+        } elseif ($row['field_type'] == "truefalse") {
+            $choicesStrs[$row['field_name']] = "0,False|1,True";
+        }
+    }
+    $choices = [];
+    foreach ($choicesStrs as $fieldName => $choicesStr) {
+        $choices[$fieldName] = getRowChoices($choicesStr);
+    }
+    return $choices;
 }
 
-function getRowChoices($choicesStr, $directFromDB = false) {
-	if ($directFromDB) {
-		$regex = "/\s*\\\\n\s*/";
-	} else {
-		$regex = "/\s*\|\s*/";
-	}
-	$choicePairs = preg_split($regex, $choicesStr);
-	$choices = [];
-	foreach ($choicePairs as $pair) {
-		$a = preg_split("/\s*,\s*/", $pair);
-		if (count($a) == 2) {
-			$choices[$a[0]] = $a[1];
-		} elseif (count($a) > 2) {
-			$a = explode(",", $pair);
-			$b = [];
-			for ($i = 1; $i < count($a); $i++) {
-				$b[] = $a[$i];
-			}
-			$choices[trim($a[0])] = trim(implode(",", $b));
-		}
-	}
-	return $choices;
+function getRowChoices($choicesStr, $directFromDB = false)
+{
+    if ($directFromDB) {
+        $regex = "/\s*\\\\n\s*/";
+    } else {
+        $regex = "/\s*\|\s*/";
+    }
+    $choicePairs = preg_split($regex, $choicesStr);
+    $choices = [];
+    foreach ($choicePairs as $pair) {
+        $a = preg_split("/\s*,\s*/", $pair);
+        if (count($a) == 2) {
+            $choices[$a[0]] = $a[1];
+        } elseif (count($a) > 2) {
+            $a = explode(",", $pair);
+            $b = [];
+            for ($i = 1; $i < count($a); $i++) {
+                $b[] = $a[$i];
+            }
+            $choices[trim($a[0])] = trim(implode(",", $b));
+        }
+    }
+    return $choices;
 }
 
-function fetchFromServer($request, $server) {
-	$ch = curl_init();
-	curl_setopt($ch, CURLOPT_URL, $server);
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-	curl_setopt($ch, CURLOPT_VERBOSE, 0);
-	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-	curl_setopt($ch, CURLOPT_AUTOREFERER, true);
-	curl_setopt($ch, CURLOPT_MAXREDIRS, 10);
-	curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
-	curl_setopt($ch, CURLOPT_FRESH_CONNECT, 1);
-	curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($request, '', '&'));
-	$output = curl_exec($ch);
-	curl_close($ch);
-	return $output;
+function fetchFromServer($request, $server)
+{
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $server);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_VERBOSE, 0);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_AUTOREFERER, true);
+    curl_setopt($ch, CURLOPT_MAXREDIRS, 10);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+    curl_setopt($ch, CURLOPT_FRESH_CONNECT, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($request, '', '&'));
+    $output = curl_exec($ch);
+    curl_close($ch);
+    return $output;
 }
 
-function downloadChoicesForField($module, $pid, $field) {
-	$sql = "SELECT element_enum FROM redcap_metadata WHERE project_id = ? AND field_name = ?";
-	$q = $module->query($sql, [$pid, $field]);
-	if ($row = $q->fetch_assoc()) {
-		return getRowChoices($row['element_enum'], true);
-	}
-	return [];
+function downloadChoicesForField($module, $pid, $field)
+{
+    $sql = "SELECT element_enum FROM redcap_metadata WHERE project_id = ? AND field_name = ?";
+    $q = $module->query($sql, [$pid, $field]);
+    if ($row = $q->fetch_assoc()) {
+        return getRowChoices($row['element_enum'], true);
+    }
+    return [];
 }
 
-function makeD3Data($data, $choices, $module) {
-	$outData = [];
-	$outData['scholars'] = [];
-	$outData['contents'] = [];
-	$outData['methods'] = [];
-	$pid = getPid();
+function makeD3Data($data, $choices, $module)
+{
+    $outData = [];
+    $outData['scholars'] = [];
+    $outData['contents'] = [];
+    $outData['methods'] = [];
+    $pid = getPid();
 
-	$fields = array_keys($module->getFields($pid));
-	$contentsField = $fields[0];
-	$methodsField = $fields[1];
+    $fields = array_keys($module->getFields($pid));
+    $contentsField = $fields[0];
+    $methodsField = $fields[1];
 
-	$counts = [];
-	foreach ($choices as $field => $indices) {
-		$counts[$field] = [];
-		foreach ($indices as $index => $label) {
-			$counts[$field][$index] = 0;
-		}
-	}
+    $counts = [];
+    foreach ($choices as $field => $indices) {
+        $counts[$field] = [];
+        foreach ($indices as $index => $label) {
+            $counts[$field][$index] = 0;
+        }
+    }
 
-	$meharryList = FlightConnectorExternalModule::getMeharryList();
-	foreach ($data as $row) {
-		$name = $row['name'] ?: $row['firstname']." ".$row['lastname'];
-		$email = $row['email'];
-		$department = $row['department'] ?? "";
-		$checks = [];
-		foreach ($row as $field => $value) {
-			if (($value == "1") && preg_match("/___/", $field)) {
-				list($field, $index) = explode("___", $field);
-				if (isset($choices[$field])) {
-					$counts[$field][$index]++;
-					if (isset($choices[$field][$index])) {
-						$label = clearHTML($choices[$field][$index]);
-						$checks[] = $label;
-					} else {
-						$checks[] = $index;
-					}
-				}
-			}
-		}
+    $meharryList = FlightConnectorExternalModule::getMeharryList();
+    foreach ($data as $row) {
+        $name = $row['name'] ?: $row['firstname']." ".$row['lastname'];
+        $email = $row['email'];
+        $department = $row['department'] ?? "";
+        $checks = [];
+        foreach ($row as $field => $value) {
+            if (($value == "1") && str_contains($field, "___")) {
+                list($field, $index) = explode("___", $field);
+                if (isset($choices[$field])) {
+                    $counts[$field][$index]++;
+                    if (isset($choices[$field][$index])) {
+                        $label = clearHTML($choices[$field][$index]);
+                        $checks[] = $label;
+                    } else {
+                        $checks[] = $index;
+                    }
+                }
+            }
+        }
 
-		$departmentText = $department ? $department." - " : "";
-		if (!$departmentText && in_array($name, $meharryList)) {
-			$departmentText = "Meharry - ";
-		}
-		$pubMedLink = "https://pubmed.ncbi.nlm.nih.gov/?term=".urlencode(strtolower($name));
-		if ($name && !empty($checks)) {
-			$outData['scholars'][] = [
-				"type" => "scholar",
-				"name" => $name,
-				"description" => "$departmentText<a href='mailto:$email'>$email</a> - <a href='$pubMedLink' target='_blank'>Search PubMed</a>",
-				"links" => $checks,
-			];
-		}
-	}
+        $departmentText = $department ? $department." - " : "";
+        if (!$departmentText && in_array($name, $meharryList)) {
+            $departmentText = "Meharry - ";
+        }
+        $pubMedLink = "https://pubmed.ncbi.nlm.nih.gov/?term=".urlencode(strtolower($name));
+        if ($name && !empty($checks)) {
+            $outData['scholars'][] = [
+                "type" => "scholar",
+                "name" => $name,
+                "description" => "$departmentText<a href='mailto:$email'>$email</a> - <a href='$pubMedLink' target='_blank'>Search PubMed</a>",
+                "links" => $checks,
+            ];
+        }
+    }
 
-	foreach ($choices[$contentsField] as $index => $label) {
-		$label = clearHTML($label);
-		if ($counts[$contentsField][$index] > 0) {
-			$slug = $index;
-			$outData['contents'][] = [
-				"type" => "content",
-				"name" => $label,
-				"description" => $label." - ".$counts[$contentsField][$index]." people - click to explore",
-				"slug" => $slug,
-			];
-		}
-	}
-	foreach ($choices[$methodsField] as $index => $label) {
-		$label = clearHTML($label);
-		if ($counts[$methodsField][$index] > 0) {
-			$outData['methods'][] = [
-				"type" => "method",
-				"name" => $label,
-				"description" => $label." - ".$counts[$methodsField][$index]." people - click to explore",
-				"count" => $counts['methods'][$index],
-			];
-		}
-	}
+    foreach ($choices[$contentsField] as $index => $label) {
+        $label = clearHTML($label);
+        if ($counts[$contentsField][$index] > 0) {
+            $slug = $index;
+            $outData['contents'][] = [
+                "type" => "content",
+                "name" => $label,
+                "description" => $label." - ".$counts[$contentsField][$index]." people - click to explore",
+                "slug" => $slug,
+            ];
+        }
+    }
+    foreach ($choices[$methodsField] as $index => $label) {
+        $label = clearHTML($label);
+        if ($counts[$methodsField][$index] > 0) {
+            $outData['methods'][] = [
+                "type" => "method",
+                "name" => $label,
+                "description" => $label." - ".$counts[$methodsField][$index]." people - click to explore",
+                "count" => $counts['methods'][$index],
+            ];
+        }
+    }
 
-	return $outData;
+    return $outData;
 }
 
-function clearHTML($str) {
-	$str = str_replace("&#039;", "'", $str);
-	$str = str_replace("&#39;", "'", $str);
-	$str = str_replace("&quot;", "\"", $str);
-	$str = str_replace("&#034;", "\"", $str);
-	$str = str_replace("&#34;", "\"", $str);
-	$str = str_replace("&amp;", "&", $str);
-	return $str;
+function clearHTML($str)
+{
+    $str = str_replace("&#039;", "'", $str);
+    $str = str_replace("&#39;", "'", $str);
+    $str = str_replace("&quot;", "\"", $str);
+    $str = str_replace("&#034;", "\"", $str);
+    $str = str_replace("&#34;", "\"", $str);
+    $str = str_replace("&amp;", "&", $str);
+    return $str;
 }
 
-function makeSaveDiv($module, $type, $mimeType = "image/png") {
-	if ($mimeType == "image/png") {
-		$canvasFunc = "canvas2PNG";
-		$suffix = "png";
-	} elseif ($mimeType == "image/jpeg") {
-		$canvasFunc = "canvas2JPEG";
-		$suffix = "jpg";
-	} else {
-		throw new \Exception("Mime Type unsupported: $mimeType");
-	}
-	if ($type == "svg") {
-		$europaWOFFLocation = $module->getUrl("EuropaNuovaRegular.woff");
-		return "<div style='text-align: right;'><button class='smallest' onclick='const svg = $(this).parent().parent().find(\"svg\").prop(\"outerHTML\"); FlightConnector.svg2Image(svg, 0, \"#ffffff\", FlightConnector.$canvasFunc, \"europa\", \"$europaWOFFLocation\"); return false;'>Save Image</button></div>";
-	} elseif ($type == "canvas") {
-		return "<div style='text-align: right;'><button class='smallest' onclick='const c = $(this).parent().parent().find(\"canvas\").get(0); const dataurl = FlightConnector.$canvasFunc(c); FlightConnector.forceDownloadUrl(dataurl, \"chart.$suffix\"); return false;'>Save Image</button></div>";
-	} else {
-		throw new \Exception("Invalid type: $type");
-	}
+function makeSaveDiv($module, $type, $mimeType = "image/png")
+{
+    if ($mimeType == "image/png") {
+        $canvasFunc = "canvas2PNG";
+        $suffix = "png";
+    } elseif ($mimeType == "image/jpeg") {
+        $canvasFunc = "canvas2JPEG";
+        $suffix = "jpg";
+    } else {
+        throw new \Exception("Mime Type unsupported: $mimeType");
+    }
+    if ($type == "svg") {
+        $europaWOFFLocation = $module->getUrl("EuropaNuovaRegular.woff");
+        return "<div style='text-align: right;'><button class='smallest' onclick='const svg = $(this).parent().parent().find(\"svg\").prop(\"outerHTML\"); FlightConnector.svg2Image(svg, 0, \"#ffffff\", FlightConnector.$canvasFunc, \"europa\", \"$europaWOFFLocation\"); return false;'>Save Image</button></div>";
+    } elseif ($type == "canvas") {
+        return "<div style='text-align: right;'><button class='smallest' onclick='const c = $(this).parent().parent().find(\"canvas\").get(0); const dataurl = FlightConnector.$canvasFunc(c); FlightConnector.forceDownloadUrl(dataurl, \"chart.$suffix\"); return false;'>Save Image</button></div>";
+    } else {
+        throw new \Exception("Invalid type: $type");
+    }
 }
 
-function makeConjunction($list, $conjugation = "and") {
-	if (count($list) == 0) {
-		return "";
-	} elseif (count($list) == 1) {
-		return $list[0];
-	} elseif (count($list) == 2) {
-		return $list[0]." $conjugation ".$list[1];
-	} else {
-		$lastElem = $list[count($list) - 2].", $conjugation ".$list[count($list) - 1];
-		$elems = [];
-		for ($i = 0; $i < count($list) - 2; $i++) {
-			$elems[] = $list[$i];
-		}
-		$elems[] = $lastElem;
-		return implode(", ", $elems);
-	}
+function makeConjunction($list, $conjugation = "and")
+{
+    if (count($list) == 0) {
+        return "";
+    } elseif (count($list) == 1) {
+        return $list[0];
+    } elseif (count($list) == 2) {
+        return $list[0]." $conjugation ".$list[1];
+    } else {
+        $lastElem = $list[count($list) - 2].", $conjugation ".$list[count($list) - 1];
+        $elems = [];
+        for ($i = 0; $i < count($list) - 2; $i++) {
+            $elems[] = $list[$i];
+        }
+        $elems[] = $lastElem;
+        return implode(", ", $elems);
+    }
 }
 
-function splitName($name, $parts, $clearOfExtraTitles = true) {
-	$simpleLastNamePrefixes = ["von", "van", "de"];
-	$complexLastNamePrefixes = [["von", "van", "de"], ["der", "la"]];
+function splitName($name, $parts, $clearOfExtraTitles = true)
+{
+    $simpleLastNamePrefixes = ["von", "van", "de"];
+    $complexLastNamePrefixes = [["von", "van", "de"], ["der", "la"]];
 
-	if ($parts <= 0) {
-		throw new \Exception("Parts must be positive! ($parts)");
-	}
-	if ($name == "") {
-		$returnValues = [];
-		for ($i = 0; $i < $parts; $i++) {
-			$returnValues[] = "";
-		}
-		return $returnValues;
-	}
-	if ($parts == 1) {
-		return [$name];
-	}
+    if ($parts <= 0) {
+        throw new \Exception("Parts must be positive! ($parts)");
+    }
+    if ($name == "") {
+        $returnValues = [];
+        for ($i = 0; $i < $parts; $i++) {
+            $returnValues[] = "";
+        }
+        return $returnValues;
+    }
+    if ($parts == 1) {
+        return [$name];
+    }
 
-	$nodes = preg_split("/\s*,\s*/", $name);
-	if ($clearOfExtraTitles) {
-		$nodes = clearOfDegrees($nodes);
-	}
-	$nodes = clearOfHonorifics($nodes);
-	if (count($nodes) == 1) {
-		if (preg_match("/\band\b/", $name)) {
-			$nodes = preg_split("/\s*\band\b\s*/", $name);
-		}
-	}
-	if (count($nodes) >= 2) {
-		# last-name, first-name
-		if ($parts == 2) {
-			return [$nodes[1], $nodes[0]];
-		} elseif (count($nodes) >= $parts) {
-			$returnValues = [$nodes[1], $nodes[0]];
-			for ($i = 2; $i < $parts; $i++) {
-				$returnValues[] = $nodes[$i];
-			}
-			return $returnValues;
-		} else {     // $parts > count($nodes)
-			$nodesInRightOrder = [$nodes[1]];   // first name
-			for ($i = 2; $i < count($nodes); $i++) {
-				$nodesInRightOrder[] = $nodes[$i];
-			}
-			$nodesInRightOrder[] = $nodes[0];    // last name
-			return padWithSpaces($nodesInRightOrder, $parts);
-		}
-	} elseif (count($nodes) == 1) {
-		if ($parts >= 2) {
-			$prevName = $nodes[0];
-			$nodes = getNodes($prevName, true);
-			if ($clearOfExtraTitles) {
-				$nodes = clearOfDegrees($nodes);
-				$nodes = clearOfHonorifics($nodes);
-			}
-			$lastNodeIdx = count($nodes) - 1;
+    $nodes = preg_split("/\s*,\s*/", $name);
+    if ($clearOfExtraTitles) {
+        $nodes = clearOfDegrees($nodes);
+    }
+    $nodes = clearOfHonorifics($nodes);
+    if (count($nodes) == 1) {
+        if (preg_match("/\band\b/", $name)) {
+            $nodes = preg_split("/\s*\band\b\s*/", $name);
+        }
+    }
+    if (count($nodes) >= 2) {
+        # last-name, first-name
+        if ($parts == 2) {
+            return [$nodes[1], $nodes[0]];
+        } elseif (count($nodes) >= $parts) {
+            $returnValues = [$nodes[1], $nodes[0]];
+            for ($i = 2; $i < $parts; $i++) {
+                $returnValues[] = $nodes[$i];
+            }
+            return $returnValues;
+        } else {     // $parts > count($nodes)
+            $nodesInRightOrder = [$nodes[1]];   // first name
+            for ($i = 2; $i < count($nodes); $i++) {
+                $nodesInRightOrder[] = $nodes[$i];
+            }
+            $nodesInRightOrder[] = $nodes[0];    // last name
+            return padWithSpaces($nodesInRightOrder, $parts);
+        }
+    } elseif (count($nodes) == 1) {
+        if ($parts >= 2) {
+            $prevName = $nodes[0];
+            $nodes = getNodes($prevName, true);
+            if ($clearOfExtraTitles) {
+                $nodes = clearOfDegrees($nodes);
+                $nodes = clearOfHonorifics($nodes);
+            }
+            $lastNodeIdx = count($nodes) - 1;
 
-			do {
-				$changed = false;
-				if (count($nodes) == $parts) {
-					if (($parts == 2) && preg_match("/^[A-Z][A-Z]?[A-Z]?$/", $nodes[1])) {
-						# Initials
-						return [$nodes[1], $nodes[0]];
-					} else {
-						return $nodes;
-					}
-				} elseif ((count($nodes) == 3) && (isInitial($nodes[0]) || isInitial($nodes[1]))) {
-					if ($parts == 2) {
-						if (isInitial($nodes[1])) {
-							return [$nodes[0], $nodes[2]];
-						} elseif (isInitial($nodes[0])) {
-							return [$nodes[1], $nodes[2]];
-						} else {
-							return [$nodes[0] . " " . $nodes[1], $nodes[2]];
-						}
-					} elseif ($parts > 3) {
-						return padWithSpaces($nodes, $parts);
-					} elseif ($parts == 3) {
-						return $nodes;
-					}
-				} elseif (count($nodes) > $parts) {
-					if (in_array(strtolower($nodes[$lastNodeIdx - 1]), $simpleLastNamePrefixes)) {
-						$newNodes = [];
-						for ($i = 0; $i < $lastNodeIdx - 1; $i++) {
-							$newNodes[] = $nodes[$i];
-						}
-						$newNodes[] = $nodes[$lastNodeIdx - 1] . " " . $nodes[$lastNodeIdx];
-						$changed = true;
-						$nodes = $newNodes;
-					} elseif (($lastNodeIdx > 2) && in_array(strtolower($nodes[$lastNodeIdx - 2]), $complexLastNamePrefixes[0]) && in_array(strtolower($nodes[$lastNodeIdx - 1]), $complexLastNamePrefixes[1])) {
-						$newNodes = [];
-						for ($i = 0; $i < $lastNodeIdx - 2; $i++) {
-							$newNodes[] = $nodes[$i];
-						}
-						$newNodes[] = $nodes[$lastNodeIdx - 2] . " " . $nodes[$lastNodeIdx - 1] . " " . $nodes[$lastNodeIdx];
-						$changed = true;
-						$nodes = $newNodes;
-					} elseif (preg_match("/^\((.+)\)$/", $nodes[$lastNodeIdx] ?? "", $matches)) {
-						$newNodes = [];
-						for ($i = 0; $i < $lastNodeIdx - 1; $i++) {
-							$newNodes[] = $nodes[$i];
-						}
-						$newNodes[] = $nodes[$lastNodeIdx - 1] . " " . $matches[1];   # remove parentheses
-						$changed = true;
-						$nodes = $newNodes;
-					} else {
-						return collapseNames($nodes, $parts);
-					}
-				} elseif (count($nodes) < $parts) {
-					return padWithSpaces($nodes, $parts);
-				}
-			} while ($changed);
+            do {
+                $changed = false;
+                if (count($nodes) == $parts) {
+                    if (($parts == 2) && preg_match("/^[A-Z][A-Z]?[A-Z]?$/", $nodes[1])) {
+                        # Initials
+                        return [$nodes[1], $nodes[0]];
+                    } else {
+                        return $nodes;
+                    }
+                } elseif ((count($nodes) == 3) && (isInitial($nodes[0]) || isInitial($nodes[1]))) {
+                    if ($parts == 2) {
+                        if (isInitial($nodes[1])) {
+                            return [$nodes[0], $nodes[2]];
+                        } elseif (isInitial($nodes[0])) {
+                            return [$nodes[1], $nodes[2]];
+                        } else {
+                            return [$nodes[0] . " " . $nodes[1], $nodes[2]];
+                        }
+                    } elseif ($parts > 3) {
+                        return padWithSpaces($nodes, $parts);
+                    } elseif ($parts == 3) {
+                        return $nodes;
+                    }
+                } elseif (count($nodes) > $parts) {
+                    if (in_array(strtolower($nodes[$lastNodeIdx - 1]), $simpleLastNamePrefixes)) {
+                        $newNodes = [];
+                        for ($i = 0; $i < $lastNodeIdx - 1; $i++) {
+                            $newNodes[] = $nodes[$i];
+                        }
+                        $newNodes[] = $nodes[$lastNodeIdx - 1] . " " . $nodes[$lastNodeIdx];
+                        $changed = true;
+                        $nodes = $newNodes;
+                    } elseif (($lastNodeIdx > 2) && in_array(strtolower($nodes[$lastNodeIdx - 2]), $complexLastNamePrefixes[0]) && in_array(strtolower($nodes[$lastNodeIdx - 1]), $complexLastNamePrefixes[1])) {
+                        $newNodes = [];
+                        for ($i = 0; $i < $lastNodeIdx - 2; $i++) {
+                            $newNodes[] = $nodes[$i];
+                        }
+                        $newNodes[] = $nodes[$lastNodeIdx - 2] . " " . $nodes[$lastNodeIdx - 1] . " " . $nodes[$lastNodeIdx];
+                        $changed = true;
+                        $nodes = $newNodes;
+                    } elseif (preg_match("/^\((.+)\)$/", $nodes[$lastNodeIdx] ?? "", $matches)) {
+                        $newNodes = [];
+                        for ($i = 0; $i < $lastNodeIdx - 1; $i++) {
+                            $newNodes[] = $nodes[$i];
+                        }
+                        $newNodes[] = $nodes[$lastNodeIdx - 1] . " " . $matches[1];   # remove parentheses
+                        $changed = true;
+                        $nodes = $newNodes;
+                    } else {
+                        return collapseNames($nodes, $parts);
+                    }
+                } elseif (count($nodes) < $parts) {
+                    return padWithSpaces($nodes, $parts);
+                }
+            } while ($changed);
 
-			if (count($nodes) > $parts) {
-				return collapseNames($nodes, $parts);
-			} elseif (count($nodes) < $parts) {
-				return padWithSpaces($nodes, $parts);
-			} else {
-				throw new \Exception("This should never happen!");
-			}
-		}
-	}
-	$ary = [];
-	for ($i = 0; $i < $parts; $i++) {
-		$ary[] = "";
-	}
-	return $ary;
+            if (count($nodes) > $parts) {
+                return collapseNames($nodes, $parts);
+            } elseif (count($nodes) < $parts) {
+                return padWithSpaces($nodes, $parts);
+            } else {
+                throw new \Exception("This should never happen!");
+            }
+        }
+    }
+    $ary = [];
+    for ($i = 0; $i < $parts; $i++) {
+        $ary[] = "";
+    }
+    return $ary;
 }
 
-function clearOfHonorifics($nodes) {
-	$returnString = false;
-	if (is_string($nodes)) {
-		$returnString = true;
-		$nodes = getNodes($nodes, true);
-	}
-	$honorifics = [
-		"Mr.",
-		"Ms.",
-		"Mx.",
-		"Mrs.",
-		"Miss",
-		"Dr.",
-		"Rev.",
-		"Mr",
-		"Ms",
-		"Mx",
-		"Mrs",
-		"Dr",
-		"Rev",
-	];
-	$suffixes = getSuffixes();
+function clearOfHonorifics($nodes)
+{
+    $returnString = false;
+    if (is_string($nodes)) {
+        $returnString = true;
+        $nodes = getNodes($nodes, true);
+    }
+    $honorifics = [
+        "Mr.",
+        "Ms.",
+        "Mx.",
+        "Mrs.",
+        "Miss",
+        "Dr.",
+        "Rev.",
+        "Mr",
+        "Ms",
+        "Mx",
+        "Mrs",
+        "Dr",
+        "Rev",
+    ];
+    $suffixes = getSuffixes();
 
-	$newNodes = [];
-	$i = 0;
-	foreach ($nodes as $node) {
-		if (($i > 0) || !in_array($node, $honorifics)) {
-			if (
-				!in_array(strtoupper($node), $suffixes)
-				|| (
-					(count($nodes) <= 2)
-					&& isInitialsOnly($node)
-				)
-			) {
-				$newNodes[] = $node;
-			}
-		}
-		$i++;
-	}
-	if ($returnString) {
-		return implode(" ", $newNodes);
-	} else {
-		return $newNodes;
-	}
+    $newNodes = [];
+    $i = 0;
+    foreach ($nodes as $node) {
+        if (($i > 0) || !in_array($node, $honorifics)) {
+            if (
+                !in_array(strtoupper($node), $suffixes)
+                || (
+                    (count($nodes) <= 2)
+                    && isInitialsOnly($node)
+                )
+            ) {
+                $newNodes[] = $node;
+            }
+        }
+        $i++;
+    }
+    if ($returnString) {
+        return implode(" ", $newNodes);
+    } else {
+        return $newNodes;
+    }
 }
 
 // TRUE for E or E.
@@ -618,191 +639,201 @@ function clearOfHonorifics($nodes) {
 // TRUE for W E B or W. E. B.
 // FALSE for WEB or W.E.B.
 // FALSE for Ryan
-function isInitialsOnly($name) {
-	if (preg_match("/^[A-Z]\.?$/", $name)) {
-		return true;
-	}
-	if (preg_match("/^[A-Z]\.?[A-Z]\.?$/", $name)) {
-		return true;
-	}
-	$nodes = getNodes($name);
-	foreach ($nodes as $node) {
-		if (!isInitial($node)) {
-			return false;
-		}
-	}
-	return true;
+function isInitialsOnly($name)
+{
+    if (preg_match("/^[A-Z]\.?$/", $name)) {
+        return true;
+    }
+    if (preg_match("/^[A-Z]\.?[A-Z]\.?$/", $name)) {
+        return true;
+    }
+    $nodes = getNodes($name);
+    foreach ($nodes as $node) {
+        if (!isInitial($node)) {
+            return false;
+        }
+    }
+    return true;
 }
 
-function getNodes($name, $ridOfSpacesOnly = false) {
-	if ($ridOfSpacesOnly) {
-		return preg_split("/\s+/", $name);
-	} else {
-		return preg_split("/[\s\-]+/", $name);
-	}
+function getNodes($name, $ridOfSpacesOnly = false)
+{
+    if ($ridOfSpacesOnly) {
+        return preg_split("/\s+/", $name);
+    } else {
+        return preg_split("/[\s\-]+/", $name);
+    }
 }
 
-function clearOfDegrees($nodes) {
-	$returnString = false;
-	if (is_string($nodes)) {
-		$returnString = true;
-		$nodes = getNodes($nodes, true);
-	}
-	$degreesInUpperCase = [
-		"MD,",
-		"PHD,",
-		"MD",
-		"PHD",
-		"MSC",
-		"DSC",
-		"DRPH",
-		"MSCI",
-		"MPH",
-		"MD PHD",
-		"MD, PHD",
-		"MD,PHD",
-		"MD/PHD",
-		"MS",
-		"MHS",
-		"DPHIL",
-		"PSYD",
-		"PHARMD",
-		"RN",
-		"FACP",
-		"FRCP",
-		"MBCHB",
-	];
-	$newNodes = [];
-	if (count($nodes) >= 1) {
-		$newNodes[] = $nodes[0];
-	}
-	$i = 0;
-	foreach ($nodes as $node) {
-		if ($i > 0) {
-			$node = trim($node);
-			$nodeToTest = preg_replace("/[\,\;\.]+$/", "", strtoupper($node));
-			if ($node && !in_array($nodeToTest, $degreesInUpperCase)) {
-				$newNodes[] = $node;
-			}
-		}
-		$i++;
-	}
-	if ($returnString) {
-		return preg_replace("/[\,\;\.]+$/", "", implode(" ", $newNodes));
-	} else {
-		return $newNodes;
-	}
+function clearOfDegrees($nodes)
+{
+    $returnString = false;
+    if (is_string($nodes)) {
+        $returnString = true;
+        $nodes = getNodes($nodes, true);
+    }
+    $degreesInUpperCase = [
+        "MD,",
+        "PHD,",
+        "MD",
+        "PHD",
+        "MSC",
+        "DSC",
+        "DRPH",
+        "MSCI",
+        "MPH",
+        "MD PHD",
+        "MD, PHD",
+        "MD,PHD",
+        "MD/PHD",
+        "MS",
+        "MHS",
+        "DPHIL",
+        "PSYD",
+        "PHARMD",
+        "RN",
+        "FACP",
+        "FRCP",
+        "MBCHB",
+    ];
+    $newNodes = [];
+    if (count($nodes) >= 1) {
+        $newNodes[] = $nodes[0];
+    }
+    $i = 0;
+    foreach ($nodes as $node) {
+        if ($i > 0) {
+            $node = trim($node);
+            $nodeToTest = preg_replace("/[\,\;\.]+$/", "", strtoupper($node));
+            if ($node && !in_array($nodeToTest, $degreesInUpperCase)) {
+                $newNodes[] = $node;
+            }
+        }
+        $i++;
+    }
+    if ($returnString) {
+        return preg_replace("/[\,\;\.]+$/", "", implode(" ", $newNodes));
+    } else {
+        return $newNodes;
+    }
 }
 
-function collapseNames($nodes, $parts) {
-	$suffixes = getSuffixes();
-	$hasSuffix = false;
-	for ($i = 1; $i < count($nodes); $i++) {
-		if (in_array(strtoupper($nodes[$i]), $suffixes)) {
-			$hasSuffix = true;
-			break;
-		}
-	}
-	if ($hasSuffix) {
-		$newNodes = [];
-		foreach ($nodes as $node) {
-			if (in_array(strtoupper($node), $suffixes)) {
-				if (count($newNodes) > 0) {
-					$newNodes[count($newNodes) - 1] .= " ".$node;
-				} else {
-					throw new \Exception("This should never happen, a suffix at the beginning of a name: ".json_encode($nodes)." ".json_encode($newNodes)." on $node");
-				}
-			} else {
-				$newNodes[] = $node;
-			}
-		}
-		if (count($newNodes) <= $parts) {
-			return $newNodes;
-		} else {
-			return collapseNames($newNodes, $parts);
-		}
-	}
-	$first = $nodes[0];
-	for ($i = 1; $i <= count($nodes) - $parts; $i++) {
-		$first .= " ".$nodes[$i];
-	}
-	# collapse initials
-	$first = preg_replace("/\b(\w)\b\s\b(\w)\b/", "$1$2", $first);
+function collapseNames($nodes, $parts)
+{
+    $suffixes = getSuffixes();
+    $hasSuffix = false;
+    for ($i = 1; $i < count($nodes); $i++) {
+        if (in_array(strtoupper($nodes[$i]), $suffixes)) {
+            $hasSuffix = true;
+            break;
+        }
+    }
+    if ($hasSuffix) {
+        $newNodes = [];
+        foreach ($nodes as $node) {
+            if (in_array(strtoupper($node), $suffixes)) {
+                if (count($newNodes) > 0) {
+                    $newNodes[count($newNodes) - 1] .= " ".$node;
+                } else {
+                    throw new \Exception("This should never happen, a suffix at the beginning of a name: ".json_encode($nodes)." ".json_encode($newNodes)." on $node");
+                }
+            } else {
+                $newNodes[] = $node;
+            }
+        }
+        if (count($newNodes) <= $parts) {
+            return $newNodes;
+        } else {
+            return collapseNames($newNodes, $parts);
+        }
+    }
+    $first = $nodes[0];
+    for ($i = 1; $i <= count($nodes) - $parts; $i++) {
+        $first .= " ".$nodes[$i];
+    }
+    # collapse initials
+    $first = preg_replace("/\b(\w)\b\s\b(\w)\b/", "$1$2", $first);
 
-	$returnValues = [];
-	$returnValues[] = $first;
-	for ($i = count($nodes) - $parts + 1; $i < count($nodes); $i++) {
-		$returnValues[] = $nodes[$i];
-	}
-	return $returnValues;
+    $returnValues = [];
+    $returnValues[] = $first;
+    for ($i = count($nodes) - $parts + 1; $i < count($nodes); $i++) {
+        $returnValues[] = $nodes[$i];
+    }
+    return $returnValues;
 }
 
-function getSuffixes() {
-	return ["I", "II", "III", "IV", "JR", "JR.", "SR", "SR."];
+function getSuffixes()
+{
+    return ["I", "II", "III", "IV", "JR", "JR.", "SR", "SR."];
 }
 
-function isInitial($name) {
-	return preg_match("/^\w\.?$/", $name);
+function isInitial($name)
+{
+    return preg_match("/^\w\.?$/", $name);
 }
 
-function padWithSpaces($nodes, $parts) {
-	$returnValues = [$nodes[0]];
-	for ($i = 0; $i < $parts - count($nodes); $i++) {
-		$returnValues[] = "";
-	}
-	for ($i = 1; $i < count($nodes); $i++) {
-		$returnValues[] = $nodes[$i];
-	}
-	return $returnValues;
+function padWithSpaces($nodes, $parts)
+{
+    $returnValues = [$nodes[0]];
+    for ($i = 0; $i < $parts - count($nodes); $i++) {
+        $returnValues[] = "";
+    }
+    for ($i = 1; $i < count($nodes); $i++) {
+        $returnValues[] = $nodes[$i];
+    }
+    return $returnValues;
 }
 
-function shortenTitle($title) {
-	$original = $title;
-	$title = preg_replace("/[\s\-:]*Flight Connector[\s\-:]*/i", "", $title);
-	if (preg_match("/^\(/", $title)) {
-		$title = preg_replace("/^\(/", "", $title);
-		$title = preg_replace("/\)$/", "", $title);
-	}
-	$title = trim($title);
-	return $title ?: $original;
+function shortenTitle($title)
+{
+    $original = $title;
+    $title = preg_replace("/[\s\-:]*Flight Connector[\s\-:]*/i", "", $title);
+    if (preg_match("/^\(/", $title)) {
+        $title = preg_replace("/^\(/", "", $title);
+        $title = preg_replace("/\)$/", "", $title);
+    }
+    $title = trim($title);
+    return $title ?: $original;
 }
 
-function makeHTMLCode($str) {
-	$htmlFriendly = preg_replace("/[\s\-]+/", "_", $str);
-	$htmlFriendly = preg_replace("/<[^>]+>/", "", $htmlFriendly);
-	$htmlFriendly = preg_replace("/[\:\+\"\/\[\]'#<>\~\`\!\@\#\$\%\^\&\*\(\)\=\;\?\.\,]/", "", $htmlFriendly);
-	return htmlentities($htmlFriendly);
+function makeHTMLCode($str)
+{
+    $htmlFriendly = preg_replace("/[\s\-]+/", "_", $str);
+    $htmlFriendly = preg_replace("/<[^>]+>/", "", $htmlFriendly);
+    $htmlFriendly = preg_replace("/[\:\+\"\/\[\]'#<>\~\`\!\@\#\$\%\^\&\*\(\)\=\;\?\.\,]/", "", $htmlFriendly);
+    return htmlentities($htmlFriendly);
 }
 
-function displayEdoc($module, $id) {
-	if (is_numeric($id)) {
-		$sql = "SELECT stored_name, mime_type FROM redcap_edocs_metadata WHERE doc_id = ?";
-		$q = $module->query($sql, [$id]);
-		if ($row = $q->fetch_assoc()) {
-			$filename = EDOC_PATH . $row['stored_name'];
-			$suffix = "";
-			if (preg_match("/\.(.+)$/", $filename, $matches)) {
-				$suffix = $matches[1];
-			}
-			$mimeType = $row['mime_type'];
-			if ($mimeType == "application/octet-stream") {
-				if (preg_match("/\.svg$/", $row['stored_name'])) {
-					$mimeType = "image/svg+xml";
-				} else {
-					$mimeType = mime_content_type($row['stored_name']) ?: $mimeType;
-				}
-			}
-			$content = file_get_contents($filename);
-			$expires = 30 * 3600 * 24;
-			header("Content-Type: $mimeType");
-			header('Content-disposition: attachment; filename="pic.'.$suffix.'"'); //Use for force to download
-			header("Content-Length: " . strlen($content));
-			header("Cache-Control: public", true);
-			header("Pragma: public", true);
-			header('Expires: ' . gmdate('D, d M Y H:i:s', time() + $expires) . ' GMT', true);
-			echo $content;
-			return;
-		}
-	}
-	throw new \Exception("Invalid Edoc ID!");
+function displayEdoc($module, $id)
+{
+    if (is_numeric($id)) {
+        $sql = "SELECT stored_name, mime_type FROM redcap_edocs_metadata WHERE doc_id = ?";
+        $q = $module->query($sql, [$id]);
+        if ($row = $q->fetch_assoc()) {
+            $filename = EDOC_PATH . $row['stored_name'];
+            $suffix = "";
+            if (preg_match("/\.(.+)$/", $filename, $matches)) {
+                $suffix = $matches[1];
+            }
+            $mimeType = $row['mime_type'];
+            if ($mimeType == "application/octet-stream") {
+                if (preg_match("/\.svg$/", $row['stored_name'])) {
+                    $mimeType = "image/svg+xml";
+                } else {
+                    $mimeType = mime_content_type($row['stored_name']) ?: $mimeType;
+                }
+            }
+            $content = file_get_contents($filename);
+            $expires = 30 * 3600 * 24;
+            header("Content-Type: $mimeType");
+            header('Content-disposition: attachment; filename="pic.'.$suffix.'"'); //Use for force to download
+            header("Content-Length: " . strlen($content));
+            header("Cache-Control: public");
+            header("Pragma: public");
+            header('Expires: ' . gmdate('D, d M Y H:i:s', time() + $expires) . ' GMT');
+            echo $content;
+            return;
+        }
+    }
+    throw new \Exception("Invalid Edoc ID!");
 }
