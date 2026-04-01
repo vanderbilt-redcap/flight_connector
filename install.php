@@ -140,7 +140,7 @@ if (!empty($_POST)) {
     $filename = APP_PATH_TEMP.bin2hex(random_bytes(8))."_".$applicableInstrument.".csv";
     $fp = fopen($filename, "w");
     foreach ($csv as $row) {
-        fputcsv($fp, $row, ",", "", '\\');
+        fputcsv($fp, $row, ",", '"', "\\");
     }
     fclose($fp);
     $module->importDataDictionary($pid, $filename);
