@@ -2,6 +2,8 @@
 
 namespace Vanderbilt\FlightConnectorExternalModule;
 
+use ExternalModules\ExternalModules;
+
 function getEventIdForClassical($module, $pid)
 {
     $sql = "SELECT DISTINCT(m.event_id) AS event_id FROM redcap_events_metadata AS m INNER JOIN redcap_events_arms AS a ON (a.arm_id = m.arm_id) WHERE a.project_id = ?";
@@ -810,22 +812,22 @@ function displayEdoc($module, $id)
 {
     if (is_numeric($id)) {
         $sql = "SELECT stored_name, mime_type FROM redcap_edocs_metadata WHERE doc_id = ?";
-        $q = $module->query($sql, [$id]);
-        if ($row = $q->fetch_assoc()) {
-            $filename = EDOC_PATH . $row['stored_name'];
+        $edocInfo = \Files::getEdocInfo($id, ExternalModules::getProjectId());
+        if (!empty($edocInfo)) {
+            $fileName = ExternalModules::getEdocPath($edocInfo);
             $suffix = "";
-            if (preg_match("/\.(.+)$/", $filename, $matches)) {
+            if (preg_match("/\.(.+)$/", $fileName, $matches)) {
                 $suffix = $matches[1];
             }
-            $mimeType = $row['mime_type'];
+            $mimeType = $edocInfo['mime_type'];
             if ($mimeType == "application/octet-stream") {
-                if (preg_match("/\.svg$/", $row['stored_name'])) {
+                if (preg_match("/\.svg$/", $edocInfo['stored_name'])) {
                     $mimeType = "image/svg+xml";
                 } else {
-                    $mimeType = mime_content_type($row['stored_name']) ?: $mimeType;
+                    $mimeType = mime_content_type($edocInfo['stored_name']) ?: $mimeType;
                 }
             }
-            $content = file_get_contents($filename);
+            $content = file_get_contents($fileName);
             $expires = 30 * 3600 * 24;
             header("Content-Type: $mimeType");
             header('Content-disposition: attachment; filename="pic.'.$suffix.'"'); //Use for force to download
