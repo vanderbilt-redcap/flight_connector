@@ -811,7 +811,6 @@ function makeHTMLCode($str)
 function displayEdoc($module, $id)
 {
     if (is_numeric($id)) {
-        $sql = "SELECT stored_name, mime_type FROM redcap_edocs_metadata WHERE doc_id = ?";
         $edocInfo = \Files::getEdocInfo($id, ExternalModules::getProjectId());
         if (!empty($edocInfo)) {
             $fileName = ExternalModules::getEdocPath($edocInfo);
