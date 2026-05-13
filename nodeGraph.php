@@ -17,11 +17,11 @@ require_once(APP_PATH_DOCROOT."Classes/System.php");
 $pictureUrl = $module->getUrl("getPicture.php")."&NOAUTH";
 $pid = getPid();
 if (!$module->isSetup($pid)) {
-	header("Location: ".$module->getUrl("install.php"));
+    header("Location: ".$module->getUrl("install.php"));
 }
 $uniqueHash = $module->getProjectSetting(FlightConnectorExternalModule::UNIQUE_HASH_SETTING, $pid) ?? "";
 if (($uniqueHash === "") || ($uniqueHash !== $_GET['h'])) {
-	die("No access.");
+    die("No access.");
 }
 
 $json = \REDCap::getDataDictionary($pid, "json");
@@ -30,7 +30,7 @@ $choices = getChoices($metadata);
 $time1 = time();
 $redcapData = getData($pid);
 if (isset($_GET['timings'])) {
-	echo "Downloaded REDCap Data in ".(time() - $time1)." seconds<br/>";
+    echo "Downloaded REDCap Data in ".(time() - $time1)." seconds<br/>";
 }
 $projectTitle = shortenTitle(\REDCap::getProjectTitle());
 $defaultHighlightedName = str_replace("&amp;", "&", preg_replace("/&#0?39;/", "'", htmlentities($_GET['highlightedName'] ?? "")));
@@ -38,8 +38,8 @@ $defaultHighlightedTopic = str_replace("&amp;", "&", preg_replace("/&#0?39;/", "
 $isMulti = isset($_GET['multi']) && ($_GET['multi'] == "1");
 $combineWithGreater = !$isMulti;
 if ($isMulti) {
-	$defaultHighlightedTopic = "";
-	$defaultHighlightedName = "";
+    $defaultHighlightedTopic = "";
+    $defaultHighlightedName = "";
 }
 
 $width = 900;
@@ -81,24 +81,24 @@ echo "<body>";
 echo makeHeader($module, "Flight Connector", 800, true);
 
 if (empty($redcapData)) {
-	echo "<p class='centered max-width thickBorder padded'>No data have been entered.</p>";
-	echo makeBothLinks($module, "nodeGraph");
-	exit;
+    echo "<p class='centered max-width thickBorder padded'>No data have been entered.</p>";
+    echo makeBothLinks($module, "nodeGraph");
+    exit;
 }
 echo makeBothLinks($module, "nodeGraph");
 
 $d3DataOriginal = [
-	"nodes" => [],
-	"links" => [],
+    "nodes" => [],
+    "links" => [],
 ];
 if ($isMulti) {
-	$zoomFactor = 2;
+    $zoomFactor = 2;
 } elseif (count($redcapData) < 100) {
-	$zoomFactor = 3.5;
+    $zoomFactor = 3.5;
 } elseif (count($redcapData) < 200) {
-	$zoomFactor = 2;
+    $zoomFactor = 2;
 } else {
-	$zoomFactor = 0;
+    $zoomFactor = 0;
 }
 # TODO - Dream List
 # Mobile view for EFS Retreat - interactivity of line graph & sizing of concept map
@@ -107,234 +107,234 @@ if ($isMulti) {
 
 $padding = 36;
 $groups = [
-	"contents" => "content",
-	"methods" => "method",
+    "contents" => "content",
+    "methods" => "method",
 ];
 $categories = [];
 foreach (array_keys($groups) as $variable) {
-	if (!isset($choices[$variable])) {
-		$shortVariable = $variable[0];
-		if (isset($choices[$shortVariable])) {
-			$groups[$shortVariable] = $groups[$variable];
-			unset($groups[$variable]);
-			$variable = $shortVariable;
-		}
-	}
-	if (isset($choices[$variable])) {
-		foreach ($choices[$variable] as $index => $label) {
-			$categories[$label] = [];
-		}
-	}
+    if (!isset($choices[$variable])) {
+        $shortVariable = $variable[0];
+        if (isset($choices[$shortVariable])) {
+            $groups[$shortVariable] = $groups[$variable];
+            unset($groups[$variable]);
+            $variable = $shortVariable;
+        }
+    }
+    if (isset($choices[$variable])) {
+        foreach ($choices[$variable] as $index => $label) {
+            $categories[$label] = [];
+        }
+    }
 }
 if ($combineWithGreater) {
-	$plus = "+";
+    $plus = "+";
 } elseif ($isMulti) {
-	$plus = "";
+    $plus = "";
 } else {
-	$plus = "";
+    $plus = "";
 }
 $allNames = [];
 $time1 = time();
 foreach ($redcapData as $row) {
-	$name = $row['name'];
-	$allNames[] = $name;
-	list($first, $last) = NameMatcher::splitName($name);
-	$fInitial = $first[0];
-	$lInitial = $last[0];
-	$initials = strtoupper("$fInitial$lInitial");
-	$topics = [];
-	foreach ($row as $field => $value) {
-		foreach ($groups as $variable => $group) {
-			if (preg_match("/^$variable"."___/", $field) && ($value == 1)) {
-				$codedCategory = preg_replace("/^$variable"."___/", "", $field);
-				$category = $choices[$variable][$codedCategory];
-				$topics[] = formatCategory($category);
-				$categories[$category][] = $name;
-			}
-		}
-	}
-	$node = [
-		"id" => $name,
-		"email" => "<a href='mailto:".$row['email']."'>".$row['email']."</a>",
-		"group" => "person",
-		"initials" => $initials,
-		"topics" => $topics,
-		"color" => $nodeColor,
-		"fontColor" => "white",
-	];
-	foreach (["department", "picture"] as $field) {
-		if (isset($row[$field]) && $row[$field]) {
-			$node[$field] = $row[$field];
-		}
-	}
-	$d3DataOriginal["nodes"][] = $node;
+    $name = $row['name'];
+    $allNames[] = $name;
+    list($first, $last) = NameMatcher::splitName($name);
+    $fInitial = $first[0];
+    $lInitial = $last[0];
+    $initials = strtoupper("$fInitial$lInitial");
+    $topics = [];
+    foreach ($row as $field => $value) {
+        foreach ($groups as $variable => $group) {
+            if (preg_match("/^$variable"."___/", $field) && ($value == 1)) {
+                $codedCategory = preg_replace("/^$variable"."___/", "", $field);
+                $category = $choices[$variable][$codedCategory];
+                $topics[] = formatCategory($category);
+                $categories[$category][] = $name;
+            }
+        }
+    }
+    $node = [
+        "id" => $name,
+        "email" => "<a href='mailto:".$row['email']."'>".$row['email']."</a>",
+        "group" => "person",
+        "initials" => $initials,
+        "topics" => $topics,
+        "color" => $nodeColor,
+        "fontColor" => "white",
+    ];
+    foreach (["department", "picture"] as $field) {
+        if (isset($row[$field]) && $row[$field]) {
+            $node[$field] = $row[$field];
+        }
+    }
+    $d3DataOriginal["nodes"][] = $node;
 }
 if (isset($_GET['timings'])) {
-	echo "Made nodes in ".(time() - $time1)." seconds<br/>";
+    echo "Made nodes in ".(time() - $time1)." seconds<br/>";
 }
 $time1 = time();
 foreach ($categories as $category => $names) {
-	$roundTime = time();
-	for ($i = 0; $i < count($names); $i++) {
-		for ($j = $i + 1; $j < count($names); $j++) {
-			createOrIncrementLink($d3DataOriginal["links"], $names[$i], $names[$j], [$category]);
-		}
-	}
-	if (isset($_GET['timings'])) {
-		echo "Created links for $category ($i of ".count($names)."): ".(time() - $roundTime)." seconds<br/>";
-	}
+    $roundTime = time();
+    for ($i = 0; $i < count($names); $i++) {
+        for ($j = $i + 1; $j < count($names); $j++) {
+            createOrIncrementLink($d3DataOriginal["links"], $names[$i], $names[$j], [$category]);
+        }
+    }
+    if (isset($_GET['timings'])) {
+        echo "Created links for $category ($i of ".count($names)."): ".(time() - $roundTime)." seconds<br/>";
+    }
 }
 if (isset($_GET['timings'])) {
-	echo "Made links in ".(time() - $time1)." seconds<br/>";
+    echo "Made links in ".(time() - $time1)." seconds<br/>";
 }
 $time1 = time();
 $subgraphsAtStrength = makeSubgraphs($d3DataOriginal);
 if (isset($_GET['timings'])) {
-	echo "Made subgraphs in " . (time() - $time1) . " seconds<br/>";
+    echo "Made subgraphs in " . (time() - $time1) . " seconds<br/>";
 }
 if (empty($subgraphsAtStrength)) {
-	$maxStrength = 1;
+    $maxStrength = 1;
 } else {
-	$maxStrength = max(array_keys($subgraphsAtStrength));
+    $maxStrength = max(array_keys($subgraphsAtStrength));
 }
 
 $sliderData = [];
 $lastTime = time();
 for ($strength = 1; $strength <= $maxStrength; $strength++) {
-	if (isset($subgraphsAtStrength[$strength])) {
-		$data = $subgraphsAtStrength[$strength];
-		if ($combineWithGreater) {
-			combineWithGreaterSubgraphs($data, $subgraphsAtStrength, $strength, $maxStrength);
-		}
-		$memberCount = count($data["nodes"] ?? []);
-		$densities = [];
-		$numNodes = count($d3DataOriginal["nodes"] ?? []);
-		if ($numNodes >= 2) {
-			foreach ($data["nodes"] ?? [] as $node) {
-				$nodeConnections = 0;
-				foreach ($data["links"] ?? [] as $edge) {
-					if (($edge["source"] == $node["id"]) || ($edge["target"] == $node["id"])) {
-						$nodeConnections++;
-					}
-				}
-				$densities[] = $nodeConnections / ($numNodes - 1);
-			}
-		}
-		$averageDensity = !empty($densities) ? array_sum($densities) / count($densities) : 0;
-	} else {
-		$memberCount = 0;
-		$averageDensity = 0;
-	}
-	$sliderData[] = ["x" => $strength, "members" => $memberCount, "density" => $averageDensity];
+    if (isset($subgraphsAtStrength[$strength])) {
+        $data = $subgraphsAtStrength[$strength];
+        if ($combineWithGreater) {
+            combineWithGreaterSubgraphs($data, $subgraphsAtStrength, $strength, $maxStrength);
+        }
+        $memberCount = count($data["nodes"] ?? []);
+        $densities = [];
+        $numNodes = count($d3DataOriginal["nodes"] ?? []);
+        if ($numNodes >= 2) {
+            foreach ($data["nodes"] ?? [] as $node) {
+                $nodeConnections = 0;
+                foreach ($data["links"] ?? [] as $edge) {
+                    if (($edge["source"] == $node["id"]) || ($edge["target"] == $node["id"])) {
+                        $nodeConnections++;
+                    }
+                }
+                $densities[] = $nodeConnections / ($numNodes - 1);
+            }
+        }
+        $averageDensity = !empty($densities) ? array_sum($densities) / count($densities) : 0;
+    } else {
+        $memberCount = 0;
+        $averageDensity = 0;
+    }
+    $sliderData[] = ["x" => $strength, "members" => $memberCount, "density" => $averageDensity];
 }
 if (isset($_GET['timings'])) {
-	echo "$maxStrength Strengths: Combined in " . (time() - $lastTime) . " seconds<br/>";
+    echo "$maxStrength Strengths: Combined in " . (time() - $lastTime) . " seconds<br/>";
 }
 $sliderJSON = json_encode($sliderData);
 
 $strength = 1;
 $myData = $d3DataOriginal;
 if ($combineWithGreater) {
-	combineWithGreaterSubgraphs($myData, $subgraphsAtStrength, $strength, $maxStrength);
+    combineWithGreaterSubgraphs($myData, $subgraphsAtStrength, $strength, $maxStrength);
 }
 addEdgeColors($myData["links"]);
 $dataJSON = json_encode($myData);
 if (empty($myData) || empty($myData["nodes"] ?? [])) {
-	$saveDiv = "";
+    $saveDiv = "";
 }
 if ($isMulti) {
-	$scale = ceil(sqrt($numParts));
-	$subWidth = $width / $scale - 2;
-	$subHeight = $height / $scale - 2;
-	$html = "";
-	for ($i = 1; $i <= $numParts; $i++) {
-		$html .= "<div id='graph$i' style='width: $subWidth; height: $subHeight; border: 1px solid #AAA;'></div>";
-	}
-	$mainCall = "$('#graph').html(\"$html\");";
-	$saveDiv = "";    // turn off for multi - they can reproduce at large scale if desired
-	$subgraphJSONs = [];
-	$subgraphData = [];
-	$weights = [];
-	$defaultWeight = 1;
-	for ($i = 1; $i <= $numParts; $i++) {
-		$foundCount = 0;
-		$subgraphData[$i] = $subgraphsAtStrength[$defaultWeight] ?? [];
-		$weights[$i] = $defaultWeight;
-		$strengthsReversed = array_keys($subgraphsAtStrength);
-		rsort($strengthsReversed);
-		foreach ($strengthsReversed as $weight) {
-			$data = $subgraphsAtStrength[$weight];
-			if (!empty($data["nodes"])) {
-				$foundCount++;
-			}
-			if ($foundCount == $i) {
-				$subgraphData[$i] = $data;
-				$weights[$i] = $weight;
-				break;
-			}
-		}
-	}
-	for ($i = 1; $i <= $numParts; $i++) {
-		if (empty($subgraphData[$i] ?? [])) {
-			$subgraphJSONs[$i] = "{}";
-		} else {
-			addEdgeColors($subgraphData[$i]["links"]);
-			$subgraphJSONs[$i] = json_encode($subgraphData[$i]);
-		}
-		$mainCall .= " $('#graph$i').append(chart($subWidth, $subHeight, {$subgraphJSONs[$i]}, {$weights[$i]}, $zoomFactor));";
-	}
-	$nameFinderHTML = "";
-	$sliderCall = "";
-	$callStem = "";
+    $scale = ceil(sqrt($numParts));
+    $subWidth = $width / $scale - 2;
+    $subHeight = $height / $scale - 2;
+    $html = "";
+    for ($i = 1; $i <= $numParts; $i++) {
+        $html .= "<div id='graph$i' style='width: $subWidth; height: $subHeight; border: 1px solid #AAA;'></div>";
+    }
+    $mainCall = "$('#graph').html(\"$html\");";
+    $saveDiv = "";    // turn off for multi - they can reproduce at large scale if desired
+    $subgraphJSONs = [];
+    $subgraphData = [];
+    $weights = [];
+    $defaultWeight = 1;
+    for ($i = 1; $i <= $numParts; $i++) {
+        $foundCount = 0;
+        $subgraphData[$i] = $subgraphsAtStrength[$defaultWeight] ?? [];
+        $weights[$i] = $defaultWeight;
+        $strengthsReversed = array_keys($subgraphsAtStrength);
+        rsort($strengthsReversed);
+        foreach ($strengthsReversed as $weight) {
+            $data = $subgraphsAtStrength[$weight];
+            if (!empty($data["nodes"])) {
+                $foundCount++;
+            }
+            if ($foundCount == $i) {
+                $subgraphData[$i] = $data;
+                $weights[$i] = $weight;
+                break;
+            }
+        }
+    }
+    for ($i = 1; $i <= $numParts; $i++) {
+        if (empty($subgraphData[$i] ?? [])) {
+            $subgraphJSONs[$i] = "{}";
+        } else {
+            addEdgeColors($subgraphData[$i]["links"]);
+            $subgraphJSONs[$i] = json_encode($subgraphData[$i]);
+        }
+        $mainCall .= " $('#graph$i').append(chart($subWidth, $subHeight, {$subgraphJSONs[$i]}, {$weights[$i]}, $zoomFactor));";
+    }
+    $nameFinderHTML = "";
+    $sliderCall = "";
+    $callStem = "";
 } else {
-	$callStem = "";
-	if (!empty($subgraphsAtStrength)) {
-		$dataJSONs = [];
-		for ($i = 1; $i <= $maxStrength; $i++) {
-			$myData = $subgraphsAtStrength[$i] ?? ["nodes" => [], "links" => []];
-			if ($combineWithGreater) {
-				combineWithGreaterSubgraphs($myData, $subgraphsAtStrength, $i, $maxStrength);
-			}
-			addEdgeColors($myData["links"]);
-			$dataJSONs[$i] = json_encode($myData);
-		}
-		$callStem .= "
+    $callStem = "";
+    if (!empty($subgraphsAtStrength)) {
+        $dataJSONs = [];
+        for ($i = 1; $i <= $maxStrength; $i++) {
+            $myData = $subgraphsAtStrength[$i] ?? ["nodes" => [], "links" => []];
+            if ($combineWithGreater) {
+                combineWithGreaterSubgraphs($myData, $subgraphsAtStrength, $i, $maxStrength);
+            }
+            addEdgeColors($myData["links"]);
+            $dataJSONs[$i] = json_encode($myData);
+        }
+        $callStem .= "
             $('#numTopics').html(strength+'$plus Topic'+(strength === 1 ? '' : 's'));
             if (strength === 1) {
                 return {$dataJSONs[1]};";
-		for ($i = 2; $i <= $maxStrength; $i++) {
-			$callStem .= "
+        for ($i = 2; $i <= $maxStrength; $i++) {
+            $callStem .= "
             } else if (strength == $i) {
                 return {$dataJSONs[$i]};";
-		}
-		$callStem .= "
+        }
+        $callStem .= "
         }";
-	}
-	$mainCall = "$('#graph').append(chart(FlightConnectorNodeGraph.width + $padding, FlightConnectorNodeGraph.height + $padding, $dataJSON, $strength, $zoomFactor));";
-	$sliderCall = "$('#configuration').html(slider($('#configuration').width(), $sliderHeight, $sliderJSON));";
-	$nameOptions = [];
-	foreach ($allNames as $name) {
-		if ($defaultHighlightedName == $name) {
-			$optionHTML = "<option value=\"$name\" selected>$name</option>";
-		} else {
-			$optionHTML = "<option value=\"$name\">$name</option>";
-		}
-		$nameOptions[] = $optionHTML;
-	}
+    }
+    $mainCall = "$('#graph').append(chart(FlightConnectorNodeGraph.width + $padding, FlightConnectorNodeGraph.height + $padding, $dataJSON, $strength, $zoomFactor));";
+    $sliderCall = "$('#configuration').html(slider($('#configuration').width(), $sliderHeight, $sliderJSON));";
+    $nameOptions = [];
+    foreach ($allNames as $name) {
+        if ($defaultHighlightedName == $name) {
+            $optionHTML = "<option value=\"$name\" selected>$name</option>";
+        } else {
+            $optionHTML = "<option value=\"$name\">$name</option>";
+        }
+        $nameOptions[] = $optionHTML;
+    }
 
-	$topicOptions = [];
-	foreach (array_keys($groups) as $variable) {
-		foreach ($choices[$variable] ?? [] as $index => $label) {
-			$id = $variable."___".$index;
-			if ($defaultHighlightedTopic == $label) {
-				$optionHTML = "<option value=\"$id\" selected>$label</option>";
-			} else {
-				$optionHTML = "<option value=\"$id\">$label</option>";
-			}
-			$topicOptions[] = $optionHTML;
-		}
-	}
-	$nameFinderHTML = "<p class='centered' id='configurations' style='margin-bottom: 0;'>
+    $topicOptions = [];
+    foreach (array_keys($groups) as $variable) {
+        foreach ($choices[$variable] ?? [] as $index => $label) {
+            $id = $variable."___".$index;
+            if ($defaultHighlightedTopic == $label) {
+                $optionHTML = "<option value=\"$id\" selected>$label</option>";
+            } else {
+                $optionHTML = "<option value=\"$id\">$label</option>";
+            }
+            $topicOptions[] = $optionHTML;
+        }
+    }
+    $nameFinderHTML = "<p class='centered' id='configurations' style='margin-bottom: 0;'>
 <span class='nobreak'><label for='highlightName' style='padding-left: 3px; color: white; background-color: $nameHighlightColor; font-weight: bold;'>Name to Highlight: </label>
 <select class='combobox' id='highlightName' onchange='FlightConnectorNodeGraph.highlightName(FlightConnectorNodeGraph.lastStrength, $(\"#highlightName :selected\").val(), false);'><option value=''></option>".implode("", array_values($nameOptions))."</select></span>
 <span class='nobreak'><label style='margin-left: 40px; padding-left: 3px; background-color: $topicHighlightColor; color: $topicHighlightFontColor; font-weight: bold;'for='highlightTopic'>Topic to Highlight: </label>
@@ -346,11 +346,11 @@ if ($isMulti) {
 
 $hiddenHTML = "";
 foreach ($_GET as $field => $value) {
-	if (!in_array($field, ["strength", "instance", "pnid", "multi", "highlight", "highlightedName", "highlightedTopic"])) {
-		$field = htmlentities($field);
-		$value = htmlentities($value);
-		$hiddenHTML .= "<input type='hidden' name='$field' value='$value' />";
-	}
+    if (!in_array($field, ["strength", "instance", "pnid", "multi", "highlight", "highlightedName", "highlightedTopic"])) {
+        $field = htmlentities($field);
+        $value = htmlentities($value);
+        $hiddenHTML .= "<input type='hidden' name='$field' value='$value' />";
+    }
 }
 $hiddenHTML .= "
 <input type='hidden' name='multi' value='0' />
@@ -358,9 +358,9 @@ $hiddenHTML .= "
 <input type='hidden' name='highlightedTopic' id='highlightedTopic' value=\"$defaultHighlightedTopic\" />";
 
 if (($strength == 1) && !$plus) {
-	$numTopics = "$strength Topic";
+    $numTopics = "$strength Topic";
 } else {
-	$numTopics = "$strength$plus Topics";
+    $numTopics = "$strength$plus Topics";
 }
 $title = "Connections with <span id='numTopics'>$numTopics</span> in Common";
 
@@ -1137,162 +1137,170 @@ echo "
 # Michael R Savona, Nancy J Cox, Dan M Roden, Douglas M Ruderfer, Yaomin Xu, Interactive network-based clustering and
 # investigation of multimorbidity association matrices with associationSubgraphs, Bioinformatics, Volume 39, Issue 1,
 # January 2023, btac780, https://doi.org/10.1093/bioinformatics/btac780
-function makeSubgraphs($d3Data) {
-	$nodes = $d3Data["nodes"];
-	$allNodesByName = [];
-	foreach ($nodes as $node) {
-		$allNodesByName[$node["id"]] = $node;
-	}
-	$edges = $d3Data["links"];
+function makeSubgraphs($d3Data)
+{
+    $nodes = $d3Data["nodes"];
+    $allNodesByName = [];
+    foreach ($nodes as $node) {
+        $allNodesByName[$node["id"]] = $node;
+    }
+    $edges = $d3Data["links"];
 
-	$subgraphs = [];
-	$nodesByName = [];
-	for ($i = 0; $i < count($edges); $i++) {
-		$weight = $edges[$i]["value"];
-		$nodeAName = $edges[$i]["source"];
-		$nodeBName = $edges[$i]["target"];
-		$topics = $edges[$i]["topics"];
-		if (!isset($subgraphs[$weight])) {
-			$subgraphs[$weight] = ["nodes" => [], "links" => []];
-			$nodesByName[$weight] = [];
-		}
-		if (!isset($nodesByName[$weight][$nodeAName])) {
-			$nodesByName[$weight][$nodeAName] = $allNodesByName[$nodeAName];
-		}
-		if (!isset($nodesByName[$weight][$nodeBName])) {
-			$nodesByName[$weight][$nodeBName] = $allNodesByName[$nodeBName];
-		}
-		createOrIncrementLink($subgraphs[$weight]["links"], $nodeAName, $nodeBName, $topics);
-	}
-	if (!empty($subgraphs)) {
-		for ($weight = 1; $weight <= max(array_keys($subgraphs)); $weight++) {
-			if (!isset($subgraphs[$weight])) {
-				$subgraphs[$weight] = ["nodes" => [], "links" => []];
-			} else {
-				$subgraphs[$weight]["nodes"] = array_values($nodesByName[$weight]);
-			}
-		}
-	}
-	return $subgraphs;
+    $subgraphs = [];
+    $nodesByName = [];
+    for ($i = 0; $i < count($edges); $i++) {
+        $weight = $edges[$i]["value"];
+        $nodeAName = $edges[$i]["source"];
+        $nodeBName = $edges[$i]["target"];
+        $topics = $edges[$i]["topics"];
+        if (!isset($subgraphs[$weight])) {
+            $subgraphs[$weight] = ["nodes" => [], "links" => []];
+            $nodesByName[$weight] = [];
+        }
+        if (!isset($nodesByName[$weight][$nodeAName])) {
+            $nodesByName[$weight][$nodeAName] = $allNodesByName[$nodeAName];
+        }
+        if (!isset($nodesByName[$weight][$nodeBName])) {
+            $nodesByName[$weight][$nodeBName] = $allNodesByName[$nodeBName];
+        }
+        createOrIncrementLink($subgraphs[$weight]["links"], $nodeAName, $nodeBName, $topics);
+    }
+    if (!empty($subgraphs)) {
+        for ($weight = 1; $weight <= max(array_keys($subgraphs)); $weight++) {
+            if (!isset($subgraphs[$weight])) {
+                $subgraphs[$weight] = ["nodes" => [], "links" => []];
+            } else {
+                $subgraphs[$weight]["nodes"] = array_values($nodesByName[$weight]);
+            }
+        }
+    }
+    return $subgraphs;
 }
 
-function getNodesFromEdges($edges, $field) {
-	$nodes = [];
-	foreach ($edges as $edge) {
-		if (isset($edge[$field])) {
-			$nodes[] = $edge[$field];
-		}
-	}
-	return $nodes;
+function getNodesFromEdges($edges, $field)
+{
+    $nodes = [];
+    foreach ($edges as $edge) {
+        if (isset($edge[$field])) {
+            $nodes[] = $edge[$field];
+        }
+    }
+    return $nodes;
 }
 
-function createOrIncrementLink(&$edges, $name1, $name2, $topics) {
-	foreach ($topics as &$topic) {
-		$topic = formatCategory($topic);
-	}
-	$weight = count($topics);
-	$found = false;
-	foreach ($edges as &$edge) {
-		if (
-			(($edge['source'] == $name1) && ($edge['target'] == $name2))
-			|| (($edge['source'] == $name2) && ($edge['target'] == $name1))
-		) {
-			$edge['value'] += $weight;
-			$edge["topics"] = array_merge($edge["topics"], $topics);
-			$found = true;
-			break;
-		}
-	}
-	if (!$found) {
-		$edges[] = [
-			"source" => $name1,
-			"target" => $name2,
-			"value" => $weight,
-			"topics" => $topics,
-		];
-	}
+function createOrIncrementLink(&$edges, $name1, $name2, $topics)
+{
+    foreach ($topics as &$topic) {
+        $topic = formatCategory($topic);
+    }
+    $weight = count($topics);
+    $found = false;
+    foreach ($edges as &$edge) {
+        if (
+            (($edge['source'] == $name1) && ($edge['target'] == $name2))
+            || (($edge['source'] == $name2) && ($edge['target'] == $name1))
+        ) {
+            $edge['value'] += $weight;
+            $edge["topics"] = array_merge($edge["topics"], $topics);
+            $found = true;
+            break;
+        }
+    }
+    if (!$found) {
+        $edges[] = [
+            "source" => $name1,
+            "target" => $name2,
+            "value" => $weight,
+            "topics" => $topics,
+        ];
+    }
 }
 
-function formatCategory($topic) {
-	$maxReplacements = 100;
-	$i = 0;
-	while (preg_match("/\S\/\S/", $topic, $matches) && ($i < $maxReplacements)) {
-		$match = $matches[0];
-		$newItem = str_replace("/", " / ", $match);
-		$topic = str_replace($match, $newItem, $topic);
-		$i++;
-	}
-	return $topic;
+function formatCategory($topic)
+{
+    $maxReplacements = 100;
+    $i = 0;
+    while (preg_match("/\S\/\S/", $topic, $matches) && ($i < $maxReplacements)) {
+        $match = $matches[0];
+        $newItem = str_replace("/", " / ", $match);
+        $topic = str_replace($match, $newItem, $topic);
+        $i++;
+    }
+    return $topic;
 }
 
-function addEdgeColors(&$edges) {
-	for ($i = 0; $i < count($edges); $i++) {
-		$weight = $edges[$i]["value"];
-		$edges[$i]["color"] = "#999";
-	}
+function addEdgeColors(&$edges)
+{
+    for ($i = 0; $i < count($edges); $i++) {
+        $weight = $edges[$i]["value"];
+        $edges[$i]["color"] = "#999";
+    }
 }
 
-function getEdgeLegend($edges) {
-	$colorWheel = [
-		"#01579b",   // blue
-		"#0288d1",
-		"#21a6cf",
-		"#81d4fa",
-		"#e1f5fe",
-		"#1b5e20",   // green
-		"#388e3c",
-		"#4caf50",
-		"#4cb150",
-		"#81c784",
-		"#c8e6c9",
-		"#006064",   // cyan/teal
-		"#00838f",
-		"#00acc1",
-		"#4dd0e1",
-		"#b2ebf2",
-	];
-	$weights = [];
-	foreach ($edges as $edge) {
-		$value = $edge["value"];
-		if (!in_array($value, $weights)) {
-			$weights[] = $value;
-		}
-	}
-	$legend = [];
-	if (count($weights) == 1) {
-		$legend[$weights[0]] = "#999";
-	} else {
-		foreach ($weights as $i => $weight) {
-			$legend[$weight] = $colorWheel[$i % count($colorWheel)];
-		}
-	}
-	return $legend;
+function getEdgeLegend($edges)
+{
+    $colorWheel = [
+        "#01579b",   // blue
+        "#0288d1",
+        "#21a6cf",
+        "#81d4fa",
+        "#e1f5fe",
+        "#1b5e20",   // green
+        "#388e3c",
+        "#4caf50",
+        "#4cb150",
+        "#81c784",
+        "#c8e6c9",
+        "#006064",   // cyan/teal
+        "#00838f",
+        "#00acc1",
+        "#4dd0e1",
+        "#b2ebf2",
+    ];
+    $weights = [];
+    foreach ($edges as $edge) {
+        $value = $edge["value"];
+        if (!in_array($value, $weights)) {
+            $weights[] = $value;
+        }
+    }
+    $legend = [];
+    if (count($weights) == 1) {
+        $legend[$weights[0]] = "#999";
+    } else {
+        foreach ($weights as $i => $weight) {
+            $legend[$weight] = $colorWheel[$i % count($colorWheel)];
+        }
+    }
+    return $legend;
 }
 
-function getLegendHTML($legend) {
-	if (count($legend) <= 1) {
-		return "";
-	}
-	$htmlNodes = [];
-	foreach ($legend as $weight => $color) {
-		$htmlNodes[] = "<span style='white-space: nowrap; padding: 10px;'><span style='background-color: $color; border: 1px solid black;'>&nbsp;&nbsp;&nbsp;</span> $weight connections</span>";
-	}
-	return "<div style='border: 1px solid #888; padding: 6px; width: 1000px; text-align: center; word-wrap: anywhere; line-height: 2em;'><h4 style='margin-top: 0; margin-bottom: 0;'>Legend</h4>".implode("", $htmlNodes)."</div>";
+function getLegendHTML($legend)
+{
+    if (count($legend) <= 1) {
+        return "";
+    }
+    $htmlNodes = [];
+    foreach ($legend as $weight => $color) {
+        $htmlNodes[] = "<span style='white-space: nowrap; padding: 10px;'><span style='background-color: $color; border: 1px solid black;'>&nbsp;&nbsp;&nbsp;</span> $weight connections</span>";
+    }
+    return "<div style='border: 1px solid #888; padding: 6px; width: 1000px; text-align: center; word-wrap: anywhere; line-height: 2em;'><h4 style='margin-top: 0; margin-bottom: 0;'>Legend</h4>".implode("", $htmlNodes)."</div>";
 }
 
-function combineWithGreaterSubgraphs(&$myData, $subgraphsAtStrength, $strength, $maxStrength) {
-	for ($i = $strength + 1; $i <= $maxStrength; $i++) {
-		$strengthSubgraph = $subgraphsAtStrength[$i] ?? [];
-		$myDataIds = [];
-		foreach ($myData["nodes"] as $node) {
-			$myDataIds[] = $node["id"];
-		}
-		foreach ($strengthSubgraph["nodes"] as $node) {
-			$id = $node["id"];
-			if (!in_array($id, $myDataIds)) {
-				$myData["nodes"][] = $node;
-			}
-		}
-		$myData["links"] = array_merge($myData["links"], $strengthSubgraph["links"] ?? []);
-	}
+function combineWithGreaterSubgraphs(&$myData, $subgraphsAtStrength, $strength, $maxStrength)
+{
+    for ($i = $strength + 1; $i <= $maxStrength; $i++) {
+        $strengthSubgraph = $subgraphsAtStrength[$i] ?? [];
+        $myDataIds = [];
+        foreach ($myData["nodes"] as $node) {
+            $myDataIds[] = $node["id"];
+        }
+        foreach ($strengthSubgraph["nodes"] as $node) {
+            $id = $node["id"];
+            if (!in_array($id, $myDataIds)) {
+                $myData["nodes"][] = $node;
+            }
+        }
+        $myData["links"] = array_merge($myData["links"], $strengthSubgraph["links"] ?? []);
+    }
 }
