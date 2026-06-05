@@ -9,11 +9,6 @@
 			"institution": "Vanderbilt University Medical Center"
 		}
 	],
-	"permissions": [
-		"redcap_every_page_before_render",
-		"redcap_survey_page",
-		"redcap_every_page_top"
-	],
 	"links": {
 		"project": [
 			{
@@ -33,9 +28,9 @@
 			}
 		]
 	},
-	"framework-version": 9,
+	"framework-version": 16,
 	"compatibility": {
-		"php-version-min": "7.3.0",
+		"php-version-min": "8.0",
 		"php-version-max": "",
 		"redcap-version-min": "11.1.1",
 		"redcap-version-max": ""
