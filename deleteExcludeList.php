@@ -8,12 +8,12 @@ $data = \REDCap::getData(FlightConnectorExternalModule::VANDERBILT_MAIN_PROJECT,
 $excludeList = FlightConnectorExternalModule::getExcludeList();
 $recordsToDelete = [];
 foreach ($data as $row) {
-    if (in_array($row['name'], $excludeList)) {
-        $recordsToDelete[] = $row['record_id'];
-    }
+	if (in_array($row['name'], $excludeList)) {
+		$recordsToDelete[] = $row['record_id'];
+	}
 }
 
 foreach ($recordsToDelete as $recordId) {
-    \REDCap::deleteRecord(FlightConnectorExternalModule::VANDERBILT_MAIN_PROJECT, $recordId);
+	\REDCap::deleteRecord(FlightConnectorExternalModule::VANDERBILT_MAIN_PROJECT, $recordId);
 }
 echo count($recordsToDelete)." records deleted.";
